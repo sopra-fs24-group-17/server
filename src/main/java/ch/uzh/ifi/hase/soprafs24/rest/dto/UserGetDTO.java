@@ -33,4 +33,17 @@ public class UserGetDTO {
   private String countryoforigin;
 
   private String avatar;
+
+  private Integer gamesplayed;
+
+  private Integer gameswon;
+
+  private Double winlossratio;
+
+  private Integer totalfriends;
+
+  private Integer achievementsunlocked;
+
+  private Date lastplayed;
+
 }

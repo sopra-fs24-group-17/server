@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,10 +13,12 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 public class UserServiceTest {
 
@@ -434,7 +437,6 @@ public class UserServiceTest {
 
     @Test
     public void getUsers_ReturnsListOfUsers() {
-        // Setup mock users
         User user1 = new User();
         user1.setUsername("user1");
         User user2 = new User();
@@ -450,4 +452,29 @@ public class UserServiceTest {
 
         Mockito.verify(userRepository, Mockito.times(1)).findAll();
     }
+
+
+    @Test
+    public void verifyToken_validToken() {
+      User testUser = new User();
+      testUser.setToken("123");
+
+      Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
+      assertEquals(userService.verifyToken(testUser.getToken()), testUser);
+    }
+
+    @Test
+    public void verifyToken_invalidToken_throwsException() {
+        User testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("user");
+        testUser.setPassword("password");
+        testUser.setEmail("test@email.com");
+        testUser.setToken("123");
+        testUser.setStatus(UserStatus.OFFLINE);
+
+        assertThrows(ResponseStatusException.class, () -> userService.verifyToken("456"));
+
+    }
+
 }

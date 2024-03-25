@@ -39,6 +39,14 @@ public interface DTOMapper {
   @Mapping(source = "otp", target = "otp")
   @Mapping(source = "avatar", target = "avatar")
   @Mapping(target = "token", ignore = true) //Will be sent in the header
+
+  //User Statistics
+  @Mapping(source = "userStats.gamesPlayed", target = "gamesplayed")
+  @Mapping(source = "userStats.gamesWon", target = "gameswon")
+  @Mapping(source = "userStats.winLossRatio", target = "winlossratio")
+  @Mapping(source = "userStats.totalFriends", target = "totalfriends")
+  @Mapping(source = "userStats.achievementsUnlocked", target = "achievementsunlocked")
+  @Mapping(source = "userStats.lastPlayed", target = "lastplayed")
   UserGetDTO convertEntityToUserGetDTO(User user);
 
   @Mapping(source = "username", target = "username")

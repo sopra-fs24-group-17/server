@@ -125,6 +125,14 @@ public class UserService {
       return userByToken;
   }
 
+  public User verifyToken(String token) {
+      User userByToken = userRepository.findUserByToken(token);
+      if (userByToken == null) {
+          throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
+      }
+      return userByToken;
+  }
+
   public User getUserByEmail(String email) {
       User userByEmail = userRepository.findByEmail(email);
       if (userByEmail == null) {

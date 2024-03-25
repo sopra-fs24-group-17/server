@@ -4,6 +4,7 @@ import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPutDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -24,8 +25,8 @@ public class UserController {
   @GetMapping("/users")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public List<UserGetDTO> getAllUsers() {
-    // fetch all users in the internal representation
+  public List<UserGetDTO> getAllUsers(@RequestHeader("token") String token) {
+    User verifiedUser = userService.verifyToken(token);
     List<User> users = userService.getUsers();
     List<UserGetDTO> userGetDTOs = new ArrayList<>();
     // convert each user to the API representation
@@ -90,5 +91,18 @@ public class UserController {
         User verifiedUser = userService.verifyTokenAndId(token, userId);
         User updatedUser = userService.editUser(userId, DTOMapper.INSTANCE.convertUserPutDTOtoEntity(userPutDTO));
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
+    }
+
+    @GetMapping("/dashboard/{userId}/profile/stats")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<UserStatsGetDTO> getAllUsersStats(@RequestHeader("token") String token) {
+      User verifiedUser =  userService.verifyToken(token);
+      List<User> users = userService.getUsersWithStats();
+        List<UserStatsGetDTO> userStatsGetDTOs = new ArrayList<>();
+        for (User user : users) {
+            userStatsGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserStatsGetDTO(user));
+        }
+        return userStatsGetDTOs;
     }
 }

@@ -2,8 +2,10 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.EmailSenderService;
 import ch.uzh.ifi.hase.soprafs24.service.PasswordService;
@@ -61,6 +63,7 @@ public class UserControllerTest {
     user.setEmail("test@email.com");
     user.setUsername("firstnamelastname");
     user.setPassword("password");
+    user.setToken("1234");
     user.setStatus(UserStatus.OFFLINE);
 
     List<User> allUsers = Collections.singletonList(user);
@@ -70,7 +73,8 @@ public class UserControllerTest {
     given(userService.getUsers()).willReturn(allUsers);
 
     // when
-    MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON);
+    MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON)
+            .header("token", user.getToken());;
 
     // then
     mockMvc.perform(getRequest).andExpect(status().isOk())
@@ -78,6 +82,25 @@ public class UserControllerTest {
         .andExpect(jsonPath("$[0].username", is(user.getUsername())))
         .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())));
   }
+
+    @Test
+    public void givenUsers_whenGetUsersWithoutValidToken_thenThrow401() throws Exception {
+        // given
+        User user = new User();
+        user.setEmail("test@email.com");
+        user.setUsername("firstnamelastname");
+        user.setPassword("password");
+        user.setToken("1234");
+        user.setStatus(UserStatus.OFFLINE);
+
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format("unauthorized"))).when(userService).verifyToken(Mockito.any());
+        MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON)
+                .header("token", "12");
+
+        mockMvc.perform(getRequest)
+                .andExpect(status().isUnauthorized());
+    }
+
 
   @Test
   public void createUser_validInput_userCreated() throws Exception {
@@ -404,6 +427,36 @@ public class UserControllerTest {
 
         mockMvc.perform(postRequest)
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void givenUsers_whenGetUsersStats_thenReturnJsonArray() throws Exception {
+        User user = new User();
+        user.setToken("123");
+        user.setId(1L);
+
+        Mockito.when(userService.getUsersWithStats()).thenReturn(Collections.singletonList(user));
+        Mockito.when(userService.verifyToken("123")).thenReturn(user);
+
+        mockMvc.perform(get("/dashboard/" + user.getId() + "/profile/stats")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("token", user.getToken()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void givenUsers_whenGetUserStats_throws401() throws Exception {
+        User user = new User();
+        user.setToken("123");
+        user.setId(1L);
+
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized"))
+                .when(userService).verifyToken("456");
+
+        mockMvc.perform(get("/dashboard/" + user.getId() + "/profile/stats")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("token", "456"))
+                        .andExpect(status().isUnauthorized());
     }
 
 
