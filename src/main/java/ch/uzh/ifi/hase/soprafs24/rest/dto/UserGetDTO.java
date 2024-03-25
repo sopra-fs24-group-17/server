@@ -1,43 +1,49 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
+import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 
+import java.util.Date;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class UserGetDTO {
 
   private Long id;
-  private String name;
+
   private String username;
+
   private UserStatus status;
 
-  public Long getId() {
-    return id;
-  }
+  private String email;
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+  private Boolean otp;
 
-  public String getName() {
-    return name;
-  }
+  private Date birthdate;
 
-  public void setName(String name) {
-    this.name = name;
-  }
+  private Date creationdate;
 
-  public String getUsername() {
-    return username;
-  }
+  private String token;
 
-  public void setUsername(String username) {
-    this.username = username;
-  }
+  private ProfileVisibility profilevisibility;
 
-  public UserStatus getStatus() {
-    return status;
-  }
+  private String countryoforigin;
 
-  public void setStatus(UserStatus status) {
-    this.status = status;
-  }
+  private String avatar;
+
+  private Integer gamesplayed;
+
+  private Integer gameswon;
+
+  private Double winlossratio;
+
+  private Integer totalfriends;
+
+  private Integer achievementsunlocked;
+
+  private Date lastplayed;
+
 }

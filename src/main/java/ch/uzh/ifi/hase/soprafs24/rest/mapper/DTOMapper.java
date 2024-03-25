@@ -3,6 +3,8 @@ package ch.uzh.ifi.hase.soprafs24.rest.mapper;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPutDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.UserStatsGetDTO;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
@@ -22,13 +24,47 @@ public interface DTOMapper {
 
   DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
 
-  @Mapping(source = "name", target = "name")
   @Mapping(source = "username", target = "username")
+  @Mapping(source = "password", target = "password")
+  @Mapping(source = "email", target = "email")
   User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
 
   @Mapping(source = "id", target = "id")
-  @Mapping(source = "name", target = "name")
+  @Mapping(source = "email", target = "email")
   @Mapping(source = "username", target = "username")
   @Mapping(source = "status", target = "status")
+  @Mapping(source = "birthdate", target = "birthdate")
+  @Mapping(source = "profilevisibility", target = "profilevisibility")
+  @Mapping(source = "countryoforigin", target = "countryoforigin")
+  @Mapping(source = "otp", target = "otp")
+  @Mapping(source = "avatar", target = "avatar")
+  @Mapping(target = "token", ignore = true) //Will be sent in the header
+
+  //User Statistics
+  @Mapping(source = "userStats.gamesPlayed", target = "gamesplayed")
+  @Mapping(source = "userStats.gamesWon", target = "gameswon")
+  @Mapping(source = "userStats.winLossRatio", target = "winlossratio")
+  @Mapping(source = "userStats.totalFriends", target = "totalfriends")
+  @Mapping(source = "userStats.achievementsUnlocked", target = "achievementsunlocked")
+  @Mapping(source = "userStats.lastPlayed", target = "lastplayed")
   UserGetDTO convertEntityToUserGetDTO(User user);
+
+  @Mapping(source = "username", target = "username")
+  @Mapping(source = "password", target = "password")
+  @Mapping(source = "email", target = "email")
+  @Mapping(source = "birthdate", target = "birthdate")
+  @Mapping(source = "countryoforigin", target = "countryoforigin")
+  @Mapping(source = "profilevisibility", target = "profilevisibility")
+  @Mapping(source = "avatar", target = "avatar")
+  User convertUserPutDTOtoEntity(UserPutDTO userPutDTO);
+
+  @Mapping(target = "userid", ignore = true)
+  @Mapping(source = "username", target = "username")
+  @Mapping(source = "userStats.gamesPlayed", target = "gamesplayed")
+  @Mapping(source = "userStats.gamesWon", target = "gameswon")
+  @Mapping(source = "userStats.winLossRatio", target = "winlossratio")
+  @Mapping(source = "userStats.totalFriends", target = "totalfriends")
+  @Mapping(source = "userStats.achievementsUnlocked", target = "achievementsunlocked")
+  @Mapping(source = "userStats.lastPlayed", target = "lastplayed")
+  UserStatsGetDTO convertEntityToUserStatsGetDTO(User user);
 }
