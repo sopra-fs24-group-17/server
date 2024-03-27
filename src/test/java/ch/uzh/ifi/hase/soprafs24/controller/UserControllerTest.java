@@ -93,7 +93,7 @@ public class UserControllerTest {
         user.setToken("1234");
         user.setStatus(UserStatus.OFFLINE);
 
-        Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format("unauthorized"))).when(userService).verifyToken(Mockito.any());
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format("unauthorized"))).when(userService).getUserByToken(Mockito.any());
         MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON)
                 .header("token", "12");
 
@@ -436,7 +436,7 @@ public class UserControllerTest {
         user.setId(1L);
 
         Mockito.when(userService.getUsersWithStats()).thenReturn(Collections.singletonList(user));
-        Mockito.when(userService.verifyToken("123")).thenReturn(user);
+        Mockito.when(userService.getUserByToken("123")).thenReturn(user);
 
         mockMvc.perform(get("/dashboard/" + user.getId() + "/profile/stats")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -451,7 +451,7 @@ public class UserControllerTest {
         user.setId(1L);
 
         Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized"))
-                .when(userService).verifyToken("456");
+                .when(userService).getUserByToken("456");
 
         mockMvc.perform(get("/dashboard/" + user.getId() + "/profile/stats")
                         .contentType(MediaType.APPLICATION_JSON)

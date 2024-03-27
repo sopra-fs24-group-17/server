@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.entity;
 
+import ch.uzh.ifi.hase.soprafs24.constant.TutorialFlag;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 
@@ -56,6 +57,10 @@ public class User implements Serializable {
 
   @Column
   private String avatar;
+
+  @Enumerated(EnumType.STRING)
+  @Column
+  private TutorialFlag tutorialflag = TutorialFlag.TRUE;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private UserStats userStats;

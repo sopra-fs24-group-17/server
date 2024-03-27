@@ -22,11 +22,16 @@ public class UserController {
     this.userService = userService;
   }
 
+  /**
+   * API endpoint to get a user overview.
+   * @param token of the user requesting access to the overview page.
+   * @return a list containing all the userDTOs.
+   */
   @GetMapping("/users")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public List<UserGetDTO> getAllUsers(@RequestHeader("token") String token) {
-    User verifiedUser = userService.verifyToken(token);
+    User verifiedUser = userService.getUserByToken(token);
     List<User> users = userService.getUsers();
     List<UserGetDTO> userGetDTOs = new ArrayList<>();
     // convert each user to the API representation
@@ -36,6 +41,11 @@ public class UserController {
     return userGetDTOs;
   }
 
+  /**
+   * API endpoint to register a user.
+   * @param userPostDTO containing username, email and password.
+   * @return the created user object.
+   */
   @PostMapping("/users/register")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
@@ -51,15 +61,17 @@ public class UserController {
     return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
   }
 
+  /**
+   * API endpoint to login a user.
+   * @param userPostDTO containing username and password.
+   * @return the corresponding user object.
+   */
   @PostMapping("/users/login")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO, HttpServletResponse response) {
       // authenticate user
       User authenticatedUser = userService.authenticateUser(userPostDTO.getUsername(), userPostDTO.getPassword());
-      if (authenticatedUser == null) {
-          throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
-      }
       User userOnline = userService.setOnline(authenticatedUser.getUsername());
       // add authentication token to request header
       response.setHeader("token", userOnline.getToken());
@@ -67,15 +79,25 @@ public class UserController {
       return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userOnline);
   }
 
-    @PostMapping("dashboard/{userId}/logout")
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public void logout(@PathVariable Long userId, @RequestHeader("token") String token) {
+  /**
+   * API endpoint to logout a user.
+   * @param userId the userId of the user to be logged-out.
+   * @param token of the user invoking the logout process.
+   */
+  @PostMapping("dashboard/{userId}/logout")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public void logout(@PathVariable Long userId, @RequestHeader("token") String token) {
+      // verify that token and userId belong to the same user
       User verifiedUser = userService.verifyTokenAndId(token, userId);
       User userOffline = userService.setOffline(userService.getUserByToken(token).getUsername());
       return;
     }
 
+    /**
+     * API endpoint to invoke a password reset
+     * @param userPostDTO containing username and email.
+     */
     @PostMapping("users/password-reset")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
@@ -84,20 +106,35 @@ public class UserController {
       userService.resetPassword(userByEmail, userPostDTO);
     }
 
+    /**
+     * API endpoint to edit a user profile.
+     * @param userPutDTO the (modified) user DTO
+     * @param userId the userId of the profile to be edited.
+     * @param token of the user invoking the edits
+     */
     @PutMapping("dashboard/{userId}/profile")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ResponseBody
     public UserGetDTO editProfile(@RequestBody UserPutDTO userPutDTO, @PathVariable Long userId, @RequestHeader("token") String token) {
+        // verify that token and userId belong to the same user
         User verifiedUser = userService.verifyTokenAndId(token, userId);
+        // cast updates
         User updatedUser = userService.editUser(userId, DTOMapper.INSTANCE.convertUserPutDTOtoEntity(userPutDTO));
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
     }
 
+    /**
+     * API endpoint to retrieve the user statistics for the leaderboard.
+     * @param token of the user requesting the user statistics overview.
+     * @return list of all user objects (username) and their statistics.
+     */
     @GetMapping("/dashboard/{userId}/profile/stats")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public List<UserStatsGetDTO> getAllUsersStats(@RequestHeader("token") String token) {
-      User verifiedUser =  userService.verifyToken(token);
+      // verify that token and userId belong to the same user
+      User verifiedUser =  userService.getUserByToken(token);
+      // fetch users along with their statistics
       List<User> users = userService.getUsersWithStats();
         List<UserStatsGetDTO> userStatsGetDTOs = new ArrayList<>();
         for (User user : users) {

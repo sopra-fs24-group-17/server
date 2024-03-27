@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 
+import ch.uzh.ifi.hase.soprafs24.constant.TutorialFlag;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.util.Date;
@@ -24,6 +25,8 @@ public class UserPutDTO {
     private String countryoforigin;
 
     private ProfileVisibility profilevisibility;
+
+    private TutorialFlag tutorialflag;
 
     private String avatar;
 

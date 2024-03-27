@@ -174,13 +174,11 @@ public class UserServiceTest {
       Mockito.when(passwordService.verifyPassword(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
 
       User authenticatedUser = userService.authenticateUser(testUser.getUsername(), testUser.getPassword());
-
-      assertNotNull(authenticatedUser);
       assertEquals(authenticatedUser.getUsername(), testUser.getUsername());
   }
 
   @Test
-  public void authenticateUser_invalid_returnsNull() {
+  public void authenticateUser_invalid_throws401() {
       testUser = new User();
       testUser.setId(1L);
       testUser.setUsername("user");
@@ -188,9 +186,7 @@ public class UserServiceTest {
       testUser.setEmail("test@email.com");
 
       Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(null);
-
-      User authenticatedUser = userService.authenticateUser(testUser.getUsername(), "invalidpassword");
-      assertNull(authenticatedUser);
+      assertThrows(ResponseStatusException.class, () -> userService.authenticateUser(testUser.getUsername(), testUser.getPassword()));
   }
 
   @Test
@@ -460,7 +456,7 @@ public class UserServiceTest {
       testUser.setToken("123");
 
       Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
-      assertEquals(userService.verifyToken(testUser.getToken()), testUser);
+      assertEquals(userService.getUserByToken(testUser.getToken()), testUser);
     }
 
     @Test
@@ -473,7 +469,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        assertThrows(ResponseStatusException.class, () -> userService.verifyToken("456"));
+        assertThrows(ResponseStatusException.class, () -> userService.getUserByToken("456"));
 
     }
 
