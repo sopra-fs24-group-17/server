@@ -31,12 +31,23 @@ public class UserService {
     this.emailSenderService = emailSenderService;
   }
 
-  public List<User> getUsers() {
-    return this.userRepository.findAll();
-  }
+  /**
+   * Returns a list of all users in the user repository.
+   * @return a list of all users entities in the user repository.
+   */
+  public List<User> getUsers() {return this.userRepository.findAll();}
 
+  /**
+   * Returns a list of all users in the user repository along with their statistics.
+   * @return a list of all users entities in the user repository along with their statisticcs.
+   */
   public List<User> getUsersWithStats() {return this.userRepository.findAllWithStatistics();}
 
+  /**
+   * Creates a new user in the user repository.
+   * @param newUser the object of the user to be created.
+   * @return the created user object.
+   */
   public User createUser(User newUser) {
     newUser.setToken(UUID.randomUUID().toString());
     newUser.setStatus(UserStatus.OFFLINE);
@@ -56,6 +67,10 @@ public class UserService {
     return newUser;
   }
 
+  /**
+   * Checks if a username already exists in the user repository.
+   * @param userToBeCreated user object of the user to be created.
+   */
   private void checkIfUserNameExists(User userToBeCreated) {
       if (userToBeCreated.getUsername().replaceAll("\\s+", "").equals("")) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username cannot be empty");
@@ -67,6 +82,10 @@ public class UserService {
       }
   }
 
+  /**
+   * Checks if an email address already exists in the user repository.
+   * @param userToBeCreated user object of the user to be created.
+   */
   private void checkIfEmailExists(User userToBeCreated) {
       if (!userToBeCreated.getEmail().contains("@")) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is invalid");
@@ -78,14 +97,26 @@ public class UserService {
       }
   }
 
+  /**
+   * Invokes user credential verification after a login attempt.
+   * @param username of the user trying to login.
+   * @param password of the user trying to login.
+   * @return the user object if the credentials are valid.
+   */
   public User authenticateUser(String username, String password) {
       User user = userRepository.findByUsername(username);
-      if (user != null && (passwordService.verifyPassword(user.getPassword(), password))) {
-          return user;
+      if (user == null || !(passwordService.verifyPassword(user.getPassword(), password))) {
+          throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
       }
-      return null;
+      return user;
   }
 
+  /**
+   * Verifies that a user is accessing/modifying his profile by comparing the profile userId with the userId associated with the token provided.
+   * @param token of the user provided through a request header.
+   * @param userId of the accessed profile.
+   * @return the user object if the userId matches.
+   */
   public User verifyTokenAndId(String token, Long userId) {
       if (getUserByToken(token).getId() != userId) {
           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
@@ -93,6 +124,11 @@ public class UserService {
       return getUserByToken(token);
   }
 
+  /**
+   * Invoked after logout, to change the status of a user to offline.
+   * @param username of the user trying to logout.
+   * @return if the user has been online, the status is changed to offline and the user object is returned.
+   */
   public User setOnline(String username) {
       User userByUsername = userRepository.findByUsername(username);
 
@@ -105,6 +141,11 @@ public class UserService {
       return userByUsername;
   }
 
+  /**
+   * Invoked after login, to change the status of a user to online.
+   * @param username of the user trying to login.
+   * @return if the user has been offline, the status is changed to online and the user object is returned.
+   */
   public User setOffline(String username) {
       User userByUsername = userRepository.findByUsername(username);
 
@@ -117,6 +158,11 @@ public class UserService {
       return userByUsername;
   }
 
+  /**
+   * Verifies if a token is valid, i.e. belongs to an actual user.
+   * @param token the token provided through the header of an api request from the client.
+   * @return if the user is valid, the corresponding user object is returned.
+   */
   public User getUserByToken(String token) {
       User userByToken = userRepository.findUserByToken(token);
       if (userByToken == null) {
@@ -125,14 +171,11 @@ public class UserService {
       return userByToken;
   }
 
-  public User verifyToken(String token) {
-      User userByToken = userRepository.findUserByToken(token);
-      if (userByToken == null) {
-          throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized");
-      }
-      return userByToken;
-  }
-
+  /**
+   * Retrieves a user from the user repository by email.
+   * @param email the email that is to be looked-up in the repo.
+   * @return the corresponding user object, if found.
+   */
   public User getUserByEmail(String email) {
       User userByEmail = userRepository.findByEmail(email);
       if (userByEmail == null) {
@@ -141,6 +184,12 @@ public class UserService {
       return userByEmail;
   }
 
+  /**
+   * Invokes a password reset for a user following a Post request.
+   * @param user the user object that matches the provided email address in the password reset attempt.
+   * @param userPostDTO the DTO holding username and email address of the user requiring password reset.
+   * @return if the user is valid, a one time password (otp) is sent by email and the otp flag is set to true.
+   */
   public void resetPassword(User user, UserPostDTO userPostDTO) {
       if (!user.getUsername().equals(userPostDTO.getUsername())){
           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "invalid user credentials");
@@ -151,9 +200,15 @@ public class UserService {
 
       // Send out Email with oneTimePassword
       emailSenderService.sendNewPassword(user.getEmail(), user.getUsername(), oneTimePassword);
-   }
+  }
 
-   public User editUser(Long userId, User modifiedUser) {
+  /**
+   * Edits a user object in the user repository.
+   * @param userId the userId of the user to be modified.
+   * @param modifiedUser the user object resulting from the PUT-DTO holding the required modifications.
+   * @return the modified user object from the user repository
+   */
+  public User editUser(Long userId, User modifiedUser) {
       User user = userRepository.findUserById(userId);
       if (user == null){
           throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user does not exist in DB");
@@ -197,6 +252,11 @@ public class UserService {
            user.setProfilevisibility(modifiedUser.getProfilevisibility());
            isUpdated = true;
        }
+       // Tutorialflag Update
+       if (modifiedUser.getTutorialflag() != null && !modifiedUser.getTutorialflag().equals(user.getTutorialflag())) {
+           user.setTutorialflag(modifiedUser.getTutorialflag());
+           isUpdated = true;
+       }
        // Avatar Update
        if (modifiedUser.getAvatar() != null && !modifiedUser.getAvatar().equals(user.getAvatar())) {
            user.setAvatar(modifiedUser.getAvatar());
@@ -208,5 +268,5 @@ public class UserService {
            log.debug("Updated Information for User: {}", user);
        }
        return user;
-    }
+  }
 }

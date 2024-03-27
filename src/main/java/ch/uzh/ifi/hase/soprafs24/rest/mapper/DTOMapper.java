@@ -37,6 +37,7 @@ public interface DTOMapper {
   @Mapping(source = "profilevisibility", target = "profilevisibility")
   @Mapping(source = "countryoforigin", target = "countryoforigin")
   @Mapping(source = "otp", target = "otp")
+  @Mapping(source = "tutorialflag", target = "tutorialflag")
   @Mapping(source = "avatar", target = "avatar")
   @Mapping(target = "token", ignore = true) //Will be sent in the header
 
@@ -55,6 +56,7 @@ public interface DTOMapper {
   @Mapping(source = "birthdate", target = "birthdate")
   @Mapping(source = "countryoforigin", target = "countryoforigin")
   @Mapping(source = "profilevisibility", target = "profilevisibility")
+  @Mapping(source = "tutorialflag", target = "tutorialflag")
   @Mapping(source = "avatar", target = "avatar")
   User convertUserPutDTOtoEntity(UserPutDTO userPutDTO);
 

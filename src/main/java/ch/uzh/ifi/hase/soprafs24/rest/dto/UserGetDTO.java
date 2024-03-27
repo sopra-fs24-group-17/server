@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
+import ch.uzh.ifi.hase.soprafs24.constant.TutorialFlag;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 
 import java.util.Date;
@@ -33,6 +34,8 @@ public class UserGetDTO {
   private String countryoforigin;
 
   private String avatar;
+
+  private TutorialFlag tutorialflag;
 
   private Integer gamesplayed;
 

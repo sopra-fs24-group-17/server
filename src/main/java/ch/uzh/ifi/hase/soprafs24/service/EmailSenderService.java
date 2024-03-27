@@ -13,6 +13,12 @@ public class EmailSenderService {
     @Autowired
     private JavaMailSender mailSender;
 
+    /**
+     * Sends a one-time password to the specified email for password reset.
+     * @param toEmail the Email of the recipient.
+     * @param username the username of the user invoking the passwordreset.
+     * @param oneTimePassword the onetimepassword to enable relogin.
+     */
     public void sendNewPassword(String toEmail, String username, String oneTimePassword){
         SimpleMailMessage message=new SimpleMailMessage();
         message.setFrom("noreply.explodingkittens17@gmail.com");
