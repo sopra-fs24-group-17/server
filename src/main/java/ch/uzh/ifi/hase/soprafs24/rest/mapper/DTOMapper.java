@@ -69,4 +69,25 @@ public interface DTOMapper {
   @Mapping(source = "userStats.achievementsUnlocked", target = "achievementsunlocked")
   @Mapping(source = "userStats.lastPlayed", target = "lastplayed")
   UserStatsGetDTO convertEntityToUserStatsGetDTO(User user);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "email", target = "email")
+    @Mapping(source = "username", target = "username")
+    @Mapping(source = "status", target = "status")
+    @Mapping(source = "birthdate", target = "birthdate")
+    @Mapping(source = "countryoforigin", target = "countryoforigin")
+    @Mapping(source = "avatar", target = "avatar")
+    @Mapping(target = "otp", ignore = true)
+    @Mapping(target = "tutorialflag", ignore = true)
+    @Mapping(target = "profilevisibility", ignore = true)
+    @Mapping(target = "token", ignore = true) //Will be sent in the header
+
+    //User Statistics
+    @Mapping(source = "userStats.gamesPlayed", target = "gamesplayed")
+    @Mapping(source = "userStats.gamesWon", target = "gameswon")
+    @Mapping(source = "userStats.winLossRatio", target = "winlossratio")
+    @Mapping(source = "userStats.totalFriends", target = "totalfriends")
+    @Mapping(source = "userStats.achievementsUnlocked", target = "achievementsunlocked")
+    @Mapping(source = "userStats.lastPlayed", target = "lastplayed")
+    UserGetDTO convertEntityToProfileUserGetDTO(User user);
 }
