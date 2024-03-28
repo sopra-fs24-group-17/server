@@ -25,9 +25,26 @@ public class UserController {
   @GetMapping("/users")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public List<UserGetDTO> getAllUsers(@RequestHeader("token") String token) {
+  public List<UserGetDTO> getAllUsers(@RequestHeader("token") String token,@RequestParam(required = false) String username,@RequestParam(required = false) String email) {
     User verifiedUser = userService.verifyToken(token);
-    List<User> users = userService.getUsers();
+    List<User> users = new ArrayList<>(); // Initialize an empty list to hold User objects
+    if (username != null && !username.trim().isEmpty()) {
+        // Attempt to fetch user by username. Add to list if non-null.
+        User userByUsername = userService.findUserByUsername(username.trim());
+        if (userByUsername != null) {
+            users.add(userByUsername);
+        }
+    } else if (email != null && !email.trim().isEmpty()) {
+        // Attempt to fetch user by email. Add to list if non-null.
+        User userByEmail = userService.findUserByEmail(email.trim());
+        if (userByEmail != null) {
+            users.add(userByEmail);
+        }
+    } else {
+        // If no search criteria are provided, fetch all users.
+        users = userService.getUsers();
+    }
+//    List<User> users = userService.getUsers();
     List<UserGetDTO> userGetDTOs = new ArrayList<>();
     // convert each user to the API representation
     for (User user : users) {

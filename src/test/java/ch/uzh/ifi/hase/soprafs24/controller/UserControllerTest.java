@@ -82,7 +82,59 @@ public class UserControllerTest {
         .andExpect(jsonPath("$[0].username", is(user.getUsername())))
         .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())));
   }
+    @Test
+    public void givenUsername_whenGetUsersByUsername_thenReturnJsonArray() throws Exception {
+        // given
+        User user = new User();
+        user.setEmail("test@email.com");
+        user.setUsername("firstnamelastname");
+        user.setPassword("password");
+        user.setToken("1234");
+        user.setStatus(UserStatus.OFFLINE);
 
+        List<User> allUsers = Collections.singletonList(user);
+
+        // this mocks the UserService -> we define above what the userService should
+        // return when getUsers() is called
+        given(userService.findUserByUsername("firstnamelastname")).willReturn(user);
+
+        // when
+        MockHttpServletRequestBuilder getRequest = get("/users").param("username","firstnamelastname").contentType(MediaType.APPLICATION_JSON)
+                .header("token", user.getToken());
+
+        // then
+        mockMvc.perform(getRequest).andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].username", is(user.getUsername())))
+                .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())));
+    }
+
+    @Test
+    public void givenEmail_whenGetUsersByEmail_thenReturnJsonArray() throws Exception {
+        // given
+        User user = new User();
+        user.setEmail("test@email.com");
+        user.setUsername("firstnamelastname");
+        user.setPassword("password");
+        user.setToken("1234");
+        user.setStatus(UserStatus.OFFLINE);
+
+        List<User> allUsers = Collections.singletonList(user);
+
+        // this mocks the UserService -> we define above what the userService should
+        // return when getUsers() is called
+        given(userService.findUserByEmail("test@email.com")).willReturn(user);
+
+        // when
+        MockHttpServletRequestBuilder getRequest = get("/users").param("email","test@email.com").contentType(MediaType.APPLICATION_JSON)
+                .header("token", user.getToken());
+
+        // then
+        mockMvc.perform(getRequest).andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].username", is(user.getUsername())))
+                .andExpect(jsonPath("$[0].status", is(user.getStatus().toString())));
+    }
     @Test
     public void givenUsers_whenGetUsersWithoutValidToken_thenThrow401() throws Exception {
         // given

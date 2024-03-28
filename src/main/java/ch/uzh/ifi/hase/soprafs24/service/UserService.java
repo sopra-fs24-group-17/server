@@ -35,6 +35,14 @@ public class UserService {
     return this.userRepository.findAll();
   }
 
+  public User findUserByUsername(String username) {
+      return userRepository.findByUsername(username);
+  }
+
+  public User findUserByEmail(String email) {
+      return userRepository.findByEmail(email);
+  }
+
   public List<User> getUsersWithStats() {return this.userRepository.findAllWithStatistics();}
 
   public User createUser(User newUser) {
