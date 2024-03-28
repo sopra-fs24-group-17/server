@@ -6,7 +6,9 @@ import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -50,7 +52,7 @@ public class User implements Serializable {
 
   @Enumerated(EnumType.STRING)
   @Column
-  private ProfileVisibility profilevisibility = ProfileVisibility.FALSE;;
+  private ProfileVisibility profilevisibility = ProfileVisibility.TRUE;
 
   @Column
   private String countryoforigin;
@@ -64,6 +66,9 @@ public class User implements Serializable {
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private UserStats userStats;
+
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<UserFriends> friends = new ArrayList<>();
 
   @PrePersist
   protected void onCreate() {

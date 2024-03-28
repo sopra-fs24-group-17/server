@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -24,11 +26,14 @@ public class UserService {
   private final PasswordService passwordService;
   private final EmailSenderService emailSenderService;
 
+  private final UserFriendsService userFriendsService;
+
   @Autowired
-  public UserService(@Qualifier("userRepository") UserRepository userRepository, PasswordService passwordService, EmailSenderService emailSenderService) {
+  public UserService(@Qualifier("userRepository") UserRepository userRepository, PasswordService passwordService, EmailSenderService emailSenderService, UserFriendsService userFriendsService) {
     this.userRepository = userRepository;
     this.passwordService = passwordService;
     this.emailSenderService = emailSenderService;
+    this.userFriendsService = userFriendsService;
   }
 
   /**
@@ -80,6 +85,26 @@ public class UserService {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                   String.format("Username %s already taken", userToBeCreated.getUsername()));
       }
+  }
+
+  /**
+   * Checks if a userid belongs to a valid user in the repository.
+   * @param userId userId of the profile that gets accessed.
+   * @param invokingUser use object of the user that accesses the profile.
+   * @return user object corresponding to the profile
+   */
+  public User getProfileUser(Long userId, User invokingUser){
+      User profileUser = userRepository.findUserById(userId);
+      if (profileUser == null) {
+          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user profile not found");
+      }
+      // if profile visibility is set to false, only friends can access the profile
+      if (profileUser.getProfilevisibility() == ProfileVisibility.FALSE && !Objects.equals(invokingUser.getId(), userId)) {
+          if (!userFriendsService.areUsersFriends(profileUser, invokingUser)) {
+              throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized to access this profile");
+          }
+      }
+      return profileUser;
   }
 
   /**
@@ -215,7 +240,7 @@ public class UserService {
       }
       boolean isUpdated = false;
       // Username Update
-       if (!user.getUsername().equals(modifiedUser.getUsername())) {
+       if (modifiedUser.getUsername() != null && !user.getUsername().equals(modifiedUser.getUsername())) {
            checkIfUserNameExists(modifiedUser);
            user.setUsername(modifiedUser.getUsername());
            isUpdated = true;
