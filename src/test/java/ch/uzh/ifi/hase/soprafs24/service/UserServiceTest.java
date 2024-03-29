@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
@@ -30,6 +31,9 @@ public class UserServiceTest {
 
   @Mock
   private EmailSenderService emailSenderService;
+
+  @Mock
+  private UserFriendsService userFriendsService;
 
   @InjectMocks
   private UserService userService;
@@ -449,7 +453,6 @@ public class UserServiceTest {
         Mockito.verify(userRepository, Mockito.times(1)).findAll();
     }
 
-
     @Test
     public void verifyToken_validToken() {
       User testUser = new User();
@@ -470,7 +473,41 @@ public class UserServiceTest {
         testUser.setStatus(UserStatus.OFFLINE);
 
         assertThrows(ResponseStatusException.class, () -> userService.getUserByToken("456"));
-
     }
 
+    @Test
+    public void whenGetProfileUser_visibilityRestrictedToFriends_thenThrowUnauthorized() {
+        testUser = new User();
+        testUser.setId(2L);
+        testUser.setProfilevisibility(ProfileVisibility.FALSE);
+
+        User invokingUser = new User();
+        invokingUser.setId(1L);
+
+        Mockito.when(userRepository.findUserById(testUser.getId())).thenReturn(testUser);
+        Mockito.when(userFriendsService.areUsersFriends(testUser, invokingUser)).thenReturn(false);
+
+        assertThrows(ResponseStatusException.class, () -> {
+            userService.getProfileUser(testUser.getId(), invokingUser);
+        }, "unauthorized to access this profile");
+    }
+
+    @Test
+    public void whenGetProfileUser_visibilityUnrestricted_thenReturnUser() {
+        testUser = new User();
+        testUser.setId(2L);
+        testUser.setProfilevisibility(ProfileVisibility.TRUE);
+
+        User invokingUser = new User();
+        invokingUser.setId(1L);
+
+        Mockito.when(userRepository.findUserById(testUser.getId())).thenReturn(testUser);
+        Mockito.when(userFriendsService.areUsersFriends(testUser, invokingUser)).thenReturn(false);
+
+        User result = userService.getProfileUser(testUser.getId(), invokingUser);
+
+        Mockito.verify(userRepository, Mockito.times(1)).findUserById(testUser.getId());
+        assertNotNull(result);
+        assertEquals(testUser.getId(), result.getId());
+    }
 }

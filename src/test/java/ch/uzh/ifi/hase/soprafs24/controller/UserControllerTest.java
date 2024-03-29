@@ -458,14 +458,50 @@ public class UserControllerTest {
                         .header("token", "456"))
                         .andExpect(status().isUnauthorized());
     }
+    @Test
+    public void whenGetOwnProfile_thenReturnsUserProfile() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@email.com");
+        user.setUsername("testUsername");
+        user.setPassword("password");
+        user.setToken("1");
+        user.setStatus(UserStatus.ONLINE);
+        String token = "123";
+        given(userService.getUserByToken(token)).willReturn(user);
+        given(userService.getProfileUser(user.getId(), user)).willReturn(user);
 
+        mockMvc.perform(get("/dashboard/{userId}/profile", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(user.getUsername())))
+        ;
+    }
 
+    @Test
+    public void whenGetOtherUserProfile_thenReturnsUserProfile() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@email.com");
+        user.setUsername("testUsername");
+        user.setPassword("password");
+        user.setToken("1");
+        user.setStatus(UserStatus.ONLINE);
+        String token = "123";
+        Long userId = 2L;
+        User otherUser = new User();
 
+        given(userService.getUserByToken(token)).willReturn(user);
+        given(userService.getProfileUser(userId, user)).willReturn(otherUser);
 
-
-
-
-
+        mockMvc.perform(get("/dashboard/{userId}/profile", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username", is(otherUser.getUsername())))
+        ;
+    }
 
   /**
    * Helper Method to convert userPostDTO into a JSON string such that the input

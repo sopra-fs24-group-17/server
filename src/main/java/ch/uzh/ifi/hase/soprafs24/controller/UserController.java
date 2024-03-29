@@ -40,6 +40,21 @@ public class UserController {
   }
 
   /**
+   * API endpoint to get a user profile.
+   * @param userId containing username, email and password.
+   * @param token token of the user requesting access to the profile.
+   * @return the created user object.
+   */
+  @GetMapping("/dashboard/{userId}/profile")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public UserGetDTO getProfileUser(@PathVariable Long userId, @RequestHeader("token") String token) {
+      User verifiedUser = userService.getUserByToken(token);
+      User profileUser = userService.getProfileUser(userId, verifiedUser);
+      return DTOMapper.INSTANCE.convertEntityToProfileUserGetDTO(profileUser);
+  }
+
+  /**
    * API endpoint to register a user.
    * @param userPostDTO containing username, email and password.
    * @return the created user object.
