@@ -56,6 +56,9 @@ public class User implements Serializable {
   private String countryoforigin;
 
   @Column
+  private Integer unreadnotifications;
+
+  @Column
   private String avatar;
 
   @Enumerated(EnumType.STRING)

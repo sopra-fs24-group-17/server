@@ -1,10 +1,8 @@
 package ch.uzh.ifi.hase.soprafs24.rest.mapper;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPutDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserStatsGetDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
@@ -27,6 +25,7 @@ public interface DTOMapper {
   @Mapping(source = "username", target = "username")
   @Mapping(source = "password", target = "password")
   @Mapping(source = "email", target = "email")
+  @Mapping(source = "unreadnotifications", target = "unreadnotifications")
   User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
 
   @Mapping(source = "id", target = "id")
@@ -40,6 +39,7 @@ public interface DTOMapper {
   @Mapping(source = "tutorialflag", target = "tutorialflag")
   @Mapping(source = "avatar", target = "avatar")
   @Mapping(target = "token", ignore = true) //Will be sent in the header
+  @Mapping(source = "unreadnotifications", target = "unreadnotifications")
 
   //User Statistics
   @Mapping(source = "userStats.gamesPlayed", target = "gamesplayed")
@@ -69,4 +69,8 @@ public interface DTOMapper {
   @Mapping(source = "userStats.achievementsUnlocked", target = "achievementsunlocked")
   @Mapping(source = "userStats.lastPlayed", target = "lastplayed")
   UserStatsGetDTO convertEntityToUserStatsGetDTO(User user);
+
+    @Mapping(source = "message", target= "message")
+    @Mapping(source = "timestamp", target="timestamp")
+    UserNotificationsGetDTO convertEntityToUserNotificationsGetDTO(Notification notification);
 }

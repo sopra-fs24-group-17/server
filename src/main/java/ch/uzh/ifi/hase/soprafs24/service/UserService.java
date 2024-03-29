@@ -1,8 +1,10 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs24.repository.NotificationRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,10 +26,12 @@ public class UserService {
   private final UserRepository userRepository;
   private final PasswordService passwordService;
   private final EmailSenderService emailSenderService;
+  private final NotificationRepository notificationRepository;
 
   @Autowired
   public UserService(@Qualifier("userRepository") UserRepository userRepository, PasswordService passwordService, EmailSenderService emailSenderService) {
     this.userRepository = userRepository;
+    this.notificationRepository = notificationRepository;
     this.passwordService = passwordService;
     this.emailSenderService = emailSenderService;
   }
@@ -269,4 +274,25 @@ public class UserService {
        }
        return user;
   }
+
+    /**
+     * Return the notifications belonging to a given user
+     * @param userId string identifying a
+     * @return Notification list
+     */
+    public List<Notification> obtainNotifications (Long userId) {
+        return notificationRepository.findByUserId(userId);
+    }
+
+    public User sendNotification (Long userId, String message) {
+        User user = userRepository.findUserById(userId);
+        user.setUnreadnotifications(user.getUnreadnotifications()+1);
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage(message);
+        notification.setTimestamp(new Date());
+        notificationRepository.save(notification);
+        userRepository.save(user);
+        return user;
+    }
 }
