@@ -33,6 +33,8 @@ public class UserGetDTO {
 
   private String countryoforigin;
 
+  private Integer unreadnotifications;
+
   private String avatar;
 
   private TutorialFlag tutorialflag;

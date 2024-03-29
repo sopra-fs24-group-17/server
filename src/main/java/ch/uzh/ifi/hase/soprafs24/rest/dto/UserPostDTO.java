@@ -10,5 +10,6 @@ public class UserPostDTO {
   private String username;
   private String email;
   private String password;
+  private Integer unreadnotifications;
 
 }

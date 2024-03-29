@@ -4,6 +4,7 @@ import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriends;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.NotificationRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
@@ -319,5 +320,9 @@ public class UserService {
         notificationRepository.save(notification);
         userRepository.save(user);
         return user;
+    }
+
+    public User getUserbyId (Long userId) {
+        return userRepository.findUserById(userId);
     }
 }

@@ -1,9 +1,12 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriends;
 import ch.uzh.ifi.hase.soprafs24.repository.UserFriendsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserFriendsService {
@@ -24,5 +27,9 @@ public class UserFriendsService {
     public boolean areUsersFriends(User userA, User profileUser) {
         return userFriendsRepository.findFriendshipBetweenUsers(userA.getId(), profileUser.getId()).isPresent()
                 || userFriendsRepository.findFriendshipBetweenUsers(profileUser.getId(), userA.getId()).isPresent();
+    }
+
+    public List<UserFriends> getFriends (User user) {
+        return userFriendsRepository.findUserFriendsByUserId(user.getId());
     }
 }

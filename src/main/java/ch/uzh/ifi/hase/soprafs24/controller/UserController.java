@@ -2,8 +2,10 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriends;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
+import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +18,15 @@ import java.util.List;
 @RestController
 public class UserController {
   private final UserService userService;
+
+  private final UserFriendsService userFriendsService;
+
   UserController(UserService userService) {
     this.userService = userService;
   }
+  UserController(UserFriendsService userFriendsService) {
+        this.userFriendsService = userFriendsService;
+    }
 
   /**
    * API endpoint to get a user overview.
@@ -190,5 +198,26 @@ public class UserController {
         User user = userService.sendNotification(userId, message);
         // I think is a good idea to return the updated user so we can display the number of unread notifications
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+    }
+
+    /**
+     * API endpoint to retrieve list of friends
+     * @param token of the user requesting the list of notifications.
+     * @return list of all notifications belonging to a given user.
+     */
+    @GetMapping("/dashboard/{userId}/friends")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<UserGetDTO> getFriends(@RequestHeader("token") String token) {
+        // verify that token and userId belong to the same user
+        User verifiedUser =  userService.getUserByToken(token);
+        // fetch users along with their statistics
+        List<UserFriends> friends = userFriendsService.getFriends(verifiedUser);
+        // Convert notifications to DTOs
+        List<UserGetDTO> userFriendsGetDTOs = new ArrayList<>();
+        for (UserFriends friend : friends) {
+            userFriendsGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserGetDTO(userService.getUserbyId(friend.getId())));
+        }
+        return userFriendsGetDTOs;
     }
 }

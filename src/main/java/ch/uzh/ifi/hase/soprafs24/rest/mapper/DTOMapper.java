@@ -69,7 +69,7 @@ public interface DTOMapper {
   @Mapping(source = "userStats.achievementsUnlocked", target = "achievementsunlocked")
   @Mapping(source = "userStats.lastPlayed", target = "lastplayed")
   UserStatsGetDTO convertEntityToUserStatsGetDTO(User user);
-  
+
     @Mapping(source = "message", target= "message")
     @Mapping(source = "timestamp", target="timestamp")
     UserNotificationsGetDTO convertEntityToUserNotificationsGetDTO(Notification notification);
