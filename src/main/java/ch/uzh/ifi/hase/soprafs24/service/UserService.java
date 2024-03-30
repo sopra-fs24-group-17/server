@@ -34,7 +34,7 @@ public class UserService {
   private final UserFriendsService userFriendsService;
 
   @Autowired
-  public UserService(@Qualifier("userRepository") UserRepository userRepository, PasswordService passwordService, EmailSenderService emailSenderService, UserFriendsService userFriendsService) {
+  public UserService(@Qualifier("userRepository") UserRepository userRepository, PasswordService passwordService, EmailSenderService emailSenderService, UserFriendsService userFriendsService, NotificationRepository notificationRepository) {
     this.userRepository = userRepository;
     this.notificationRepository = notificationRepository;
     this.passwordService = passwordService;

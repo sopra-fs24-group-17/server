@@ -21,12 +21,10 @@ public class UserController {
 
   private final UserFriendsService userFriendsService;
 
-  UserController(UserService userService) {
+  UserController(UserService userService, UserFriendsService userFriendsService) {
     this.userService = userService;
+    this.userFriendsService = userFriendsService;
   }
-  UserController(UserFriendsService userFriendsService) {
-        this.userFriendsService = userFriendsService;
-    }
 
   /**
    * API endpoint to get a user overview.
