@@ -79,7 +79,7 @@ public interface DTOMapper {
     @Mapping(source = "avatar", target = "avatar")
     @Mapping(target = "otp", ignore = true)
     @Mapping(target = "tutorialflag", ignore = true)
-    @Mapping(target = "profilevisibility", ignore = true)
+    @Mapping(target = "profilevisibility")
     @Mapping(target = "token", ignore = true) //Will be sent in the header
 
     //User Statistics
