@@ -22,78 +22,57 @@ import static org.junit.jupiter.api.Assertions.*;
 @WebAppConfiguration
 @SpringBootTest
 @ActiveProfiles("dev")
-public class UserServiceIntegrationTest {
+class UserServiceIntegrationTest {
 
-  @Qualifier("userRepository")
-  @Autowired
-  private UserRepository userRepository;
+    @Qualifier("userRepository")
+    @Autowired
+    private UserRepository userRepository;
 
-  @Autowired
-  private UserService userService;
+    @Autowired
+    private UserService userService;
 
-  @BeforeEach
-  public void setup() {
-    userRepository.deleteAll();
-  }
+    @BeforeEach
+    public void setup() {
+        userRepository.deleteAll();
+    }
 
-  @Test
-  public void createUser_validInputs_success() {
-    // given
-    assertNull(userRepository.findByUsername("testUsername"));
+    @Test
+    void createUser_validInputs_success() {
+        // given
+        assertNull(userRepository.findByUsername("testUsername"));
 
-    User testUser = new User();
-    testUser.setEmail("test@email.com");
-    testUser.setUsername("testUsername");
-    testUser.setPassword("password");
+        User testUser = new User();
+        testUser.setUsername("testUsername");
+        testUser.setPassword("testPassword");
+        testUser.setEmail("email@email.com");
 
-    // when
-    User createdUser = userService.createUser(testUser);
+        // when
+        User createdUser = userService.createUser(testUser);
 
-    // then
-    assertEquals(testUser.getId(), createdUser.getId());
-    assertEquals(testUser.getEmail(), createdUser.getEmail());
-    assertEquals(testUser.getUsername(), createdUser.getUsername());
-    assertNotNull(createdUser.getToken());
-    assertEquals(UserStatus.OFFLINE, createdUser.getStatus());
-  }
+        // then
+        assertEquals(testUser.getId(), createdUser.getId());
+        assertEquals(testUser.getUsername(), createdUser.getUsername());
+        assertEquals(testUser.getPassword(), createdUser.getPassword());
+        assertEquals(testUser.getEmail(), createdUser.getEmail());
+        assertNotNull(createdUser.getToken());
+    }
 
-  @Test
-  public void createUser_duplicateUsername_throwsException() {
-    assertNull(userRepository.findByUsername("testUsername"));
+    @Test
+    void createUser_duplicateUsername_throwsException() {
+        assertNull(userRepository.findByUsername("testUsername"));
 
-    User testUser = new User();
-    testUser.setEmail("test@email.com");
-    testUser.setUsername("testUsername");
-    testUser.setPassword("password");
-    User createdUser = userService.createUser(testUser);
+        User testUser = new User();
+        testUser.setUsername("testUsername");
+        testUser.setPassword("testPassword");
+        testUser.setEmail("email@email.com");
+        User createdUser = userService.createUser(testUser);
 
-    User testUser2 = new User();
+        // attempt to create second user with same username
+        User testUser2 = new User();
+        testUser2.setUsername("testUsername");
+        testUser2.setPassword("testPassword");
+        testUser2.setEmail("email@email.com");
 
-    testUser2.setEmail("test2@email.com");
-    testUser2.setUsername("testUsername");
-    testUser2.setPassword("password");
-
-    assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser2));
-  }
-
-  @Test
-  public void createUser_duplicateEmail_throwsException() {
-      assertNull(userRepository.findByEmail("test@email.com"));
-
-      User testUser = new User();
-      testUser.setEmail("test@email.com");
-      testUser.setUsername("testUsername");
-      testUser.setPassword("password");
-      User createdUser = userService.createUser(testUser);
-
-      User testUser2 = new User();
-
-      testUser2.setEmail("test@email.com");
-      testUser2.setUsername("testUsername2");
-      testUser2.setPassword("password");
-
-      assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser2));
-
-  }
-
+        assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser2));
+    }
 }

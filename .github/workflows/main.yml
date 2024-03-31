@@ -23,12 +23,6 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Create application-local.properties
-        run: |
-          echo "spring.mail.host=${{ secrets.MAIL_HOST }}" > src/main/resources/application-local.properties
-          echo "spring.mail.username=${{ secrets.MAIL_USERNAME }}" >> src/main/resources/application-local.properties
-          echo "spring.mail.password=${{ secrets.MAIL_PASSWORD }}" >> src/main/resources/application-local.properties
-
       - name: Test and analyze
         run: ./gradlew test jacocoTestReport sonar
         env:
