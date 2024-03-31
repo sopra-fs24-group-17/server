@@ -2,8 +2,11 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.context.ActiveProfiles;
+
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("dev")
 public class PasswordServiceTest {
 
     private PasswordService passwordService;
