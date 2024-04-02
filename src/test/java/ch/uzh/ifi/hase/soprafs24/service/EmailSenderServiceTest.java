@@ -10,7 +10,9 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("dev")
 @ExtendWith(MockitoExtension.class) // Initialize mocks with Mockito
 public class EmailSenderServiceTest {
 
