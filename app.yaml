@@ -2,4 +2,22 @@
 # https://cloud.google.com/appengine/docs/standard
 
 runtime: java17
-instance_class: F2
+env: flex
+
+automatic_scaling:
+  max_num_instances: 1
+
+runtime_config:
+  operating_system: "ubuntu22"
+  runtime_version: "17"
+
+network:
+  session_affinity: true
+
+env_variables:
+  MAIL_HOST: $MAIL_HOST
+  MAIL_USERNAME: $MAIL_USERNAME
+  MAIL_PASSWORD: $MAIL_PASSWORD
+  POSTGRESQL_URL: $POSTGRESQL_URL
+  POSTGRESQL_USERNAME: $POSTGRESQL_USERNAME
+  POSTGRESQL_PASSWORD: $POSTGRESQL_PASSWORD
