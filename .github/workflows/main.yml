@@ -57,6 +57,8 @@ jobs:
           deliverables: app.yaml
           version: ${{ github.run_id }}-${{ github.run_number }}
           credentials: ${{ secrets.GCP_SERVICE_CREDENTIALS }}
+        env:
+          CLOUDSDK_CORE_VERBOSITY: debug
 
       - name: Test
         run: curl "${{ steps.deploy.outputs.url }}"
