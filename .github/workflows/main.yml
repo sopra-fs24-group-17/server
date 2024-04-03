@@ -38,7 +38,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup for Deployment
+      - name: Deployment Setup
         uses: 73h/gae-app-yaml-replace-env-variables@v0.3
         env:
           POSTGRESQL_URL: ${{ secrets.POSTGRESQL_URL }}
