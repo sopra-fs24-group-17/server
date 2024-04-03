@@ -11,6 +11,7 @@ network:
   session_affinity: true
 
 env_variables:
+  spring_profiles_active: "dev"
   MAIL_HOST: $MAIL_HOST
   MAIL_USERNAME: $MAIL_USERNAME
   MAIL_PASSWORD: $MAIL_PASSWORD
