@@ -96,5 +96,5 @@ public interface DTOMapper {
   UserFriendsRequestGetDTO convertEntityToUserFriendsRequestGetDTO(UserFriendsRequests userFriendsRequests);
 
   @Mapping(source = "status", target = "status")
-    UserFriendsRequests convertUserFriendsRequestPostDTOToUserFriendsRequests(UserFriendsRequestPutDTO userFriendsRequestPutDTO);
+  UserFriendsRequests convertUserFriendsRequestPostDTOToUserFriendsRequests(UserFriendsRequestPutDTO userFriendsRequestPutDTO);
 }

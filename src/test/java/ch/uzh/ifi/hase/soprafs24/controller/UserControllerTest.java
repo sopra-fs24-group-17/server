@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -588,6 +589,46 @@ public class UserControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(userService).editFriends(userId, requestId, requestDto.getStatus());
+    }
+
+    @Test
+    public void getUserFriends_Success() throws Exception {
+        Long userId = 1L;
+        String token = "valid-token";
+
+        User verifiedUser = new User();
+        verifiedUser.setId(userId);
+        verifiedUser.setUsername("verifiedUser");
+        verifiedUser.setAvatar("avatarUrl");
+
+        User friend1 = new User();
+        friend1.setId(2L);
+        friend1.setUsername("friend1");
+        friend1.setAvatar("avatarUrl1");
+
+        User friend2 = new User();
+        friend2.setId(3L);
+        friend2.setUsername("friend2");
+        friend2.setAvatar("avatarUrl2");
+
+        List<User> friends = Arrays.asList(friend1, friend2);
+
+        when(userService.verifyTokenAndId(token, userId)).thenReturn(verifiedUser);
+        when(userService.getUsersFriends(userId)).thenReturn(friends);
+
+        mockMvc.perform(get("/dashboard/{userId}/friends", userId)
+                        .header("token", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].friendName", is(friend1.getUsername())))
+                .andExpect(jsonPath("$[0].friendAvatar", is(friend1.getAvatar())))
+                .andExpect(jsonPath("$[1].friendName", is(friend2.getUsername())))
+                .andExpect(jsonPath("$[1].friendAvatar", is(friend2.getAvatar())));
+
+        verify(userService).verifyTokenAndId(token, userId);
+        verify(userService).getUsersFriends(userId);
     }
 
   /**
