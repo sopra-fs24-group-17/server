@@ -1,11 +1,10 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPutDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserStatsGetDTO;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
+import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +17,8 @@ import java.util.List;
 @RestController
 public class UserController {
   private final UserService userService;
-  UserController(UserService userService) {
-    this.userService = userService;
-  }
+
+  UserController(UserService userService) {this.userService = userService;}
 
   /**
    * API endpoint to get a user overview.
@@ -146,15 +144,64 @@ public class UserController {
     @GetMapping("/dashboard/{userId}/profile/stats")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public List<UserStatsGetDTO> getAllUsersStats(@RequestHeader("token") String token) {
+    public List<UserStatsGetDTO> getAllUsersStats(@PathVariable Long userId, @RequestHeader("token") String token) {
       // verify that token and userId belong to the same user
       User verifiedUser =  userService.getUserByToken(token);
       // fetch users along with their statistics
       List<User> users = userService.getUsersWithStats();
-        List<UserStatsGetDTO> userStatsGetDTOs = new ArrayList<>();
-        for (User user : users) {
-            userStatsGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserStatsGetDTO(user));
-        }
-        return userStatsGetDTOs;
+      List<UserStatsGetDTO> userStatsGetDTOs = new ArrayList<>();
+      for (User user : users) {
+          userStatsGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserStatsGetDTO(user));
+      }
+      return userStatsGetDTOs;
     }
+
+    /**
+     * API endpoint to create a friendship request.
+     * @param userId of the user receiving the friendship request.
+     * @param token of the user initialising the friendship request.
+     */
+    @PutMapping("/dashboard/{userId}/friends/requests")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseBody
+    public void friendRequest(@PathVariable Long userId, @RequestHeader("token") String token){
+        userService.addFriends(userId, token);
+    }
+
+    /**
+     * API endpoint to process friendship requests
+     * @param userId of the user processing his/her friendship requests.
+     * @param requestId of the friendship request.
+     * @param token of the user processing his/her friendship requests.
+     */
+    @PutMapping("/dashboard/{userId}/friends/requests/{requestId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseBody
+    public void processFriendRequest(@PathVariable Long userId, @PathVariable Long requestId, @RequestHeader("token") String token, @RequestBody UserFriendsRequestPutDTO requestDto) {
+        // verify that token and userId belong to the same user
+        User verifiedUser = userService.verifyTokenAndId(token, userId);
+        userService.editFriends(userId, requestId, requestDto.getStatus());
+    }
+
+    /**
+     * API endpoint to retrieve all pending friendship requests.
+     * @param userId of the user who wants to fetch his/her friendship requests (received)
+     * @param token of the user who wants to fetch his/her friendship requests (received)
+     * @return all the retrieved userFriendsRequestGetDTOs
+     */
+    @GetMapping("/dashboard/{userId}/friends/requests")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<UserFriendsRequestGetDTO> getPendingFriendshipRequests(@PathVariable Long userId, @RequestHeader("token") String token) {
+        // verify that token and userId belong to the same user
+        User verifiedUser = userService.verifyTokenAndId(token, userId);
+
+        List<UserFriendsRequests> requests = userService.getPendingFriendshipRequests(userId);
+        List<UserFriendsRequestGetDTO> userFriendsRequestGetDTOS = new ArrayList<>();
+        for (UserFriendsRequests userFriendsRequests : requests) {
+            userFriendsRequestGetDTOS.add(DTOMapper.INSTANCE.convertEntityToUserFriendsRequestGetDTO(userFriendsRequests));
+        }
+        return userFriendsRequestGetDTOS;
+    }
+
 }
