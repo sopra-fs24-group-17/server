@@ -1,8 +1,10 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.FriendRequestStatus;
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import org.slf4j.Logger;
@@ -25,11 +27,14 @@ public class UserService {
   private final UserRepository userRepository;
   private final PasswordService passwordService;
   private final EmailSenderService emailSenderService;
-
   private final UserFriendsService userFriendsService;
 
   @Autowired
-  public UserService(@Qualifier("userRepository") UserRepository userRepository, PasswordService passwordService, EmailSenderService emailSenderService, UserFriendsService userFriendsService) {
+  public UserService(@Qualifier("userRepository") UserRepository userRepository,
+                     PasswordService passwordService,
+                     EmailSenderService emailSenderService,
+                     UserFriendsService userFriendsService) {
+
     this.userRepository = userRepository;
     this.passwordService = passwordService;
     this.emailSenderService = emailSenderService;
@@ -210,6 +215,20 @@ public class UserService {
   }
 
   /**
+   * Retrieves a user from the user repository by id.
+   * @param userId the userId that is to be looked-up in the repo.
+   * @return the corresponding user object, if found
+   */
+  public User getUserById(Long userId) {
+      User userById = userRepository.findUserById(userId);
+      if (userById == null) {
+          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid userid");
+      }
+      return userById;
+
+  }
+
+  /**
    * Invokes a password reset for a user following a Post request.
    * @param user the user object that matches the provided email address in the password reset attempt.
    * @param userPostDTO the DTO holding username and email address of the user requiring password reset.
@@ -288,10 +307,43 @@ public class UserService {
            isUpdated = true;
        }
        if (isUpdated) {
-           userRepository.save(user);
-           userRepository.flush();
+           userRepository.saveAndFlush(user);
            log.debug("Updated Information for User: {}", user);
        }
        return user;
   }
+
+    /**
+     * Edits a user object in the user repository.
+     * @param userId the userId of the user receiving a friendship request.
+     * @param token the token of the user invoking a friendship request.
+     */
+    public void addFriends(Long userId, String token) {
+      User requestingUser = getUserByToken(token);
+      User requestedUser = getUserById(userId);
+      userFriendsService.createFriendshipRequest(requestingUser, requestedUser);
+    }
+
+    public void editFriends(Long userId, Long requestId, FriendRequestStatus newStatus) {
+        userFriendsService.processFriendshipRequest(userId, requestId, newStatus);
+    }
+
+    /**
+     * Retrieves all pending friendship requests a user received.
+     * @param userId the userId of the user whose friendship request are retrieved.
+     */
+    public List<UserFriendsRequests> getPendingFriendshipRequests(Long userId) {
+        List<UserFriendsRequests> requests = userFriendsService.findAllFriendshipRequestsReceived(userId);
+        return requests;
+    }
+
+    /**
+     * Retrieves all friends of a particular user.
+     * @param userId of the user whose friends shall be retrieved.
+     * @return a list of all user objects that are friends of the invoking user.
+     */
+    public List<User> getUsersFriends(Long userId) {
+        return userFriendsService.getFriends(userId);
+    }
+
 }
