@@ -1,8 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.constant.FriendRequestStatus;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.UserFriendsRequestPutDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserStatsGetDTO;
@@ -24,12 +27,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -499,8 +506,129 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("token", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username", is(otherUser.getUsername())))
-        ;
+                .andExpect(jsonPath("$.username", is(otherUser.getUsername())));
+    }
+
+    @Test
+    public void friendshipRequestIsCreated() throws Exception {
+        Long userId = 1L;
+        String token = "sample-token";
+
+        mockMvc.perform(put("/dashboard/{userId}/friends/requests", userId)
+                        .header("token", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(userService).addFriends(eq(userId), eq(token));
+    }
+
+    @Test
+    public void getPendingFriendshipRequests_Success() throws Exception {
+        Long userId = 1L;
+        String token = "valid-token";
+
+        User user = new User();
+        user.setId(userId);
+        Mockito.when(userService.verifyTokenAndId(token, userId)).thenReturn(user);
+
+        List<UserFriendsRequests> mockRequests = new ArrayList<>();
+
+        Mockito.when(userService.getPendingFriendshipRequests(userId)).thenReturn(mockRequests);
+
+        mockMvc.perform(get("/dashboard/{userId}/friends/requests", userId)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(mockRequests.size())));
+
+        Mockito.verify(userService).getPendingFriendshipRequests(userId);
+    }
+
+    @Test
+    public void getPendingFriendshipRequests_Unauthorized() throws Exception {
+        Long userId = 1L;
+        String invalidToken = "invalid-token";
+
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED)).when(userService).verifyTokenAndId(invalidToken, userId);
+
+        mockMvc.perform(get("/dashboard/{userId}/friends/requests", userId)
+                        .header("token", invalidToken))
+                .andExpect(status().isUnauthorized());
+
+        Mockito.verify(userService).verifyTokenAndId(invalidToken, userId);
+    }
+
+    @Test
+    public void getPendingFriendshipRequests_NoContent() throws Exception {
+        Long userId = 1L;
+        String token = "valid-token";
+
+        Mockito.when(userService.verifyTokenAndId(token, userId)).thenReturn(new User());
+        Mockito.when(userService.getPendingFriendshipRequests(userId)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/dashboard/{userId}/friends/requests", userId)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+
+        Mockito.verify(userService).getPendingFriendshipRequests(userId);
+    }
+
+    @Test
+    public void processFriendRequest_Success() throws Exception {
+        Long userId = 1L;
+        Long requestId = 2L;
+        String token = "valid-token";
+        UserFriendsRequestPutDTO requestDto = new UserFriendsRequestPutDTO();
+        requestDto.setStatus(FriendRequestStatus.ACCEPTED);
+
+        mockMvc.perform(put("/dashboard/{userId}/friends/requests/{requestId}", userId, requestId)
+                        .header("token", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(requestDto)))
+                .andExpect(status().isNoContent());
+
+        verify(userService).editFriends(userId, requestId, requestDto.getStatus());
+    }
+
+    @Test
+    public void getUserFriends_Success() throws Exception {
+        Long userId = 1L;
+        String token = "valid-token";
+
+        User verifiedUser = new User();
+        verifiedUser.setId(userId);
+        verifiedUser.setUsername("verifiedUser");
+        verifiedUser.setAvatar("avatarUrl");
+
+        User friend1 = new User();
+        friend1.setId(2L);
+        friend1.setUsername("friend1");
+        friend1.setAvatar("avatarUrl1");
+
+        User friend2 = new User();
+        friend2.setId(3L);
+        friend2.setUsername("friend2");
+        friend2.setAvatar("avatarUrl2");
+
+        List<User> friends = Arrays.asList(friend1, friend2);
+
+        when(userService.verifyTokenAndId(token, userId)).thenReturn(verifiedUser);
+        when(userService.getUsersFriends(userId)).thenReturn(friends);
+
+        mockMvc.perform(get("/dashboard/{userId}/friends", userId)
+                        .header("token", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].friendName", is(friend1.getUsername())))
+                .andExpect(jsonPath("$[0].friendAvatar", is(friend1.getAvatar())))
+                .andExpect(jsonPath("$[1].friendName", is(friend2.getUsername())))
+                .andExpect(jsonPath("$[1].friendAvatar", is(friend2.getAvatar())));
+
+        verify(userService).verifyTokenAndId(token, userId);
+        verify(userService).getUsersFriends(userId);
     }
 
   /**
