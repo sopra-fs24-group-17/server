@@ -204,4 +204,27 @@ public class UserController {
         return userFriendsRequestGetDTOS;
     }
 
+    /**
+     * API endpoint to retrieve all friends of a given user.
+     * @param userId of the user whose friends shall be retrieved.
+     * @param token of the user whose friends shall be retrieved.
+     * @return a list of all friend users (containing their username and their avatar)
+     */
+    @GetMapping("/dashboard/{userId}/friends")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List <FriendsGetDTO> getUserFriends(@PathVariable Long userId, @RequestHeader("token") String token) {
+        // verify that token and userId belong to the same user
+        User verifiedUser = userService.verifyTokenAndId(token, userId);
+
+        List<User> friends = userService.getUsersFriends(userId);
+        List<FriendsGetDTO> friendsGetDTOS = new ArrayList<>();
+        for (User friend: friends) {
+            FriendsGetDTO friendDTO = new FriendsGetDTO();
+            friendDTO.setFriendName(friend.getUsername());
+            friendDTO.setFriendAvatar(friend.getAvatar());
+            friendsGetDTOS.add(friendDTO);
+        }
+        return friendsGetDTOS;
+    }
 }

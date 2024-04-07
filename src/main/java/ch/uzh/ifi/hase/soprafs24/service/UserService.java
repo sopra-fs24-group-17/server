@@ -27,7 +27,6 @@ public class UserService {
   private final UserRepository userRepository;
   private final PasswordService passwordService;
   private final EmailSenderService emailSenderService;
-
   private final UserFriendsService userFriendsService;
 
   @Autowired
@@ -336,6 +335,15 @@ public class UserService {
     public List<UserFriendsRequests> getPendingFriendshipRequests(Long userId) {
         List<UserFriendsRequests> requests = userFriendsService.findAllFriendshipRequestsReceived(userId);
         return requests;
+    }
+
+    /**
+     * Retrieves all friends of a particular user.
+     * @param userId of the user whose friends shall be retrieved.
+     * @return a list of all user objects that are friends of the invoking user.
+     */
+    public List<User> getUsersFriends(Long userId) {
+        return userFriendsService.getFriends(userId);
     }
 
 }

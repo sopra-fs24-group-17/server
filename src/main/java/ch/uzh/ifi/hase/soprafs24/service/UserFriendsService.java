@@ -71,9 +71,10 @@ public class UserFriendsService {
         if (!Objects.equals(userFriendsRequests.getRequestedUser().getId(), requestedUserId)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized to process this friendship request");
         }
-        userFriendsRequests.setStatus(newStatus);
-        userFriendsRequestRepository.save(userFriendsRequests);
-
+        if (newStatus != null) {
+            userFriendsRequests.setStatus(newStatus);
+            userFriendsRequestRepository.save(userFriendsRequests);
+        }
         if (newStatus == FriendRequestStatus.ACCEPTED) {
             UserFriends userFriends = new UserFriends();
             userFriends.setUser(userFriendsRequests.getRequestingUser());
@@ -91,5 +92,21 @@ public class UserFriendsService {
         // Add all received requests
         allRequests.addAll(userFriendsRequestRepository.findAllReceivedRequests(userId));
         return allRequests;
+    }
+
+    /**
+     * Retrieves all friends for a particular user and returns the corresponding user objects.
+     * @param userId of the user whose friends shall be retrieved.
+     * @return an array of all user objects that are friends of the invoking user.
+     */
+    public List<User> getFriends(Long userId) {
+        List<UserFriends> friendships = userFriendsRepository.findAllFriendshipsForUser(userId);
+        List<User> friends = new ArrayList<>();
+
+        for (UserFriends friendship : friendships) {
+            User friend = (friendship.getUser().getId().equals(userId)) ? friendship.getFriend() : friendship.getUser();
+            friends.add(friend);
+        }
+        return friends;
     }
 }

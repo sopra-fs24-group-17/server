@@ -15,11 +15,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ActiveProfiles("dev")
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +45,7 @@ public class UserFriendsServiceTest {
         User requestedUser = new User();
         requestedUser.setId(2L);
 
-        Mockito.when(userFriendsRequestRepository.findFriendshipRequests(requestingUser.getId(), requestedUser.getId()))
+        when(userFriendsRequestRepository.findFriendshipRequests(requestingUser.getId(), requestedUser.getId()))
                 .thenReturn(Optional.empty());
 
         userFriendsService.createFriendshipRequest(requestingUser, requestedUser);
@@ -62,7 +65,7 @@ public class UserFriendsServiceTest {
         existingRequest.setRequestingUser(requestingUser);
         existingRequest.setRequestedUser(requestedUser);
 
-        Mockito.when(userFriendsRequestRepository.findFriendshipRequests(requestingUser.getId(), requestedUser.getId()))
+        when(userFriendsRequestRepository.findFriendshipRequests(requestingUser.getId(), requestedUser.getId()))
                 .thenReturn(Optional.of(existingRequest));
 
         assertThrows(ResponseStatusException.class, () -> {
@@ -85,7 +88,7 @@ public class UserFriendsServiceTest {
         request.setRequestedUser(requestedUser);
         request.setStatus(FriendRequestStatus.PENDING);
 
-        Mockito.when(userFriendsRequestRepository.findUserFriendsRequestsById(requestId)).thenReturn(request);
+        when(userFriendsRequestRepository.findUserFriendsRequestsById(requestId)).thenReturn(request);
 
         userFriendsService.processFriendshipRequest(requestedUserId, requestId, FriendRequestStatus.ACCEPTED);
 
@@ -109,10 +112,39 @@ public class UserFriendsServiceTest {
         request.setRequestedUser(anotherUser);
         request.setStatus(FriendRequestStatus.PENDING);
 
-        Mockito.when(userFriendsRequestRepository.findUserFriendsRequestsById(requestId)).thenReturn(request);
+        when(userFriendsRequestRepository.findUserFriendsRequestsById(requestId)).thenReturn(request);
 
         assertThrows(ResponseStatusException.class, () -> {
             userFriendsService.processFriendshipRequest(requestedUserId, requestId, FriendRequestStatus.ACCEPTED);
         });
     }
+    @Test
+    public void getFriends_ReturnsAllFriendsOfUser() {
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+
+        User friend1 = new User();
+        friend1.setId(2L);
+        User friend2 = new User();
+        friend2.setId(3L);
+
+        UserFriends friendship1 = new UserFriends();
+        friendship1.setUser(user);
+        friendship1.setFriend(friend1);
+
+        UserFriends friendship2 = new UserFriends();
+        friendship2.setUser(friend2);
+        friendship2.setFriend(user);
+
+        when(userFriendsRepository.findAllFriendshipsForUser(userId)).thenReturn(Arrays.asList(friendship1, friendship2));
+
+        List<User> friends = userFriendsService.getFriends(userId);
+
+        assertEquals(2, friends.size(), "Should return exactly two friends.");
+        assertEquals(friend1.getId(), friends.get(0).getId(), "The first friend's ID should match.");
+        assertEquals(friend2.getId(), friends.get(1).getId(), "The second friend's ID should match.");
+    }
+
+
 }
