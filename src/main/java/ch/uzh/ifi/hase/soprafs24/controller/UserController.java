@@ -3,20 +3,34 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
-import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
+import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
+import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
+import ch.uzh.ifi.hase.soprafs24.service.ImageService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
 public class UserController {
   private final UserService userService;
+  private final ImageService imageService;
+    @Value("${app.static.resource.path}")
+    private String staticResourcePath;
 
-  UserController(UserService userService) {this.userService = userService;}
+  UserController(UserService userService, ImageService imageService) {
+    this.userService = userService;
+    this.imageService = imageService;
+  }
 
   /**
    * API endpoint to get a user overview.
@@ -226,4 +240,26 @@ public class UserController {
         }
         return friendsGetDTOS;
     }
+
+
+    @PostMapping("/dashboard/{userId}/profile/uploadAvatar")
+    public String createAvatar(@PathVariable Long userId, @RequestParam("avatar") MultipartFile avatarImage) throws IOException {
+        List<String> allowedMimeTypes = Arrays.asList("image/jpeg", "image/png", "image/webp");
+
+        // Validate MIME type
+        String mimeType = avatarImage.getContentType();
+        if (!allowedMimeTypes.contains(mimeType)) {
+            // If the file type is not allowed, you could throw an exception or handle it as needed
+            throw new IllegalArgumentException("Invalid file type. Only JPEG, PNG, and WEBP are allowed.");
+        }
+
+        String uploadDirectory = staticResourcePath.endsWith("/") ? staticResourcePath : staticResourcePath + "/";
+        uploadDirectory += "images/avatars/";
+        String fileName = imageService.saveImageToStorage(uploadDirectory, avatarImage);
+        String path = "/images/avatars/" + fileName;
+
+        // Return the path as before
+        return path;
+    }
+
 }
