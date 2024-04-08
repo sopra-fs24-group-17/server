@@ -11,6 +11,7 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.EmailSenderService;
+import ch.uzh.ifi.hase.soprafs24.service.ImageService;
 import ch.uzh.ifi.hase.soprafs24.service.PasswordService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -62,6 +63,9 @@ public class UserControllerTest {
 
   @MockBean
   private PasswordService passwordService;
+
+  @MockBean
+  private ImageService imageService;
 
   @Test
   public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
