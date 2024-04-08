@@ -208,7 +208,7 @@ public class UserController {
      * API endpoint to retrieve all friends of a given user.
      * @param userId of the user whose friends shall be retrieved.
      * @param token of the user whose friends shall be retrieved.
-     * @return a list of all friend users (containing their username and their avatar)
+     * @return a list of all friend users (containing their username, their avatar and their online status)
      */
     @GetMapping("/dashboard/{userId}/friends")
     @ResponseStatus(HttpStatus.OK)
@@ -223,6 +223,7 @@ public class UserController {
             FriendsGetDTO friendDTO = new FriendsGetDTO();
             friendDTO.setFriendName(friend.getUsername());
             friendDTO.setFriendAvatar(friend.getAvatar());
+            friendDTO.setStatus(friend.getStatus());
             friendsGetDTOS.add(friendDTO);
         }
         return friendsGetDTOS;
