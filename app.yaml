@@ -1,7 +1,7 @@
 # https://cloud.google.com/appengine/docs/the-appengine-environments#comparing_high-level_features
 # https://cloud.google.com/appengine/docs/standard
 
-runtime: java17
+runtime: java
 env: flex
 
 automatic_scaling:
@@ -15,7 +15,6 @@ network:
   session_affinity: true
 
 env_variables:
-  spring_profiles_active: "dev"
   MAIL_HOST: $MAIL_HOST
   MAIL_USERNAME: $MAIL_USERNAME
   MAIL_PASSWORD: $MAIL_PASSWORD
