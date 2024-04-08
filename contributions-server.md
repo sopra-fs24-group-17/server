@@ -21,3 +21,11 @@
 | 2    | 114     | Migrate to persistent database (PostgreSQL)                                                                                                                  | https://github.com/sopra-fs24-group-17/server/issues/114 | 3           | Kevin Bründler                      | &#9745;  |
 | 2    | 122     | Debug Service Integration Tests                                                                                                                              | https://github.com/sopra-fs24-group-17/server/issues/122 | 3           | Kevin Bründler                      | &#9745;  |
 | 2    | 139     | API to Retrieve Friends                                                                                                                                      | https://github.com/sopra-fs24-group-17/server/issues/139 | 3           | Kevin Bründler                      | &#9745;  | 
+| 1    | 18      | Provide UI elements (like a dropdown or input field) to set the minimum player count from two to five
+             | https://github.com/sopra-fs24-group-17/client/issues/18 | 3           | Panagiotis Patsias |                |  &#9745; |
+| 1    | 16      | Create UI components allowing the user to set the game as "public" or "private"
+                 |https://github.com/sopra-fs24-group-17/client/issues/16 | 3         | Panagiotis Patsias  |              |  &#9745; |
+| 1    | 3       | Access Control UI Handling
+                 | https://github.com/sopra-fs24-group-17/client/issues/3 | 3         | Panagiotis Patsias  |              | &#9745; |
+| 1    | 38      | Create UI component allowing the user to choose game mode between 4 different options.
+                 | https://github.com/sopra-fs24-group-17/client/issues/38 | 3        | Panagiotis Patsias  |              | &#9745; |
