@@ -1,8 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
+import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
+import ch.uzh.ifi.hase.soprafs24.rest.mapper.NotificationDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
 import ch.uzh.ifi.hase.soprafs24.service.ImageService;
@@ -260,6 +263,27 @@ public class UserController {
 
         // Return the path as before
         return path;
+    }
+
+    /**
+     * API endpoint to retrieve notifications belonging to a user.
+     * @param token of the user requesting the list of notifications.
+     * @return list of all notifications belonging to a given user.
+     */
+    @GetMapping("/dashboard/{userId}/notifications")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<NotificationGetDTO> getNotifications(@RequestHeader("token") String token) {
+        // verify that token and userId belong to the same user
+        User verifiedUser =  userService.getUserByToken(token);
+        // fetch users along with their statistics
+        List<Notification> notifications = userService.obtainNotifications(verifiedUser.getId());
+        // Convert notifications to DTOs
+        List<NotificationGetDTO> userNotificationsGetDTOs = new ArrayList<>();
+        for (Notification notification : notifications) {
+            userNotificationsGetDTOs.add(NotificationDTOMapper.INSTANCE.convertEntityToNotificationGetDTO(notification));
+        }
+        return userNotificationsGetDTOs;
     }
 
 }
