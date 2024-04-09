@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Date;
 
 @Service
 @Transactional
@@ -359,5 +360,19 @@ public class UserService {
     public List<Notification> obtainNotifications (Long userId) {
         return notificationRepository.findByUserId(userId);
     }
+
+    public User sendNotification (Long userId, String message) {
+        User user = userRepository.findUserById(userId);
+        user.setUnreadnotifications(user.getUnreadnotifications()+1);
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage(message);
+        notification.setTimestamp(new Date());
+        notificationRepository.save(notification);
+        userRepository.save(user);
+        return user;
+    }
+
+    // TODO: Endpoint to retrieve a single notification
 
 }

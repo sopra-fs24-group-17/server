@@ -286,4 +286,19 @@ public class UserController {
         return userNotificationsGetDTOs;
     }
 
+    /**
+     * API endpoint to send a notification from the server to the client.
+     * @param token of the user requesting the list of notifications.
+     * @return list of all notifications belonging to a given user.
+     */
+    // Probably this is redundant. We can only have a notify function on service and the retrieve all notifications endpoint.
+    @PostMapping("/dashboard/{userId}/notifications/send")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public UserGetDTO sendNotification(@RequestHeader("token") String token, @RequestParam Long userId, @RequestParam String message) {
+        User user = userService.sendNotification(userId, message);
+        // I think is a good idea to return the updated user so we can display the number of unread notifications
+        return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+    }
+
 }
