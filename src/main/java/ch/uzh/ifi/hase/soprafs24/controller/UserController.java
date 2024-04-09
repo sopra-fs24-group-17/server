@@ -3,7 +3,7 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
-import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
+import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
 import ch.uzh.ifi.hase.soprafs24.service.ImageService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
@@ -46,7 +46,7 @@ public class UserController {
     List<UserGetDTO> userGetDTOs = new ArrayList<>();
     // convert each user to the API representation
     for (User user : users) {
-      userGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
+      userGetDTOs.add(UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
     }
     return userGetDTOs;
   }
@@ -63,7 +63,7 @@ public class UserController {
   public UserGetDTO getProfileUser(@PathVariable Long userId, @RequestHeader("token") String token) {
       User verifiedUser = userService.getUserByToken(token);
       User profileUser = userService.getProfileUser(userId, verifiedUser);
-      return DTOMapper.INSTANCE.convertEntityToProfileUserGetDTO(profileUser);
+      return UserDTOMapper.INSTANCE.convertEntityToProfileUserGetDTO(profileUser);
   }
 
   /**
@@ -76,14 +76,14 @@ public class UserController {
   @ResponseBody
   public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO, HttpServletResponse response) {
     // convert API user to internal representation
-    User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+    User userInput = UserDTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
     // create user
     User createdUser = userService.createUser(userInput);
     User userOnline = userService.setOnline(createdUser.getUsername());
     // add authentication token to response header
     response.setHeader("token", createdUser.getToken());
     // convert internal representation of user back to API
-    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
+    return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
   }
 
   /**
@@ -101,7 +101,7 @@ public class UserController {
       // add authentication token to request header
       response.setHeader("token", userOnline.getToken());
       // convert internal representation of user back to API
-      return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userOnline);
+      return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(userOnline);
   }
 
   /**
@@ -144,8 +144,8 @@ public class UserController {
         // verify that token and userId belong to the same user
         User verifiedUser = userService.verifyTokenAndId(token, userId);
         // cast updates
-        User updatedUser = userService.editUser(userId, DTOMapper.INSTANCE.convertUserPutDTOtoEntity(userPutDTO));
-        return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
+        User updatedUser = userService.editUser(userId, UserDTOMapper.INSTANCE.convertUserPutDTOtoEntity(userPutDTO));
+        return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
     }
 
     /**
@@ -163,7 +163,7 @@ public class UserController {
       List<User> users = userService.getUsersWithStats();
       List<UserStatsGetDTO> userStatsGetDTOs = new ArrayList<>();
       for (User user : users) {
-          userStatsGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserStatsGetDTO(user));
+          userStatsGetDTOs.add(UserDTOMapper.INSTANCE.convertEntityToUserStatsGetDTO(user));
       }
       return userStatsGetDTOs;
     }
@@ -211,7 +211,7 @@ public class UserController {
         List<UserFriendsRequests> requests = userService.getPendingFriendshipRequests(userId);
         List<UserFriendsRequestGetDTO> userFriendsRequestGetDTOS = new ArrayList<>();
         for (UserFriendsRequests userFriendsRequests : requests) {
-            userFriendsRequestGetDTOS.add(DTOMapper.INSTANCE.convertEntityToUserFriendsRequestGetDTO(userFriendsRequests));
+            userFriendsRequestGetDTOS.add(UserDTOMapper.INSTANCE.convertEntityToUserFriendsRequestGetDTO(userFriendsRequests));
         }
         return userFriendsRequestGetDTOS;
     }
@@ -235,6 +235,7 @@ public class UserController {
             FriendsGetDTO friendDTO = new FriendsGetDTO();
             friendDTO.setFriendName(friend.getUsername());
             friendDTO.setFriendAvatar(friend.getAvatar());
+            friendDTO.setStatus(friend.getStatus());
             friendsGetDTOS.add(friendDTO);
         }
         return friendsGetDTOS;
