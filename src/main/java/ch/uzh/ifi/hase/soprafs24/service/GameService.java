@@ -4,11 +4,12 @@ import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePutDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ch.uzh.ifi.hase.soprafs24.service.UserService;
 
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -58,5 +59,15 @@ public class GameService {
             gameId = 100000L + random.nextLong(900000L); // Generate random 6 digit number
         } while (gameRepository.findByGameId(gameId).isPresent()); //until unique
         return gameId;
+    }
+
+    public Game findGameById(String token, GamePutDTO gamePutDTO, Long gameId){
+        User verifiedUser = userService.getUserByToken(token);
+        Game game = GameDTOMapper.INSTANCE.convertGamePutDTOToEntity(gamePutDTO);
+
+        // Alternatively gameRepository.findByGameId(gameId), but had issues with return type Optional<Game>
+        game.getPlayers().add(verifiedUser);
+
+        return gameRepository.save(game);
     }
 }
