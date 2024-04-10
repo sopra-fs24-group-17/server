@@ -3,9 +3,11 @@ package ch.uzh.ifi.hase.soprafs24.service;
 import ch.uzh.ifi.hase.soprafs24.constant.FriendRequestStatus;
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs24.repository.NotificationRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Date;
 
 @Service
 @Transactional
@@ -28,14 +31,17 @@ public class UserService {
   private final PasswordService passwordService;
   private final EmailSenderService emailSenderService;
   private final UserFriendsService userFriendsService;
+  private final NotificationRepository notificationRepository;
 
   @Autowired
   public UserService(@Qualifier("userRepository") UserRepository userRepository,
+                     NotificationRepository notificationRepository,
                      PasswordService passwordService,
                      EmailSenderService emailSenderService,
                      UserFriendsService userFriendsService) {
 
     this.userRepository = userRepository;
+    this.notificationRepository = notificationRepository;
     this.passwordService = passwordService;
     this.emailSenderService = emailSenderService;
     this.userFriendsService = userFriendsService;
@@ -345,5 +351,28 @@ public class UserService {
     public List<User> getUsersFriends(Long userId) {
         return userFriendsService.getFriends(userId);
     }
+
+    /**
+     * Return the notifications belonging to a given user
+     * @param userId string identifying a
+     * @return Notification list
+     */
+    public List<Notification> obtainNotifications (Long userId) {
+        return notificationRepository.findByUserId(userId);
+    }
+
+    public User sendNotification (Long userId, String message) {
+        User user = userRepository.findUserById(userId);
+        user.setUnreadnotifications(user.getUnreadnotifications()+1);
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage(message);
+        notification.setTimestamp(new Date());
+        notificationRepository.save(notification);
+        userRepository.save(user);
+        return user;
+    }
+
+    // TODO: Endpoint to retrieve a single notification
 
 }
