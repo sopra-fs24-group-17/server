@@ -4,9 +4,13 @@ import ch.uzh.ifi.hase.soprafs24.constant.FriendRequestStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriends;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
+import ch.uzh.ifi.hase.soprafs24.event.FriendshipRequestAcceptanceEvent;
+import ch.uzh.ifi.hase.soprafs24.event.FriendshipRequestSendEvent;
+import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.UserFriendsRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserFriendsRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,9 +27,13 @@ public class UserFriendsService {
     private final UserFriendsRequestRepository userFriendsRequestRepository;
 
     @Autowired
-    public UserFriendsService(UserFriendsRepository userFriendsRepository, UserFriendsRequestRepository userFriendsRequestRepository) {
+    private ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    public UserFriendsService(UserFriendsRepository userFriendsRepository, UserFriendsRequestRepository userFriendsRequestRepository, ApplicationEventPublisher eventPublisher) {
         this.userFriendsRepository = userFriendsRepository;
         this.userFriendsRequestRepository = userFriendsRequestRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -55,6 +63,13 @@ public class UserFriendsService {
         friendRequest.setRequestingUser(requestingUser);
         friendRequest.setRequestedUser(requestedUser);
         userFriendsRequestRepository.saveAndFlush(friendRequest);
+
+        //Publish Friendship receipt event
+        FriendshipRequestSendEvent friendshipRequestSendEvent = new FriendshipRequestSendEvent(this,
+                requestingUser.getUsername(),
+                requestedUser.getId());
+        eventPublisher.publishEvent(friendshipRequestSendEvent);
+
     }
 
     /**
@@ -80,6 +95,13 @@ public class UserFriendsService {
             userFriends.setUser(userFriendsRequests.getRequestingUser());
             userFriends.setFriend(userFriendsRequests.getRequestedUser());
             userFriendsRepository.save(userFriends);
+
+            //Publish Friendship acceptance event
+            FriendshipRequestAcceptanceEvent friendshipRequestAcceptanceEvent = new FriendshipRequestAcceptanceEvent(this,
+                    userFriendsRequests.getRequestingUser().getUsername(),
+                    userFriendsRequests.getRequestedUser().getId());
+            eventPublisher.publishEvent(friendshipRequestAcceptanceEvent);
+
         }
     }
 

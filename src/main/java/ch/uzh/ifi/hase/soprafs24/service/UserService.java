@@ -6,6 +6,9 @@ import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
+import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
+import ch.uzh.ifi.hase.soprafs24.event.LoginEvent;
+import ch.uzh.ifi.hase.soprafs24.event.LogoutEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.NotificationRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
@@ -13,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,17 +38,22 @@ public class UserService {
   private final NotificationRepository notificationRepository;
 
   @Autowired
+  private ApplicationEventPublisher eventPublisher;
+
+  @Autowired
   public UserService(@Qualifier("userRepository") UserRepository userRepository,
                      NotificationRepository notificationRepository,
                      PasswordService passwordService,
                      EmailSenderService emailSenderService,
-                     UserFriendsService userFriendsService) {
+                     UserFriendsService userFriendsService,
+                     ApplicationEventPublisher eventPublisher) {
 
     this.userRepository = userRepository;
     this.notificationRepository = notificationRepository;
     this.passwordService = passwordService;
     this.emailSenderService = emailSenderService;
     this.userFriendsService = userFriendsService;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -174,6 +183,11 @@ public class UserService {
       userByUsername.setStatus(UserStatus.ONLINE);
       userByUsername = userRepository.save(userByUsername);
       userRepository.flush();
+
+      // Publish a Login Event
+      LoginEvent loginEvent = new LoginEvent(this, userByUsername.getUsername(), userByUsername.getId());
+      eventPublisher.publishEvent(loginEvent);
+
       return userByUsername;
   }
 
@@ -191,6 +205,11 @@ public class UserService {
       userByUsername.setStatus(UserStatus.OFFLINE);
       userByUsername = userRepository.save(userByUsername);
       userRepository.flush();
+
+      // Publish a Logout Event
+      LogoutEvent logoutEvent = new LogoutEvent(this, userByUsername.getUsername(), userByUsername.getId());
+      eventPublisher.publishEvent(logoutEvent);
+
       return userByUsername;
   }
 
