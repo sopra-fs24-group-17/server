@@ -27,8 +27,9 @@ import java.util.List;
 public class UserController {
   private final UserService userService;
   private final ImageService imageService;
-    @Value("${app.static.resource.path}")
-    private String staticResourcePath;
+
+  @Value("${app.static.resource.path}")
+  private String staticResourcePath;
 
   UserController(UserService userService, ImageService imageService) {
     this.userService = userService;
