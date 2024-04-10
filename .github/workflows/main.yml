@@ -59,6 +59,3 @@ jobs:
           credentials: ${{ secrets.GCP_SERVICE_CREDENTIALS }}
         env:
           CLOUDSDK_CORE_VERBOSITY: debug
-
-      - name: Test
-        run: curl "${{ steps.deploy.outputs.url }}"
