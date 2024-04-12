@@ -30,7 +30,7 @@ public class UserController {
   @Value("${app.static.resource.path}")
   private String staticResourcePath;
 
-  UserController(UserService userService, /*ImageService imageService*/) {
+  UserController(UserService userService/*, ImageService imageService*/) {
     this.userService = userService;
     //this.imageService = imageService;
   }
