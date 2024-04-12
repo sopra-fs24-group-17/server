@@ -29,7 +29,8 @@ public class GameEventListener {
 
     @EventListener
     public void onGameLeaveEvent(GameLeaveEvent event) {
-        //To Do -- To be implemented
+        logger.info("GameLeaveEvent triggered for game ID: {}", event.getGameId());
+        webSocketService.sendMessageLeftUser(event.getUserName(), event.getGameId());
     }
 
 }

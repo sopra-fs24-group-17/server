@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.eventlistener;
 
 import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
+import ch.uzh.ifi.hase.soprafs24.event.GameLeaveEvent;
 import ch.uzh.ifi.hase.soprafs24.eventlistener.GameEventListener;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,10 +32,16 @@ public class GameEventListenerTest {
         GameJoinEvent event = new GameJoinEvent(this, userName, gameId);
 
         gameEventListener.onGameJoinEvent(event);
-
         verify(webSocketService).sendMessageJoinedUser(userName, gameId);
     }
 
-    // Placeholder for onGameLeaveEvent test
-    // TO DO -- to be implemented
+    @Test
+    public void testOnGameLeaveEvent() {
+        String userName = "testUser";
+        Long gameId = 123L;
+        GameLeaveEvent event = new GameLeaveEvent(this, userName, gameId);
+
+        gameEventListener.onGameLeaveEvent(event);
+        verify(webSocketService).sendMessageLeftUser(userName, gameId);
+    }
 }

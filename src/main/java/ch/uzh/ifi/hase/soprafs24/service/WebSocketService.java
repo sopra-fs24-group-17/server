@@ -31,6 +31,12 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId, userName);
     }
 
+    public void sendMessageLeftUser(String userName, Long gameId) {
+        logger.info("Leave Message Dispatched: User: {} left Game: {}", userName, gameId);
+        this.sendMessage.convertAndSend("/game/" + gameId, userName);
+    }
+
+
     public void sendMessageFriendLogin(String userName, Long userId) {
         logger.info("Friend Login Message Dispatched: User: {} logged in", userName);
         this.sendMessage.convertAndSend("/login/" + userId, userName);

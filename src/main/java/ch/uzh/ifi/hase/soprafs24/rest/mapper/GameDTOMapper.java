@@ -18,6 +18,7 @@ public interface GameDTOMapper {
     @Mapping(source = "mode", target = "mode")
     @Mapping(source = "maxPlayers", target = "maxPlayers")
     @Mapping(source = "initiatingUser.username", target = "initiatingUserName")
+    @Mapping(source = "state", target = "state")
     GameGetDTO convertEntityToGameGetDTO(Game game);
 
     // Conversion of GamePostDTO to Game Entity
@@ -26,6 +27,7 @@ public interface GameDTOMapper {
     Game convertGamePostDTOToEntity(GamePostDTO gamePostDTO);
 
     @Mapping(target = "gameId", source = "gameId")
+    @Mapping(target = "state", source = "state")
     Game convertGamePutDTOToEntity(GamePutDTO gamePutDTO);
 
 

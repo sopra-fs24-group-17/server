@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -39,8 +41,12 @@ public class GameControllerTest {
     @MockBean
     private GameService gameService;
 
+    @Mock
+    private GameDTOMapper gameDTOMapper;
+
     @BeforeEach
     public void setup(WebApplicationContext webApplicationContext) {
+        MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
     }
 
@@ -69,4 +75,18 @@ public class GameControllerTest {
         verify(gameService).createNewGame(anyString(), any(GamePostDTO.class));
     }
 
+    @Test
+    public void testLeaveGame_Success() throws Exception {
+        Long gameId = 1L;
+        String token = "validToken";
+        Game game = new Game();
+        game.setGameId(gameId);
+
+        given(gameService.leaveGame(token, gameId)).willReturn(game);
+
+        mockMvc.perform(put("/dashboard/games/leave/{gameId}", gameId)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameId").value(gameId));
+    }
 }
