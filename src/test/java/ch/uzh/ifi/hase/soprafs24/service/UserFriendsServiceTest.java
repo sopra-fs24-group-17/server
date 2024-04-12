@@ -12,6 +12,7 @@ import org.mockito.Mockito;
 import ch.uzh.ifi.hase.soprafs24.repository.UserFriendsRequestRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserFriendsRepository;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -33,6 +34,9 @@ public class UserFriendsServiceTest {
 
     @Mock
     private UserFriendsRepository userFriendsRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UserFriendsService userFriendsService;

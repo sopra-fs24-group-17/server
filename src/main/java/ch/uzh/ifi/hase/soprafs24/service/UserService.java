@@ -3,14 +3,20 @@ package ch.uzh.ifi.hase.soprafs24.service;
 import ch.uzh.ifi.hase.soprafs24.constant.FriendRequestStatus;
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
+import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
+import ch.uzh.ifi.hase.soprafs24.event.LoginEvent;
+import ch.uzh.ifi.hase.soprafs24.event.LogoutEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs24.repository.NotificationRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Date;
 
 @Service
 @Transactional
@@ -28,17 +35,25 @@ public class UserService {
   private final PasswordService passwordService;
   private final EmailSenderService emailSenderService;
   private final UserFriendsService userFriendsService;
+  private final NotificationRepository notificationRepository;
+
+  @Autowired
+  private ApplicationEventPublisher eventPublisher;
 
   @Autowired
   public UserService(@Qualifier("userRepository") UserRepository userRepository,
+                     NotificationRepository notificationRepository,
                      PasswordService passwordService,
                      EmailSenderService emailSenderService,
-                     UserFriendsService userFriendsService) {
+                     UserFriendsService userFriendsService,
+                     ApplicationEventPublisher eventPublisher) {
 
     this.userRepository = userRepository;
+    this.notificationRepository = notificationRepository;
     this.passwordService = passwordService;
     this.emailSenderService = emailSenderService;
     this.userFriendsService = userFriendsService;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -168,6 +183,11 @@ public class UserService {
       userByUsername.setStatus(UserStatus.ONLINE);
       userByUsername = userRepository.save(userByUsername);
       userRepository.flush();
+
+      // Publish a Login Event
+      LoginEvent loginEvent = new LoginEvent(this, userByUsername.getUsername(), userByUsername.getId());
+      eventPublisher.publishEvent(loginEvent);
+
       return userByUsername;
   }
 
@@ -185,6 +205,11 @@ public class UserService {
       userByUsername.setStatus(UserStatus.OFFLINE);
       userByUsername = userRepository.save(userByUsername);
       userRepository.flush();
+
+      // Publish a Logout Event
+      LogoutEvent logoutEvent = new LogoutEvent(this, userByUsername.getUsername(), userByUsername.getId());
+      eventPublisher.publishEvent(logoutEvent);
+
       return userByUsername;
   }
 
@@ -345,5 +370,28 @@ public class UserService {
     public List<User> getUsersFriends(Long userId) {
         return userFriendsService.getFriends(userId);
     }
+
+    /**
+     * Return the notifications belonging to a given user
+     * @param userId string identifying a
+     * @return Notification list
+     */
+    public List<Notification> obtainNotifications (Long userId) {
+        return notificationRepository.findByUserId(userId);
+    }
+
+    public User sendNotification (Long userId, String message) {
+        User user = userRepository.findUserById(userId);
+        user.setUnreadnotifications(user.getUnreadnotifications()+1);
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage(message);
+        notification.setTimestamp(new Date());
+        notificationRepository.save(notification);
+        userRepository.save(user);
+        return user;
+    }
+
+    // TODO: Endpoint to retrieve a single notification
 
 }

@@ -1,24 +1,39 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
-import ch.uzh.ifi.hase.soprafs24.rest.mapper.DTOMapper;
+import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
+import ch.uzh.ifi.hase.soprafs24.rest.mapper.NotificationDTOMapper;
+import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
 public class UserController {
   private final UserService userService;
+  //private final ImageService imageService;
 
-  UserController(UserService userService) {this.userService = userService;}
+  @Value("${app.static.resource.path}")
+  private String staticResourcePath;
+
+  UserController(UserService userService/*, ImageService imageService*/) {
+    this.userService = userService;
+    //this.imageService = imageService;
+  }
 
   /**
    * API endpoint to get a user overview.
@@ -34,7 +49,7 @@ public class UserController {
     List<UserGetDTO> userGetDTOs = new ArrayList<>();
     // convert each user to the API representation
     for (User user : users) {
-      userGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
+      userGetDTOs.add(UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
     }
     return userGetDTOs;
   }
@@ -51,7 +66,7 @@ public class UserController {
   public UserGetDTO getProfileUser(@PathVariable Long userId, @RequestHeader("token") String token) {
       User verifiedUser = userService.getUserByToken(token);
       User profileUser = userService.getProfileUser(userId, verifiedUser);
-      return DTOMapper.INSTANCE.convertEntityToProfileUserGetDTO(profileUser);
+      return UserDTOMapper.INSTANCE.convertEntityToProfileUserGetDTO(profileUser);
   }
 
   /**
@@ -64,14 +79,14 @@ public class UserController {
   @ResponseBody
   public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO, HttpServletResponse response) {
     // convert API user to internal representation
-    User userInput = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+    User userInput = UserDTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
     // create user
     User createdUser = userService.createUser(userInput);
     User userOnline = userService.setOnline(createdUser.getUsername());
     // add authentication token to response header
     response.setHeader("token", createdUser.getToken());
     // convert internal representation of user back to API
-    return DTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
+    return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(createdUser);
   }
 
   /**
@@ -89,7 +104,7 @@ public class UserController {
       // add authentication token to request header
       response.setHeader("token", userOnline.getToken());
       // convert internal representation of user back to API
-      return DTOMapper.INSTANCE.convertEntityToUserGetDTO(userOnline);
+      return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(userOnline);
   }
 
   /**
@@ -132,8 +147,8 @@ public class UserController {
         // verify that token and userId belong to the same user
         User verifiedUser = userService.verifyTokenAndId(token, userId);
         // cast updates
-        User updatedUser = userService.editUser(userId, DTOMapper.INSTANCE.convertUserPutDTOtoEntity(userPutDTO));
-        return DTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
+        User updatedUser = userService.editUser(userId, UserDTOMapper.INSTANCE.convertUserPutDTOtoEntity(userPutDTO));
+        return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(updatedUser);
     }
 
     /**
@@ -151,7 +166,7 @@ public class UserController {
       List<User> users = userService.getUsersWithStats();
       List<UserStatsGetDTO> userStatsGetDTOs = new ArrayList<>();
       for (User user : users) {
-          userStatsGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserStatsGetDTO(user));
+          userStatsGetDTOs.add(UserDTOMapper.INSTANCE.convertEntityToUserStatsGetDTO(user));
       }
       return userStatsGetDTOs;
     }
@@ -199,7 +214,7 @@ public class UserController {
         List<UserFriendsRequests> requests = userService.getPendingFriendshipRequests(userId);
         List<UserFriendsRequestGetDTO> userFriendsRequestGetDTOS = new ArrayList<>();
         for (UserFriendsRequests userFriendsRequests : requests) {
-            userFriendsRequestGetDTOS.add(DTOMapper.INSTANCE.convertEntityToUserFriendsRequestGetDTO(userFriendsRequests));
+            userFriendsRequestGetDTOS.add(UserDTOMapper.INSTANCE.convertEntityToUserFriendsRequestGetDTO(userFriendsRequests));
         }
         return userFriendsRequestGetDTOS;
     }
@@ -223,8 +238,67 @@ public class UserController {
             FriendsGetDTO friendDTO = new FriendsGetDTO();
             friendDTO.setFriendName(friend.getUsername());
             friendDTO.setFriendAvatar(friend.getAvatar());
+            friendDTO.setStatus(friend.getStatus());
             friendsGetDTOS.add(friendDTO);
         }
         return friendsGetDTOS;
     }
+
+
+/*    @PostMapping("/dashboard/{userId}/profile/uploadAvatar")
+    public String createAvatar(@PathVariable Long userId, @RequestParam("avatar") MultipartFile avatarImage) throws IOException {
+        List<String> allowedMimeTypes = Arrays.asList("image/jpeg", "image/png", "image/webp");
+
+        // Validate MIME type
+        String mimeType = avatarImage.getContentType();
+        if (!allowedMimeTypes.contains(mimeType)) {
+            // If the file type is not allowed, you could throw an exception or handle it as needed
+            throw new IllegalArgumentException("Invalid file type. Only JPEG, PNG, and WEBP are allowed.");
+        }
+
+        String uploadDirectory = staticResourcePath.endsWith("/") ? staticResourcePath : staticResourcePath + "/";
+        uploadDirectory += "images/avatars/";
+        String fileName = imageService.saveImageToStorage(uploadDirectory, avatarImage);
+        String path = "/images/avatars/" + fileName;
+
+        // Return the path as before
+        return path;
+    }*/
+
+    /**
+     * API endpoint to retrieve notifications belonging to a user.
+     * @param token of the user requesting the list of notifications.
+     * @return list of all notifications belonging to a given user.
+     */
+    @GetMapping("/dashboard/{userId}/notifications")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<NotificationGetDTO> getNotifications(@RequestHeader("token") String token) {
+        // verify that token and userId belong to the same user
+        User verifiedUser =  userService.getUserByToken(token);
+        // fetch users along with their statistics
+        List<Notification> notifications = userService.obtainNotifications(verifiedUser.getId());
+        // Convert notifications to DTOs
+        List<NotificationGetDTO> userNotificationsGetDTOs = new ArrayList<>();
+        for (Notification notification : notifications) {
+            userNotificationsGetDTOs.add(NotificationDTOMapper.INSTANCE.convertEntityToNotificationGetDTO(notification));
+        }
+        return userNotificationsGetDTOs;
+    }
+
+    /**
+     * API endpoint to send a notification from the server to the client.
+     * @param token of the user requesting the list of notifications.
+     * @return list of all notifications belonging to a given user.
+     */
+    // Probably this is redundant. We can only have a notify function on service and the retrieve all notifications endpoint.
+    @PostMapping("/dashboard/{userId}/notifications/send")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public UserGetDTO sendNotification(@RequestHeader("token") String token, @RequestParam Long userId, @RequestParam String message) {
+        User user = userService.sendNotification(userId, message);
+        // I think is a good idea to return the updated user so we can display the number of unread notifications
+        return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+    }
+
 }

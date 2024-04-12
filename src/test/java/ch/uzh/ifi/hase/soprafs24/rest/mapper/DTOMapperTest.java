@@ -1,9 +1,10 @@
 package ch.uzh.ifi.hase.soprafs24.rest.mapper;
 
+import ch.uzh.ifi.hase.soprafs24.constant.FriendRequestStatus;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserGetDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,7 +22,7 @@ public class DTOMapperTest {
     userPostDTO.setUsername("username");
 
     // MAP -> Create user
-    User user = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+    User user = UserDTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
 
     // check content
     assertEquals(userPostDTO.getUsername(), user.getUsername());
@@ -36,11 +37,39 @@ public class DTOMapperTest {
     user.setToken("1");
 
     // MAP -> Create UserGetDTO
-    UserGetDTO userGetDTO = DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+    UserGetDTO userGetDTO = UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
 
     // check content
     assertEquals(user.getId(), userGetDTO.getId());
     assertEquals(user.getUsername(), userGetDTO.getUsername());
     assertEquals(user.getStatus(), userGetDTO.getStatus());
   }
+
+    @Test
+    public void testUpdateUser_fromUserPutDTO_toUser_success() {
+        UserPutDTO userPutDTO = new UserPutDTO();
+        userPutDTO.setUsername("updateUsername");
+        userPutDTO.setEmail("update@example.com");
+
+        User user = UserDTOMapper.INSTANCE.convertUserPutDTOtoEntity(userPutDTO);
+
+        assertEquals(userPutDTO.getUsername(), user.getUsername());
+        assertEquals(userPutDTO.getEmail(), user.getEmail());
+    }
+
+    @Test
+    public void testGetUserFriendsRequest_fromUserFriendsRequests_toUserFriendsRequestGetDTO_success() {
+        UserFriendsRequests request = new UserFriendsRequests();
+        UserFriendsRequestGetDTO requestGetDTO = UserDTOMapper.INSTANCE.convertEntityToUserFriendsRequestGetDTO(request);
+        assertEquals(request.getId(), requestGetDTO.getRequestId());
+    }
+
+    @Test
+    public void testConvertUserFriendsRequestPutDTO_toUserFriendsRequests_success() {
+        UserFriendsRequestPutDTO putDTO = new UserFriendsRequestPutDTO();
+        putDTO.setStatus(FriendRequestStatus.ACCEPTED);
+        UserFriendsRequests request = UserDTOMapper.INSTANCE.convertUserFriendsRequestPostDTOToUserFriendsRequests(putDTO);
+        assertEquals(putDTO.getStatus(), request.getStatus());
+    }
+
 }
