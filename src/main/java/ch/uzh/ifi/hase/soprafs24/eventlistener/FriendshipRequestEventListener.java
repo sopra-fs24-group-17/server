@@ -17,9 +17,7 @@ public class FriendshipRequestEventListener {
     private final WebSocketService webSocketService;
 
     @Autowired
-    public FriendshipRequestEventListener(WebSocketService webSocketService) {
-        this.webSocketService = webSocketService;
-    }
+    public FriendshipRequestEventListener(WebSocketService webSocketService) {this.webSocketService = webSocketService;}
 
     @EventListener
     public void onFriendshipRequestAcceptance(FriendshipRequestAcceptanceEvent event) {

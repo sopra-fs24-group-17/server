@@ -16,9 +16,7 @@ public class GameCreationEventListener {
     private final WebSocketService webSocketService;
 
     @Autowired
-    public GameCreationEventListener(WebSocketService webSocketService) {
-        this.webSocketService = webSocketService;
-    }
+    public GameCreationEventListener(WebSocketService webSocketService) {this.webSocketService = webSocketService;}
 
     @EventListener
     public void onGameCreation(GameCreationEvent event) {
