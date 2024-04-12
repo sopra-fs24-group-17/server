@@ -4,17 +4,14 @@ import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
-import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.NotificationDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -44,7 +41,7 @@ public class UserController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public List<UserGetDTO> getAllUsers(@RequestHeader("token") String token) {
-    User verifiedUser = userService.getUserByToken(token);
+    User verifiedUser = userService.verifyUserByToken(token);
     List<User> users = userService.getUsers();
     List<UserGetDTO> userGetDTOs = new ArrayList<>();
     // convert each user to the API representation
@@ -64,7 +61,7 @@ public class UserController {
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
   public UserGetDTO getProfileUser(@PathVariable Long userId, @RequestHeader("token") String token) {
-      User verifiedUser = userService.getUserByToken(token);
+      User verifiedUser = userService.verifyUserByToken(token);
       User profileUser = userService.getProfileUser(userId, verifiedUser);
       return UserDTOMapper.INSTANCE.convertEntityToProfileUserGetDTO(profileUser);
   }
@@ -118,7 +115,7 @@ public class UserController {
   public void logout(@PathVariable Long userId, @RequestHeader("token") String token) {
       // verify that token and userId belong to the same user
       User verifiedUser = userService.verifyTokenAndId(token, userId);
-      User userOffline = userService.setOffline(userService.getUserByToken(token).getUsername());
+      User userOffline = userService.setOffline(userService.verifyUserByToken(token).getUsername());
       return;
     }
 
@@ -161,7 +158,7 @@ public class UserController {
     @ResponseBody
     public List<UserStatsGetDTO> getAllUsersStats(@PathVariable Long userId, @RequestHeader("token") String token) {
       // verify that token and userId belong to the same user
-      User verifiedUser =  userService.getUserByToken(token);
+      User verifiedUser =  userService.verifyUserByToken(token);
       // fetch users along with their statistics
       List<User> users = userService.getUsersWithStats();
       List<UserStatsGetDTO> userStatsGetDTOs = new ArrayList<>();
@@ -275,7 +272,7 @@ public class UserController {
     @ResponseBody
     public List<NotificationGetDTO> getNotifications(@RequestHeader("token") String token) {
         // verify that token and userId belong to the same user
-        User verifiedUser =  userService.getUserByToken(token);
+        User verifiedUser =  userService.verifyUserByToken(token);
         // fetch users along with their statistics
         List<Notification> notifications = userService.obtainNotifications(verifiedUser.getId());
         // Convert notifications to DTOs

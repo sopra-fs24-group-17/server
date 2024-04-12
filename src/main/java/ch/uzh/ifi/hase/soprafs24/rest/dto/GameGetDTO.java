@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.rest.dto;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameMode;
 
+import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,5 +17,7 @@ public class GameGetDTO {
     private Integer maxPlayers;
 
     private String initiatingUserName;
+
+    private GameState state;
 
 }

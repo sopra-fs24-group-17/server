@@ -3,7 +3,6 @@ package ch.uzh.ifi.hase.soprafs24.service;
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,12 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -210,7 +207,7 @@ public class UserServiceTest {
       testUser.setToken("123");
 
       Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
-      Mockito.when(userService.getUserByToken(Mockito.anyString())).thenReturn(testUser);
+      Mockito.when(userService.verifyUserByToken(Mockito.anyString())).thenReturn(testUser);
 
       User verifiedUser = userService.verifyTokenAndId(testUser.getToken(), testUser.getId());
       assertEquals(verifiedUser.getUsername(), testUser.getUsername());
@@ -301,7 +298,7 @@ public class UserServiceTest {
         testUser.setStatus(UserStatus.OFFLINE);
 
         Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
-        assertEquals(userService.getUserByToken(testUser.getToken()), testUser);
+        assertEquals(userService.verifyUserByToken(testUser.getToken()), testUser);
 
     }
 
@@ -316,7 +313,7 @@ public class UserServiceTest {
         testUser.setStatus(UserStatus.OFFLINE);
 
         Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(null);
-        assertThrows(ResponseStatusException.class, () -> userService.getUserByToken(testUser.getToken()));
+        assertThrows(ResponseStatusException.class, () -> userService.verifyUserByToken(testUser.getToken()));
     }
 
     @Test
@@ -466,7 +463,7 @@ public class UserServiceTest {
       testUser.setToken("123");
 
       Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
-      assertEquals(userService.getUserByToken(testUser.getToken()), testUser);
+      assertEquals(userService.verifyUserByToken(testUser.getToken()), testUser);
     }
 
     @Test
@@ -479,7 +476,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        assertThrows(ResponseStatusException.class, () -> userService.getUserByToken("456"));
+        assertThrows(ResponseStatusException.class, () -> userService.verifyUserByToken("456"));
     }
 
     @Test

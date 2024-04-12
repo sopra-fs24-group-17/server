@@ -31,16 +31,31 @@ public class GameController {
         return GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(game);
     }
 
-    /**
+    /** Allows a user to join a game. Joining is only possible if the game hasn't started so far (state = Preparation) and if the max. player count has not been reached.
      * @param token of the user joining an existing game
-     * @param gamePutDTO containing gameId of the existing game
-     * @return a GameGetDTO instance containing gameId, mode, max-player count and  name of the initiating user.
+     * @param gameId containing gameId of the existing game
+     * @return a GameGetDTO instance containing gameId, mode, max-player count and name of the initiating user.
      */
     @PutMapping("/dashboard/games/join/{gameId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public GameGetDTO joinGame(@RequestHeader("token") String token, @RequestBody GamePutDTO gamePutDTO, @PathVariable Long gameId) {
-        Game updatedGame = gameService.findGameById(token, gamePutDTO, gameId);
+    public GameGetDTO joinGame(@RequestHeader("token") String token, @PathVariable Long gameId) {
+        Game updatedGame = gameService.joinGame(token, gameId);
         return GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(updatedGame);
     }
+
+    /**
+     * Allows a user to leave a game. Leaving the game is only possible if the game hasn't started so far (state = Preparation)
+     * @param token of the user leaving a particular game
+     * @param gameId of the game that the user wants to leave.
+     * @return a GameGETDTO instance containing gameId, mode, max-player count and name of the initiating user.
+     */
+    @PutMapping("/dashboard/games/leave/{gameId}")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public GameGetDTO leaveGame(@RequestHeader("token") String token, @PathVariable Long gameId) {
+        Game updatedGame = gameService.leaveGame(token, gameId);
+        return GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(updatedGame);
+    }
+
 }
