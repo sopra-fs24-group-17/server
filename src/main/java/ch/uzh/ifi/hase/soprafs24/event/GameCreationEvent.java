@@ -1,7 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.event;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.context.ApplicationEvent;
 
+@Getter
+@Setter
 public class GameCreationEvent extends ApplicationEvent {
     private final Long gameId;
     private final String initiatingUsername;
@@ -10,13 +14,5 @@ public class GameCreationEvent extends ApplicationEvent {
         super(source);
         this.gameId = gameId;
         this.initiatingUsername = initiatingUsername;
-    }
-
-    public Long getGameId() {
-        return gameId;
-    }
-
-    public String getInitiatingUsername() {
-        return initiatingUsername;
     }
 }

@@ -43,7 +43,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return serverContainer;
     }
 
-    // Used to verify persistent open configuration of websocket through ping
+    // Used to verify persistent open connection of websocket through constant ping from server to client
     @Bean
     public TaskScheduler heartBeatScheduler() {
         ThreadPoolTaskScheduler hbScheduler = new ThreadPoolTaskScheduler();
