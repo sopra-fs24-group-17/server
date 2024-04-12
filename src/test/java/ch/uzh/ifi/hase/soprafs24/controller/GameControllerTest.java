@@ -89,4 +89,19 @@ public class GameControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameId").value(gameId));
     }
+
+    @Test
+    public void testJoinGame_Success() throws Exception {
+        Long gameId = 1L;
+        String token = "validToken";
+        Game game = new Game();
+
+        game.setGameId(gameId);
+
+        given(gameService.joinGame(token, gameId)).willReturn(game);
+        mockMvc.perform(put("/dashboard/games/join/{gameId}", gameId)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameId").value(gameId));
+    }
 }

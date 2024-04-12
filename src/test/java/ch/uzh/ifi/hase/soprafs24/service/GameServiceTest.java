@@ -158,5 +158,53 @@ public class GameServiceTest {
         assertEquals(GameState.ABORTED, updatedGame.getState());
     }
 
+    @Test
+    public void testJoinGame_Success() {
+        game.setMaxPlayers(10);
+        when(userService.verifyUserByToken("validToken")).thenReturn(mockUser);
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(game));
+
+        User anotherUser = new User();
+        anotherUser.setUsername("anotherUser");
+
+        game.getPlayers().remove(mockUser);
+        game.getPlayers().add(anotherUser);
+
+        Game updatedGame = gameService.joinGame("validToken", gameId);
+
+        assertTrue(updatedGame.getPlayers().contains(mockUser));
+        assertEquals(2, updatedGame.getPlayers().size());
+        verify(gameRepository).save(updatedGame);
+    }
+
+    @Test
+    public void testJoinGame_GameNotFound() {
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> gameService.joinGame("validToken", gameId));
+    }
+
+    @Test
+    public void testJoinGame_NotPreparingState() {
+        game.setState(GameState.ONGOING);  // Set the game state to active
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(game));
+
+        assertThrows(ResponseStatusException.class, () -> gameService.joinGame("validToken", gameId));
+    }
+
+    @Test
+    public void testJoinGame_UserAlreadyInGame() {
+        when(userService.verifyUserByToken("validToken")).thenReturn(mockUser);
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(game));
+
+        assertThrows(ResponseStatusException.class, () -> gameService.joinGame("validToken", gameId));
+    }
+
+    @Test
+    public void testJoinGame_UnauthorizedUser() {
+        when(userService.verifyUserByToken("invalidToken")).thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+        assertThrows(ResponseStatusException.class, () -> gameService.joinGame("invalidToken", gameId));
+    }
 }
 

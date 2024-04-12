@@ -64,32 +64,43 @@ public class GameService {
     }
 
     /**
-     * To be completed @Jorge
-     * @param token
-     * @param gamePutDTO
-     * @param gameId
+     * Allows a user to join a game session. Joining is only allowed if the max player count hasn't been reached
+     * and the game session is still PREPARING.
+     * @param token of the user wanting to join a game session
+     * @param gameId of the game that the user wants to join.
      * @return
      */
-    public Game findGameById(String token, GamePutDTO gamePutDTO, Long gameId) {
+    public Game joinGame(String token, Long gameId) {
+        // First verify that User is authorized to join a game
         User verifiedUser = userService.verifyUserByToken(token);
-        Game game = GameDTOMapper.INSTANCE.convertGamePutDTOToEntity(gamePutDTO);
 
-        // Alternatively gameRepository.findByGameId(gameId), but had issues with return type Optional<Game>
-        game.getPlayers().add(verifiedUser);
-        gameRepository.saveAndFlush(game);
+        Optional<Game> optionalGame = gameRepository.findByGameId(gameId);
 
-        // @Jorge
-        // TO DO -- Verify State of the Game still allows joining of users
-        // TO DO -- Verify max player count hasn't been reached
-        // TO DO -- Change the method name to something more meaningful like joinGame()
-        // TO DO -- Exception handling
-        // TO Do -- Tests
+        if (!optionalGame.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
+        }
 
-        // After successfully adding a player to the game, publish the event for the EventListener
-        GameJoinEvent gameJoinEvent = new GameJoinEvent(this, verifiedUser.getUsername(), gameId);
-        eventPublisher.publishEvent(gameJoinEvent);
+        Game currentGame = optionalGame.get();
+        GameState state = currentGame.getState();
 
-        return game;
+        if (!state.equals(GameState.PREPARING)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't join a game that is beyond the preparation phase");
+        }
+
+        Set<User> players = currentGame.getPlayers();
+        if (players.contains(verifiedUser)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is already part of the session");
+        }
+        if (players.size() >= currentGame.getMaxPlayers()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Game session full");
+        } else {
+            players.add(verifiedUser);
+
+            GameJoinEvent gameJoinEvent = new GameJoinEvent(this, verifiedUser.getUsername(), gameId);
+            eventPublisher.publishEvent(gameJoinEvent);
+        }
+        gameRepository.save(currentGame);
+        return currentGame;
     }
 
     /**
@@ -113,7 +124,7 @@ public class GameService {
         Game currentGame = optionalGame.get();
         GameState state = currentGame.getState();
         // Verify that the gameState is Preparing, else we can't allow leavings of the game
-        if (!state.equals(null) && !state.equals(GameState.PREPARING)) {
+        if (!state.equals(GameState.PREPARING)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't leave a game that is beyond the preparation phase");
         }
 
