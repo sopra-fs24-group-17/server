@@ -8,7 +8,6 @@ import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.NotificationDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
-import ch.uzh.ifi.hase.soprafs24.service.ImageService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,14 +25,14 @@ import java.util.List;
 @RestController
 public class UserController {
   private final UserService userService;
-  private final ImageService imageService;
+  //private final ImageService imageService;
 
   @Value("${app.static.resource.path}")
   private String staticResourcePath;
 
-  UserController(UserService userService, ImageService imageService) {
+  UserController(UserService userService/*, ImageService imageService*/) {
     this.userService = userService;
-    this.imageService = imageService;
+    //this.imageService = imageService;
   }
 
   /**
@@ -246,7 +245,7 @@ public class UserController {
     }
 
 
-    @PostMapping("/dashboard/{userId}/profile/uploadAvatar")
+/*    @PostMapping("/dashboard/{userId}/profile/uploadAvatar")
     public String createAvatar(@PathVariable Long userId, @RequestParam("avatar") MultipartFile avatarImage) throws IOException {
         List<String> allowedMimeTypes = Arrays.asList("image/jpeg", "image/png", "image/webp");
 
@@ -264,7 +263,7 @@ public class UserController {
 
         // Return the path as before
         return path;
-    }
+    }*/
 
     /**
      * API endpoint to retrieve notifications belonging to a user.
