@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.event.GameCreationEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
@@ -52,7 +53,9 @@ public class GameService {
         // Add the initiating user to the player set
         game.getPlayers().add(verifiedUser);
 
-        return gameRepository.save(game);
+        Game savedGame = gameRepository.save(game);
+        eventPublisher.publishEvent(new GameCreationEvent(this, savedGame.getGameId(), verifiedUser.getUsername()));
+        return savedGame;
     }
 
     /**
@@ -68,17 +71,20 @@ public class GameService {
 
         // Alternatively gameRepository.findByGameId(gameId), but had issues with return type Optional<Game>
         game.getPlayers().add(verifiedUser);
+        gameRepository.saveAndFlush(game);
 
         // @Jorge
         // TO DO -- Verify State of the Game still allows joining of users
         // TO DO -- Verify max player count hasn't been reached
         // TO DO -- Change the method name to something more meaningful like joinGame()
+        // TO DO -- Exception handling
+        // TO Do -- Tests
 
         // After successfully adding a player to the game, publish the event for the EventListener
         GameJoinEvent gameJoinEvent = new GameJoinEvent(this, verifiedUser.getUsername(), gameId);
         eventPublisher.publishEvent(gameJoinEvent);
 
-        return gameRepository.save(game);
+        return game;
     }
 
     /**

@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -28,6 +29,9 @@ public class GameServiceTest {
 
     @InjectMocks
     private GameService gameService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private User mockUser;
     private GamePostDTO gamePostDTO;
