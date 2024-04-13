@@ -71,4 +71,20 @@ public class WebSocketServiceTest {
         verify(messagingTemplate).convertAndSend("/friendshiprequest/received/" + userId, userName);
     }
 
+    @Test
+    public void sendMessageToClients_withStringMessageTest() {
+        String destination = "/test/destination";
+        String message = "Hello, world!";
+        webSocketService.sendMessageToClients(destination, message);
+        verify(messagingTemplate).convertAndSend(destination, message);
+    }
+
+    @Test
+    public void sendMessageLeftUserTest() {
+        String userName = "testUser";
+        Long gameId = 234L;
+        webSocketService.sendMessageLeftUser(userName, gameId);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, userName);
+    }
+
 }
