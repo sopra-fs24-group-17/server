@@ -1,8 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.FriendRequestStatus;
 import ch.uzh.ifi.hase.soprafs24.constant.ProfileVisibility;
+import ch.uzh.ifi.hase.soprafs24.constant.TutorialFlag;
 import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,14 +15,19 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 @ActiveProfiles("dev")
 public class UserServiceTest {
@@ -57,8 +65,26 @@ public class UserServiceTest {
 
     // when -> any object is being save in the userRepository -> return the dummy
     // testUser
-    Mockito.when(userRepository.save(Mockito.any())).thenReturn(testUser);
+    when(userRepository.save(Mockito.any())).thenReturn(testUser);
   }
+
+    private User setupTestUser() {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("existingUser");
+        user.setPassword("existingPassword");
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            user.setBirthdate(sdf.parse("2000-01-01"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        user.setEmail("existing@email.com");
+        user.setCountryoforigin("USA");
+        user.setProfilevisibility(ProfileVisibility.FALSE);
+        user.setTutorialflag(TutorialFlag.TRUE);
+        return user;
+    }
 
   @Test
   public void createUser_validInputs_success() {
@@ -67,7 +93,7 @@ public class UserServiceTest {
     User createdUser = userService.createUser(testUser);
 
     // then
-    Mockito.verify(userRepository, Mockito.times(1)).save(Mockito.any());
+    verify(userRepository, Mockito.times(1)).save(Mockito.any());
 
     assertEquals(testUser.getId(), createdUser.getId());
     assertEquals(testUser.getEmail(), createdUser.getEmail());
@@ -79,21 +105,21 @@ public class UserServiceTest {
   @Test
   public void createUser_duplicateName_throwsException() {
     userService.createUser(testUser);
-    Mockito.when(userRepository.findByUsername(Mockito.any())).thenReturn(testUser);
+    when(userRepository.findByUsername(Mockito.any())).thenReturn(testUser);
     assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
 
   @Test
   public void createUser_duplicateEmail_throwsException() {
       userService.createUser(testUser);
-      Mockito.when(userRepository.findByEmail(Mockito.any())).thenReturn(testUser);
+      when(userRepository.findByEmail(Mockito.any())).thenReturn(testUser);
       assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
 
   @Test
   public void createUser_duplicateInputs_throwsException() {
     userService.createUser(testUser);
-    Mockito.when(userRepository.findByUsername(Mockito.any())).thenReturn(testUser);
+    when(userRepository.findByUsername(Mockito.any())).thenReturn(testUser);
     assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
 
@@ -104,7 +130,7 @@ public class UserServiceTest {
       testUser.setUsername("");
       testUser.setPassword("password");
 
-      Mockito.when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
+      when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
       assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
 
@@ -115,7 +141,7 @@ public class UserServiceTest {
      testUser.setUsername("        ");
      testUser.setEmail("test@email.com");
 
-     Mockito.when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
+     when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
      assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
 
@@ -126,7 +152,7 @@ public class UserServiceTest {
       testUser.setUsername("user");
       testUser.setEmail("");
 
-      Mockito.when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
+      when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
 
       assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
@@ -139,7 +165,7 @@ public class UserServiceTest {
       testUser.setPassword("password");
       testUser.setEmail("invalidemail"); // contains no @ symbol
 
-      Mockito.when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
+      when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
 
       assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
@@ -152,7 +178,7 @@ public class UserServiceTest {
       testUser.setPassword("");
       testUser.setEmail("test@email.com");
 
-      Mockito.when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
+      when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
 
       assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
@@ -165,7 +191,7 @@ public class UserServiceTest {
       testUser.setPassword("                  ");
       testUser.setEmail("test@email.com");
 
-      Mockito.when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
+      when(userRepository.findUserById(Mockito.any())).thenReturn(testUser);
 
       assertThrows(ResponseStatusException.class, () -> userService.createUser(testUser));
   }
@@ -178,8 +204,8 @@ public class UserServiceTest {
       testUser.setPassword("password");
       testUser.setEmail("test@email.com");
 
-      Mockito.when(userRepository.findByUsername(Mockito.any())).thenReturn(testUser);
-      Mockito.when(passwordService.verifyPassword(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
+      when(userRepository.findByUsername(Mockito.any())).thenReturn(testUser);
+      when(passwordService.verifyPassword(Mockito.anyString(), Mockito.anyString())).thenReturn(true);
 
       User authenticatedUser = userService.authenticateUser(testUser.getUsername(), testUser.getPassword());
       assertEquals(authenticatedUser.getUsername(), testUser.getUsername());
@@ -193,7 +219,7 @@ public class UserServiceTest {
       testUser.setPassword("password");
       testUser.setEmail("test@email.com");
 
-      Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(null);
+      when(userRepository.findByUsername(Mockito.anyString())).thenReturn(null);
       assertThrows(ResponseStatusException.class, () -> userService.authenticateUser(testUser.getUsername(), testUser.getPassword()));
   }
 
@@ -206,8 +232,8 @@ public class UserServiceTest {
       testUser.setEmail("test@email.com");
       testUser.setToken("123");
 
-      Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
-      Mockito.when(userService.verifyUserByToken(Mockito.anyString())).thenReturn(testUser);
+      when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
+      when(userService.verifyUserByToken(Mockito.anyString())).thenReturn(testUser);
 
       User verifiedUser = userService.verifyTokenAndId(testUser.getToken(), testUser.getId());
       assertEquals(verifiedUser.getUsername(), testUser.getUsername());
@@ -236,7 +262,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
+        when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
 
         User onlineUser = userService.setOnline(testUser.getUsername());
         assertNotEquals(onlineUser.getStatus(), testUser.getStatus());
@@ -252,7 +278,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.ONLINE);
 
-        Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
+        when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
         assertThrows(ResponseStatusException.class, () -> userService.setOnline(testUser.getUsername()));
     }
 
@@ -266,7 +292,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.ONLINE);
 
-        Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
+        when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
 
         User offlineUser = userService.setOffline(testUser.getUsername());
         assertNotEquals(offlineUser.getStatus(), testUser.getStatus());
@@ -283,7 +309,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        Mockito.when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
+        when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
         assertThrows(ResponseStatusException.class, () -> userService.setOffline(testUser.getUsername()));
     }
 
@@ -297,7 +323,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
+        when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
         assertEquals(userService.verifyUserByToken(testUser.getToken()), testUser);
 
     }
@@ -312,7 +338,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(null);
+        when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(null);
         assertThrows(ResponseStatusException.class, () -> userService.verifyUserByToken(testUser.getToken()));
     }
 
@@ -326,7 +352,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        Mockito.when(userRepository.findByEmail(Mockito.anyString())).thenReturn(testUser);
+        when(userRepository.findByEmail(Mockito.anyString())).thenReturn(testUser);
         assertEquals(userService.getUserByEmail(testUser.getEmail()), testUser);
     }
 
@@ -340,7 +366,7 @@ public class UserServiceTest {
         testUser.setToken("123");
         testUser.setStatus(UserStatus.OFFLINE);
 
-        Mockito.when(userRepository.findByEmail(Mockito.anyString())).thenReturn(null);
+        when(userRepository.findByEmail(Mockito.anyString())).thenReturn(null);
         assertThrows(ResponseStatusException.class, () -> userService.getUserByEmail(testUser.getEmail()));
     }
 
@@ -358,13 +384,13 @@ public class UserServiceTest {
         userPostDTO.setUsername("user");
         userPostDTO.setEmail("test@email.com");
 
-        Mockito.when(passwordService.generateRandomPassword(10)).thenReturn("randomPassword");
-        Mockito.when(passwordService.securePassword("randomPassword")).thenReturn("securedPassword");
+        when(passwordService.generateRandomPassword(10)).thenReturn("randomPassword");
+        when(passwordService.securePassword("randomPassword")).thenReturn("securedPassword");
 
         userService.resetPassword(testUser, userPostDTO);
 
-        Mockito.verify(passwordService, Mockito.times(1)).securePassword("randomPassword");
-        Mockito.verify(emailSenderService, Mockito.times(1)).sendNewPassword(testUser.getEmail(), testUser.getUsername(), "randomPassword");
+        verify(passwordService, Mockito.times(1)).securePassword("randomPassword");
+        verify(emailSenderService, Mockito.times(1)).sendNewPassword(testUser.getEmail(), testUser.getUsername(), "randomPassword");
         assertEquals("securedPassword", testUser.getPassword());
         assertTrue(testUser.getOtp());
     }
@@ -385,8 +411,8 @@ public class UserServiceTest {
 
         assertThrows(ResponseStatusException.class, () -> userService.resetPassword(testUser, userPostDTO));
 
-        Mockito.verify(passwordService, Mockito.never()).generateRandomPassword(Mockito.anyInt());
-        Mockito.verify(emailSenderService, Mockito.never()).sendNewPassword(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        verify(passwordService, Mockito.never()).generateRandomPassword(Mockito.anyInt());
+        verify(emailSenderService, Mockito.never()).sendNewPassword(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -394,7 +420,7 @@ public class UserServiceTest {
         Long userId = 1L;
         User modifiedUser = new User(); // Populate as needed for the test.
 
-        Mockito.when(userRepository.findUserById(userId)).thenReturn(null);
+        when(userRepository.findUserById(userId)).thenReturn(null);
 
         assertThrows(ResponseStatusException.class, () -> userService.editUser(userId, modifiedUser));
     }
@@ -413,8 +439,8 @@ public class UserServiceTest {
         modifiedUser.setPassword("newPassword");
         modifiedUser.setEmail("newEmail@test.com");
 
-        Mockito.when(userRepository.findUserById(userId)).thenReturn(existingUser);
-        Mockito.when(passwordService.securePassword("newPassword")).thenReturn("securedNewPassword");
+        when(userRepository.findUserById(userId)).thenReturn(existingUser);
+        when(passwordService.securePassword("newPassword")).thenReturn("securedNewPassword");
 
         User result = userService.editUser(userId, modifiedUser);
 
@@ -435,7 +461,7 @@ public class UserServiceTest {
         modifiedUser.setUsername("username");
         modifiedUser.setPassword("   ");
 
-        Mockito.when(userRepository.findUserById(userId)).thenReturn(existingUser);
+        when(userRepository.findUserById(userId)).thenReturn(existingUser);
         assertThrows(ResponseStatusException.class, () -> userService.editUser(userId, modifiedUser));
     }
 
@@ -447,14 +473,14 @@ public class UserServiceTest {
         user2.setUsername("user2");
         List<User> mockUsers = Arrays.asList(user1, user2);
 
-        Mockito.when(userRepository.findAll()).thenReturn(mockUsers);
+        when(userRepository.findAll()).thenReturn(mockUsers);
         List<User> users = userService.getUsers();
 
         assertNotNull(users);
         assertEquals(2, users.size());
         assertEquals(mockUsers, users);
 
-        Mockito.verify(userRepository, Mockito.times(1)).findAll();
+        verify(userRepository, Mockito.times(1)).findAll();
     }
 
     @Test
@@ -462,7 +488,7 @@ public class UserServiceTest {
       User testUser = new User();
       testUser.setToken("123");
 
-      Mockito.when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
+      when(userRepository.findUserByToken(Mockito.anyString())).thenReturn(testUser);
       assertEquals(userService.verifyUserByToken(testUser.getToken()), testUser);
     }
 
@@ -488,8 +514,8 @@ public class UserServiceTest {
         User invokingUser = new User();
         invokingUser.setId(1L);
 
-        Mockito.when(userRepository.findUserById(testUser.getId())).thenReturn(testUser);
-        Mockito.when(userFriendsService.areUsersFriends(testUser, invokingUser)).thenReturn(false);
+        when(userRepository.findUserById(testUser.getId())).thenReturn(testUser);
+        when(userFriendsService.areUsersFriends(testUser, invokingUser)).thenReturn(false);
 
         assertThrows(ResponseStatusException.class, () -> {
             userService.getProfileUser(testUser.getId(), invokingUser);
@@ -505,13 +531,205 @@ public class UserServiceTest {
         User invokingUser = new User();
         invokingUser.setId(1L);
 
-        Mockito.when(userRepository.findUserById(testUser.getId())).thenReturn(testUser);
-        Mockito.when(userFriendsService.areUsersFriends(testUser, invokingUser)).thenReturn(false);
+        when(userRepository.findUserById(testUser.getId())).thenReturn(testUser);
+        when(userFriendsService.areUsersFriends(testUser, invokingUser)).thenReturn(false);
 
         User result = userService.getProfileUser(testUser.getId(), invokingUser);
 
-        Mockito.verify(userRepository, Mockito.times(1)).findUserById(testUser.getId());
+        verify(userRepository, Mockito.times(1)).findUserById(testUser.getId());
         assertNotNull(result);
         assertEquals(testUser.getId(), result.getId());
     }
+
+    @Test
+    public void addFriends_validRequest_createsFriendship() {
+        User user1 = new User();
+        user1.setId(1L);
+        user1.setToken("valid-token");
+
+        User user2 = new User();
+        user2.setId(2L);
+
+        when(userRepository.findUserByToken("valid-token")).thenReturn(user1);
+        when(userRepository.findUserById(2L)).thenReturn(user2);
+
+        userService.addFriends(2L, "valid-token");
+
+        verify(userFriendsService).createFriendshipRequest(user1, user2);
+    }
+
+    @Test
+    public void addFriends_invalidToken_throwsException() {
+        when(userRepository.findUserByToken("invalid-token")).thenReturn(null);
+
+        assertThrows(ResponseStatusException.class, () -> userService.addFriends(2L, "invalid-token"));
+    }
+
+    @Test
+    public void addFriends_invalidUserId_throwsException() {
+        User user1 = new User();
+        user1.setId(1L);
+        user1.setToken("valid-token");
+
+        when(userRepository.findUserByToken("valid-token")).thenReturn(user1);
+        when(userRepository.findUserById(2L)).thenReturn(null);
+
+        assertThrows(ResponseStatusException.class, () -> userService.addFriends(2L, "valid-token"));
+    }
+
+    @Test
+    public void editFriends_validRequest_processesFriendshipRequest() {
+        Long userId = 1L;
+        Long requestId = 1L;
+        FriendRequestStatus newStatus = FriendRequestStatus.ACCEPTED;
+
+        userService.editFriends(userId, requestId, newStatus);
+
+        verify(userFriendsService).processFriendshipRequest(userId, requestId, newStatus);
+    }
+
+    @Test
+    public void editFriends_invalidRequestId_throwsException() {
+        Long userId = 1L;
+        Long invalidRequestId = 999L;
+        FriendRequestStatus newStatus = FriendRequestStatus.ACCEPTED;
+
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND))
+                .when(userFriendsService).processFriendshipRequest(userId, invalidRequestId, newStatus);
+
+        assertThrows(ResponseStatusException.class, () -> userService.editFriends(userId, invalidRequestId, newStatus));
+    }
+
+    @Test
+    public void getPendingFriendshipRequests_validUserId_returnsRequests() {
+        Long userId = 1L;
+        List<UserFriendsRequests> expectedRequests = Arrays.asList(new UserFriendsRequests(), new UserFriendsRequests());
+
+        when(userFriendsService.findAllFriendshipRequestsReceived(userId)).thenReturn(expectedRequests);
+
+        List<UserFriendsRequests> actualRequests = userService.getPendingFriendshipRequests(userId);
+
+        assertEquals(expectedRequests, actualRequests);
+        assertNotNull(actualRequests);
+        assertEquals(2, actualRequests.size());
+    }
+
+    @Test
+    public void getPendingFriendshipRequests_noRequests_returnsEmptyList() {
+        Long userId = 1L;
+        when(userFriendsService.findAllFriendshipRequestsReceived(userId)).thenReturn(Collections.emptyList());
+
+        List<UserFriendsRequests> actualRequests = userService.getPendingFriendshipRequests(userId);
+
+        assertTrue(actualRequests.isEmpty());
+    }
+
+    @Test
+    public void getUsersFriends_validUserId_returnsFriendsList() {
+        Long userId = 1L;
+        List<User> expectedFriends = Arrays.asList(new User(), new User());
+
+        when(userFriendsService.getFriends(userId)).thenReturn(expectedFriends);
+
+        List<User> actualFriends = userService.getUsersFriends(userId);
+
+        assertEquals(expectedFriends, actualFriends);
+        assertNotNull(actualFriends);
+        assertEquals(2, actualFriends.size());
+    }
+
+    @Test
+    public void getUsersFriends_noFriends_returnsEmptyList() {
+        Long userId = 1L;
+        when(userFriendsService.getFriends(userId)).thenReturn(Collections.emptyList());
+
+        List<User> actualFriends = userService.getUsersFriends(userId);
+
+        assertTrue(actualFriends.isEmpty());
+    }
+
+    @Test
+    public void getUserById_validUserId_returnsUser() {
+        Long userId = 1L;
+        User expectedUser = new User();
+        expectedUser.setId(userId);
+
+        when(userRepository.findUserById(userId)).thenReturn(expectedUser);
+
+        User actualUser = userService.getUserById(userId);
+
+        assertEquals(expectedUser, actualUser);
+        assertEquals(userId, actualUser.getId());
+    }
+
+    @Test
+    public void getUserById_invalidUserId_throwsException() {
+        Long userId = 999L;
+        when(userRepository.findUserById(userId)).thenReturn(null);
+
+        assertThrows(ResponseStatusException.class, () -> userService.getUserById(userId));
+    }
+
+    @Test
+    public void editUser_UpdateCountryOfOrigin_Success() {
+        User existingUser = setupTestUser();
+        User modifiedUser = new User();
+        modifiedUser.setCountryoforigin("Canada");
+
+        when(userRepository.findUserById(1L)).thenReturn(existingUser);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(existingUser);
+
+        User result = userService.editUser(1L, modifiedUser);
+
+        assertEquals("Canada", result.getCountryoforigin());
+        verify(userRepository).saveAndFlush(existingUser);
+    }
+
+    @Test
+    public void editUser_UpdateProfileVisibility_Success() {
+        User existingUser = setupTestUser();
+        User modifiedUser = new User();
+        modifiedUser.setProfilevisibility(ProfileVisibility.TRUE);
+
+        when(userRepository.findUserById(1L)).thenReturn(existingUser);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(existingUser);
+
+        User result = userService.editUser(1L, modifiedUser);
+
+        assertEquals(ProfileVisibility.TRUE, result.getProfilevisibility());
+        verify(userRepository).saveAndFlush(existingUser);
+    }
+
+    @Test
+    public void editUser_UpdateTutorialFlag_Success() {
+        User existingUser = setupTestUser();
+        User modifiedUser = new User();
+        modifiedUser.setTutorialflag(TutorialFlag.FALSE);
+
+        when(userRepository.findUserById(1L)).thenReturn(existingUser);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(existingUser);
+
+        User result = userService.editUser(1L, modifiedUser);
+
+        assertEquals(TutorialFlag.FALSE, result.getTutorialflag());
+        verify(userRepository).saveAndFlush(existingUser);
+    }
+
+    @Test
+    public void editUser_UpdateBirthDate_Success() throws Exception {
+        User existingUser = setupTestUser();
+        User modifiedUser = new User();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date newBirthdate = sdf.parse("1900-01-01");
+        modifiedUser.setBirthdate(newBirthdate);
+
+        when(userRepository.findUserById(1L)).thenReturn(existingUser);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(existingUser);
+
+        User result = userService.editUser(1L, modifiedUser);
+
+        assertEquals(newBirthdate, result.getBirthdate());
+        verify(userRepository).saveAndFlush(existingUser);
+    }
+
 }

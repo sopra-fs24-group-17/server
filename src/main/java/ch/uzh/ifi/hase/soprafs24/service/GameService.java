@@ -8,7 +8,6 @@ import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameLeaveEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePutDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;

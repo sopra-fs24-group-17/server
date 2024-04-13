@@ -44,7 +44,7 @@ public class WebSocketServiceTest {
         String userName = "testUser";
         Long userId = 456L;
         webSocketService.sendMessageFriendLogin(userName, userId);
-        verify(messagingTemplate).convertAndSend("/login/" + userId, userName);
+        verify(messagingTemplate).convertAndSend("/login" , userName);
     }
 
     @Test
@@ -52,7 +52,7 @@ public class WebSocketServiceTest {
         String userName = "testUser";
         Long userId = 789L;
         webSocketService.sendMessageFriendLogout(userName, userId);
-        verify(messagingTemplate).convertAndSend("/logout/" + userId, userName);
+        verify(messagingTemplate).convertAndSend("/logout", userName);
     }
 
     @Test
@@ -69,6 +69,29 @@ public class WebSocketServiceTest {
         Long userId = 131415L;
         webSocketService.sendMessageFriendshipRequestReceived(userName, userId);
         verify(messagingTemplate).convertAndSend("/friendshiprequest/received/" + userId, userName);
+    }
+
+    @Test
+    public void sendMessageToClients_withStringMessageTest() {
+        String destination = "/test/destination";
+        String message = "Hello, world!";
+        webSocketService.sendMessageToClients(destination, message);
+        verify(messagingTemplate).convertAndSend(destination, message);
+    }
+
+    @Test
+    public void sendMessageLeftUserTest() {
+        String userName = "testUser";
+        Long gameId = 234L;
+        webSocketService.sendMessageLeftUser(userName, gameId);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, userName);
+    }
+
+    @Test
+    public void sendMessageGameCreatedTest() {
+        Long gameId = 1234L;
+        webSocketService.sendMessageGameCreated(gameId);
+        verify(messagingTemplate).convertAndSend("/game/new", gameId);
     }
 
 }

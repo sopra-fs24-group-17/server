@@ -39,12 +39,12 @@ public class WebSocketService {
 
     public void sendMessageFriendLogin(String userName, Long userId) {
         logger.info("Friend Login Message Dispatched: User: {} logged in", userName);
-        this.sendMessage.convertAndSend("/login/" + userId, userName);
+        this.sendMessage.convertAndSend("/login", userName);
     }
 
     public void sendMessageFriendLogout(String userName, Long userId) {
         logger.info("Friend Logout Message Dispatched: User: {} logged out", userName);
-        this.sendMessage.convertAndSend("/logout/" + userId, userName);
+        this.sendMessage.convertAndSend("/logout", userName);
     }
 
     public void sendMessageFriendshipRequestAccepted(String userName, Long userId) {
@@ -55,5 +55,10 @@ public class WebSocketService {
     public void sendMessageFriendshipRequestReceived(String userName, Long userId) {
         logger.info("Friend Request Received Message Dispatched: User: {}", userName);
         this.sendMessage.convertAndSend("/friendshiprequest/received/" + userId, userName);
+    }
+
+    public void sendMessageGameCreated(Long gameId) {
+        logger.info("Game Creation Message Sent: Game: {}", gameId);
+        this.sendMessage.convertAndSend("/game/new", gameId);
     }
 }
