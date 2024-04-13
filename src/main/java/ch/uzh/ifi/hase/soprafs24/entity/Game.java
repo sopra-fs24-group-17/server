@@ -51,7 +51,7 @@ public class Game implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private GameState state = GameState.ONGOING;
+    private GameState state = GameState.PREPARING;
 
     @ManyToOne
     @JoinColumn(name = "winningPlayerId", referencedColumnName = "id")

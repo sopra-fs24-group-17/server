@@ -6,7 +6,6 @@ import ch.uzh.ifi.hase.soprafs24.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
-import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
 import ch.uzh.ifi.hase.soprafs24.event.LoginEvent;
 import ch.uzh.ifi.hase.soprafs24.event.LogoutEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
@@ -163,10 +162,10 @@ public class UserService {
    * @return the user object if the userId matches.
    */
   public User verifyTokenAndId(String token, Long userId) {
-      if (getUserByToken(token).getId() != userId) {
+      if (verifyUserByToken(token).getId() != userId) {
           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
       }
-      return getUserByToken(token);
+      return verifyUserByToken(token);
   }
 
   /**
@@ -218,7 +217,7 @@ public class UserService {
    * @param token the token provided through the header of an api request from the client.
    * @return if the user is valid, the corresponding user object is returned.
    */
-  public User getUserByToken(String token) {
+  public User verifyUserByToken(String token) {
       User userByToken = userRepository.findUserByToken(token);
       if (userByToken == null) {
           throw new ResponseStatusException(HttpStatus.NOT_FOUND, "invalid token");
@@ -344,7 +343,7 @@ public class UserService {
      * @param token the token of the user invoking a friendship request.
      */
     public void addFriends(Long userId, String token) {
-      User requestingUser = getUserByToken(token);
+      User requestingUser = verifyUserByToken(token);
       User requestedUser = getUserById(userId);
       userFriendsService.createFriendshipRequest(requestingUser, requestedUser);
     }

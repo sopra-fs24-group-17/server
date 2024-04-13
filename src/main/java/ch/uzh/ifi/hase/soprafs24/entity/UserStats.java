@@ -38,5 +38,4 @@ public class UserStats implements Serializable {
 
     @Column()
     private Date lastPlayed;
-
 }

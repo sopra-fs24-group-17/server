@@ -97,7 +97,7 @@ public class UserControllerTest {
         user.setToken("1234");
         user.setStatus(UserStatus.OFFLINE);
 
-        Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format("unauthorized"))).when(userService).getUserByToken(Mockito.any());
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format("unauthorized"))).when(userService).verifyUserByToken(Mockito.any());
         MockHttpServletRequestBuilder getRequest = get("/users").contentType(MediaType.APPLICATION_JSON)
                 .header("token", "12");
 
@@ -229,7 +229,7 @@ public class UserControllerTest {
         user.setToken("1");
         user.setStatus(UserStatus.ONLINE);
 
-        given(userService.getUserByToken(user.getToken())).willReturn(user);
+        given(userService.verifyUserByToken(user.getToken())).willReturn(user);
         given(userService.verifyTokenAndId(user.getToken(), user.getId())).willReturn(user);
         given(userService.editUser(user.getId(), user)).willReturn(user);
 
@@ -252,7 +252,7 @@ public class UserControllerTest {
         user.setToken("1");
         user.setStatus(UserStatus.ONLINE);
 
-        given(userService.getUserByToken(user.getToken())).willReturn(user);
+        given(userService.verifyUserByToken(user.getToken())).willReturn(user);
         Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, String.format("Unauthorized"))).when(userService).verifyTokenAndId(Mockito.anyString(), Mockito.anyLong());
 
         MockHttpServletRequestBuilder putRequest = put("/dashboard/" + 69 + "/profile/")
@@ -275,7 +275,7 @@ public class UserControllerTest {
         user.setStatus(UserStatus.ONLINE);
 
         when(userService.editUser(Mockito.anyLong(), Mockito.any())).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("user with userId: 1 was not found")));
-        when(userService.getUserByToken(Mockito.anyString())).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("user with userId: 1 was not found")));
+        when(userService.verifyUserByToken(Mockito.anyString())).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("user with userId: 1 was not found")));
 
         MockHttpServletRequestBuilder putRequest = put("/dashboard/" + user.getId() + "/profile/")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -398,7 +398,7 @@ public class UserControllerTest {
         user.setStatus(UserStatus.ONLINE);
 
         given(userService.setOffline(Mockito.anyString())).willReturn(user);
-        given(userService.getUserByToken(Mockito.anyString())).willReturn(user);
+        given(userService.verifyUserByToken(Mockito.anyString())).willReturn(user);
         given(userService.verifyTokenAndId(Mockito.anyString(), Mockito.anyLong())).willReturn(user);
 
         MockHttpServletRequestBuilder postRequest = post("/dashboard/" + user.getId() + "/logout")
@@ -440,7 +440,7 @@ public class UserControllerTest {
         user.setId(1L);
 
         Mockito.when(userService.getUsersWithStats()).thenReturn(Collections.singletonList(user));
-        Mockito.when(userService.getUserByToken("123")).thenReturn(user);
+        Mockito.when(userService.verifyUserByToken("123")).thenReturn(user);
 
         mockMvc.perform(get("/dashboard/" + user.getId() + "/profile/stats")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -455,7 +455,7 @@ public class UserControllerTest {
         user.setId(1L);
 
         Mockito.doThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "unauthorized"))
-                .when(userService).getUserByToken("456");
+                .when(userService).verifyUserByToken("456");
 
         mockMvc.perform(get("/dashboard/" + user.getId() + "/profile/stats")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -472,7 +472,7 @@ public class UserControllerTest {
         user.setToken("1");
         user.setStatus(UserStatus.ONLINE);
         String token = "123";
-        given(userService.getUserByToken(token)).willReturn(user);
+        given(userService.verifyUserByToken(token)).willReturn(user);
         given(userService.getProfileUser(user.getId(), user)).willReturn(user);
 
         mockMvc.perform(get("/dashboard/{userId}/profile", user.getId())
@@ -496,7 +496,7 @@ public class UserControllerTest {
         Long userId = 2L;
         User otherUser = new User();
 
-        given(userService.getUserByToken(token)).willReturn(user);
+        given(userService.verifyUserByToken(token)).willReturn(user);
         given(userService.getProfileUser(userId, user)).willReturn(otherUser);
 
         mockMvc.perform(get("/dashboard/{userId}/profile", userId)
