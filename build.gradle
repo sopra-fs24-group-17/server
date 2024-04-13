@@ -47,8 +47,8 @@ dependencies {
     implementation 'de.mkammerer:argon2-jvm:2.11'
 
     // PostgreSQL
-    implementation 'org.postgresql:postgresql:42.7.0'
-    implementation 'com.google.cloud.sql:postgres-socket-factory:1.11.1'
+    implementation 'org.postgresql:postgresql:42.7.3'
+    implementation 'com.google.cloud.sql:postgres-socket-factory:1.17.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
