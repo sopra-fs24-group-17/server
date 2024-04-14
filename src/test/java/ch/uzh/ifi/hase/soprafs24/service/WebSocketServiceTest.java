@@ -7,6 +7,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.json.JSONObject;
+
 
 public class WebSocketServiceTest {
 
@@ -35,8 +37,15 @@ public class WebSocketServiceTest {
     public void sendMessageJoinedUserTest() {
         String userName = "testUser";
         Long gameId = 123L;
+
+        JSONObject expectedMessage = new JSONObject();
+        expectedMessage.put("type", "join");
+        expectedMessage.put("userName", userName);
+        expectedMessage.put("gameId", gameId);
+        String expectedJson = expectedMessage.toString();
+
         webSocketService.sendMessageJoinedUser(userName, gameId);
-        verify(messagingTemplate).convertAndSend("/game/" + gameId, userName);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, expectedJson);
     }
 
     @Test
@@ -83,8 +92,15 @@ public class WebSocketServiceTest {
     public void sendMessageLeftUserTest() {
         String userName = "testUser";
         Long gameId = 234L;
+
+        JSONObject expectedMessage = new JSONObject();
+        expectedMessage.put("type", "leave");
+        expectedMessage.put("userName", userName);
+        expectedMessage.put("gameId", gameId);
+        String expectedJson = expectedMessage.toString();
+
         webSocketService.sendMessageLeftUser(userName, gameId);
-        verify(messagingTemplate).convertAndSend("/game/" + gameId, userName);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, expectedJson);
     }
 
     @Test
