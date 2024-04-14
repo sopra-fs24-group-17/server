@@ -20,4 +20,6 @@ public class GameGetDTO {
 
     private GameState state;
 
+    private String deckId;
+
 }

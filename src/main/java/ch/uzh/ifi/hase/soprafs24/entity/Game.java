@@ -57,4 +57,7 @@ public class Game implements Serializable {
     @JoinColumn(name = "winningPlayerId", referencedColumnName = "id")
     private User winningPlayer;
 
+    @OneToOne(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
+    private GameDeck gameDeck;
+
 }

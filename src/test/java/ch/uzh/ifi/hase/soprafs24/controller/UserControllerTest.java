@@ -483,8 +483,7 @@ public class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("token", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username", is(user.getUsername())))
-        ;
+                .andExpect(jsonPath("$.username", is(user.getUsername())));
     }
 
     @Test
