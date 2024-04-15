@@ -157,7 +157,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public List<UserStatsGetDTO> getAllUsersStats(@PathVariable Long userId, @RequestHeader("token") String token) {
-      // verify that token and userId belong to the same user
+      // verify user by token
       User verifiedUser =  userService.verifyUserByToken(token);
       // fetch users along with their statistics
       List<User> users = userService.getUsersWithStats();
