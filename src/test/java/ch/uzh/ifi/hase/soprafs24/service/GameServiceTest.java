@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
@@ -15,6 +16,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -36,6 +38,9 @@ public class GameServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private GameDeckService gameDeckService;
 
     private User mockUser;
     private GamePostDTO gamePostDTO;
@@ -60,10 +65,10 @@ public class GameServiceTest {
     }
 
     @Test
-    public void testCreateNewGame_Success() {
+    public void testCreateNewGame_Success() throws IOException, InterruptedException {
         when(userService.verifyUserByToken(anyString())).thenReturn(mockUser);
         when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
+        when(gameDeckService.fetchDeck(any(Game.class))).thenReturn(new GameDeck());
         Game createdGame = gameService.createNewGame("validToken", gamePostDTO);
 
         assertNotNull(createdGame.getGameId());
@@ -72,8 +77,9 @@ public class GameServiceTest {
     }
 
     @Test
-    public void testCreateNewGame_UniqueGameIdGeneration() {
+    public void testCreateNewGame_UniqueGameIdGeneration() throws IOException, InterruptedException {
         when(userService.verifyUserByToken(anyString())).thenReturn(mockUser);
+        when(gameDeckService.fetchDeck(any(Game.class))).thenReturn(new GameDeck());
         when(gameRepository.findByGameId(anyLong())).thenReturn(Optional.empty());
         when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
