@@ -1,5 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.eventlistener.GameCreationEventListener;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,26 @@ public class WebSocketService {
     }
 
     public void sendMessageJoinedUser(String userName, Long gameId) {
-        this.sendMessage.convertAndSend("/game/" + gameId, userName);
+
+        logger.info("Join Message Dispatched: User: {} joined Game: {}", userName, gameId);
+
+        JSONObject message = new JSONObject();
+        message.put("type", "join");
+        message.put("userName", userName);
+        message.put("gameId", gameId);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
+
     public void sendMessageLeftUser(String userName, Long gameId) {
-        this.sendMessage.convertAndSend("/game/" + gameId, userName);
+
+        JSONObject message = new JSONObject();
+        message.put("type", "leave");
+        message.put("userName", userName);
+        message.put("gameId", gameId);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
 
