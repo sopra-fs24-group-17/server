@@ -32,7 +32,6 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
-
     public void sendMessageLeftUser(String userName, Long gameId) {
 
         JSONObject message = new JSONObject();
@@ -42,7 +41,6 @@ public class WebSocketService {
 
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
-
 
     public void sendMessageFriendLogin(String userName, Long userId) {
         this.sendMessage.convertAndSend("/login", userName);
@@ -58,6 +56,16 @@ public class WebSocketService {
 
     public void sendMessageFriendshipRequestReceived(String userName, Long userId) {
         this.sendMessage.convertAndSend("/friendshiprequest/received/" + userId, userName);
+    }
+
+    public void sendMessageCardsDrawn(Long gameId, String invokingPlayerUsername, Integer numberOfCards) {
+        JSONObject message = new JSONObject();
+        message.put("type", "drawing");
+        message.put("gameId", gameId);
+        message.put("user", invokingPlayerUsername);
+        message.put("numberOfCards", numberOfCards);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
     public void sendMessageGameCreated(Long gameId) {
