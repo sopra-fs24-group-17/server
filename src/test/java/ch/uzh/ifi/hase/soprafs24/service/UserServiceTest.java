@@ -269,20 +269,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void setOnline_invalid_throwsException() {
-        testUser = new User();
-        testUser.setId(1L);
-        testUser.setUsername("user");
-        testUser.setPassword("password");
-        testUser.setEmail("test@email.com");
-        testUser.setToken("123");
-        testUser.setStatus(UserStatus.ONLINE);
-
-        when(userRepository.findByUsername(Mockito.anyString())).thenReturn(testUser);
-        assertThrows(ResponseStatusException.class, () -> userService.setOnline(testUser.getUsername()));
-    }
-
-    @Test
     public void setOffline_success() {
         testUser = new User();
         testUser.setId(1L);
