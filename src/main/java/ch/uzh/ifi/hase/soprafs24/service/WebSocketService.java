@@ -58,12 +58,21 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/friendshiprequest/received/" + userId, userName);
     }
 
-    public void sendMessageCardsDrawn(Long gameId, String invokingPlayerUsername, Integer numberOfCards) {
+    public void sendMessageCardsDrawn(Long gameId, String invokingPlayerUserName, Integer numberOfCards) {
         JSONObject message = new JSONObject();
         message.put("type", "drawing");
         message.put("gameId", gameId);
-        message.put("user", invokingPlayerUsername);
+        message.put("user", invokingPlayerUserName);
         message.put("numberOfCards", numberOfCards);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    public void sendMessageShuffling(Long gameId, String invokingPlayerUserName) {
+        JSONObject message = new JSONObject();
+        message.put("type", "shuffling");
+        message.put("gameId", gameId);
+        message.put("user", invokingPlayerUserName);
 
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
