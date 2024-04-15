@@ -24,8 +24,6 @@ public class WebSocketService {
 
     public void sendMessageJoinedUser(String userName, Long gameId) {
 
-        logger.info("Join Message Dispatched: User: {} joined Game: {}", userName, gameId);
-
         JSONObject message = new JSONObject();
         message.put("type", "join");
         message.put("userName", userName);
