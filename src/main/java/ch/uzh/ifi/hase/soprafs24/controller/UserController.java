@@ -153,11 +153,12 @@ public class UserController {
      * @param token of the user requesting the user statistics overview.
      * @return list of all user objects (username) and their statistics.
      */
-    @GetMapping("/dashboard/{userId}/profile/stats")
+    // @GetMapping("/dashboard/{userId}/profile/stats")
+    @GetMapping("/dashboard/profile/stats")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public List<UserStatsGetDTO> getAllUsersStats(@PathVariable Long userId, @RequestHeader("token") String token) {
-      // verify that token and userId belong to the same user
+    public List<UserStatsGetDTO> getAllUsersStats(/*@PathVariable Long userId, */@RequestHeader("token") String token) {
+      // verify user by token
       User verifiedUser =  userService.verifyUserByToken(token);
       // fetch users along with their statistics
       List<User> users = userService.getUsersWithStats();

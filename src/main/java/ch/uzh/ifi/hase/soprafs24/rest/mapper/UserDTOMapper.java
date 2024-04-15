@@ -58,7 +58,8 @@ public interface UserDTOMapper {
   @Mapping(source = "avatar", target = "avatar")
   User convertUserPutDTOtoEntity(UserPutDTO userPutDTO);
 
-  @Mapping(target = "userid", ignore = true)
+  // @Mapping(target = "userid", ignore = true)
+  @Mapping(source = "id", target = "userid")
   @Mapping(source = "username", target = "username")
   @Mapping(source = "userStats.gamesPlayed", target = "gamesplayed")
   @Mapping(source = "userStats.gamesWon", target = "gameswon")
