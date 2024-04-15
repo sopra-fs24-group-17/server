@@ -4,9 +4,11 @@ import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
+import ch.uzh.ifi.hase.soprafs24.event.ShufflingEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.coyote.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,6 +118,34 @@ public class GameDeckService {
 
         return cards;
     }
+
+    /**
+     * Allows shuffling of a card deck
+     * @param gameDeck object which shall be reshuffled
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void shuffleCards(GameDeck gameDeck) throws IOException, InterruptedException {
+
+        if (gameDeck.getRemainingCards() >=1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shuffle doesn't alter the state of the remaining deck");
+        }
+
+        String shuffleCardsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/shuffle/?remaining=true", gameDeck.getDeckID());
+
+        HttpRequest shuffleCardsRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(shuffleCardsUri))
+                .build();
+
+        HttpResponse<String> shuffleCardsResponse = httpClient.send(shuffleCardsRequest, HttpResponse.BodyHandlers.ofString());
+        logger.info(shuffleCardsResponse.body());
+
+        // Publish a shuffling event
+        ShufflingEvent shufflingEvent = new ShufflingEvent(this, gameDeck.getGame().getGameId(), "placeholder");
+        eventPublisher.publishEvent(shufflingEvent);
+    }
+
 
     /**
      * Helper method to parse the response from the draw cards api call.
