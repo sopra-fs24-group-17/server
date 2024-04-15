@@ -2,14 +2,15 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.event.GameCreationEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameLeaveEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePutDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
+import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -29,12 +31,15 @@ public class GameService {
 
     private final UserService userService;
 
+    private final GameDeckService gameDeckService;
+
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
-    public GameService(GameRepository gameRepository, UserService userService, ApplicationEventPublisher eventPublisher) {
+    public GameService(GameRepository gameRepository, UserService userService, GameDeckService gameDeckService, ApplicationEventPublisher eventPublisher) {
         this.gameRepository = gameRepository;
         this.userService = userService;
+        this.gameDeckService = gameDeckService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -57,10 +62,19 @@ public class GameService {
 
         // Add the initiating user to the player set
         game.getPlayers().add(verifiedUser);
-
         Game savedGame = gameRepository.save(game);
         eventPublisher.publishEvent(new GameCreationEvent(this, savedGame.getGameId(), verifiedUser.getUsername()));
-        return savedGame;
+
+        try {
+            // Create corresponding deck of cards for the game
+            GameDeck gameDeck = gameDeckService.fetchDeck(game);
+
+            game.setGameDeck(gameDeck);
+            Game updatedGame = gameRepository.saveAndFlush(game);
+            return savedGame;
+        } catch (IOException | InterruptedException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to fetch a GameDeck");
+        }
     }
 
     /**

@@ -3,9 +3,10 @@ package ch.uzh.ifi.hase.soprafs24.rest.mapper;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GameGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
-import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePutDTO;
 import org.mapstruct.Mapper;
+import org.mapstruct.MapperConfig;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.factory.Mappers;
 
 @Mapper
@@ -19,16 +20,11 @@ public interface GameDTOMapper {
     @Mapping(source = "maxPlayers", target = "maxPlayers")
     @Mapping(source = "initiatingUser.username", target = "initiatingUserName")
     @Mapping(source = "state", target = "state")
+    @Mapping(target = "deckId", expression = "java(game.getGameDeck() != null ? game.getGameDeck().getDeckID() : null)")
     GameGetDTO convertEntityToGameGetDTO(Game game);
 
     // Conversion of GamePostDTO to Game Entity
     @Mapping(target = "mode", source = "mode")
     @Mapping(target = "maxPlayers", source = "maxPlayers")
     Game convertGamePostDTOToEntity(GamePostDTO gamePostDTO);
-
-    @Mapping(target = "gameId", source = "gameId")
-    @Mapping(target = "state", source = "state")
-    Game convertGamePutDTOToEntity(GamePutDTO gamePutDTO);
-
-
 }

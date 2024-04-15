@@ -20,8 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -150,5 +149,35 @@ public class UserFriendsServiceTest {
         assertEquals(friend2.getId(), friends.get(1).getId(), "The second friend's ID should match.");
     }
 
+    @Test
+    public void findAllFriendshipRequestsReceived_ReturnsAllRequests() {
+        Long userId = 1L;
 
+        UserFriendsRequests request1 = new UserFriendsRequests();
+        request1.setId(1L);
+        UserFriendsRequests request2 = new UserFriendsRequests();
+        request2.setId(2L);
+
+        when(userFriendsRequestRepository.findAllReceivedRequests(userId)).thenReturn(Arrays.asList(request1, request2));
+
+        List<UserFriendsRequests> requests = userFriendsService.findAllFriendshipRequestsReceived(userId);
+
+        assertEquals(2, requests.size(), "Should return exactly two requests.");
+        assertEquals(1L, requests.get(0).getId(), "The first request's ID should match.");
+        assertEquals(2L, requests.get(1).getId(), "The second request's ID should match.");
+    }
+
+    @Test
+    public void areUsersFriends_UsersAreNotFriends_ReturnsFalse() {
+        User userA = new User();
+        userA.setId(1L);
+        User profileUser = new User();
+        profileUser.setId(2L);
+
+        when(userFriendsRepository.findFriendshipBetweenUsers(userA.getId(), profileUser.getId())).thenReturn(Optional.empty());
+        when(userFriendsRepository.findFriendshipBetweenUsers(profileUser.getId(), userA.getId())).thenReturn(Optional.empty());
+
+        boolean areFriends = userFriendsService.areUsersFriends(userA, profileUser);
+        assertFalse(areFriends, "Users should not be friends");
+    }
 }

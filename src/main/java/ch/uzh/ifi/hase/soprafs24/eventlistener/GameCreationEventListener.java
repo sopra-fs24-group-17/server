@@ -21,6 +21,6 @@ public class GameCreationEventListener {
     @EventListener
     public void onGameCreation(GameCreationEvent event) {
         logger.info("GameCreationEvent triggered for game ID: {}", event.getGameId());
-        webSocketService.sendMessageToClients("/game/new", "New game created with ID: " + event.getGameId());
+        webSocketService.sendMessageGameCreated(event.getGameId());
     }
 }

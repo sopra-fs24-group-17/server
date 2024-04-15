@@ -25,7 +25,8 @@ public class GameCreationEventListenerTest {
     public void testOnGameCreation() {
         Long gameId = 123L;
         GameCreationEvent event = new GameCreationEvent(this, gameId, "TestUser");
+
         gameCreationEventListener.onGameCreation(event);
-        verify(webSocketService).sendMessageToClients(eq("/game/new"), anyString());
+        verify(webSocketService).sendMessageGameCreated(gameId);
     }
 }
