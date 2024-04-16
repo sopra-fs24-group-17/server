@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.server.ResponseStatusException;
@@ -38,6 +40,25 @@ public class GameDeckService {
     private GameDeckRepository gameDeckRepository;
 
     private CardRepository cardRepository;
+
+    private List<Character> suits = new ArrayList<>(List.of('S', 'H', 'C', 'D'));
+
+    private Map<String, String> dictionary = new HashMap<>() {{
+        put("A", "bomb");
+        put("2", "deactivation");
+        put("3", "cat_1");
+        put("4", "attack");
+        put("5", "skip");
+        put("6", "pick");
+        put("7", "shuffle");
+        put("8", "cat_2");
+        put("9", "cat_3");
+        put("0", "cat_4");
+        put("J", "cat_5");
+        put("Q", "future");
+        put("K", "no");
+        put("JOKER", "deactivation"); // TODO : Modify this to the current value of joker
+    }};
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -58,7 +79,7 @@ public class GameDeckService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public GameDeck fetchDeck(Game game) throws IOException, InterruptedException {
+    public GameDeck fetchDeck(Game game, boolean init) throws IOException, InterruptedException {
 
         String newDeckUri = "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true";
 
@@ -73,6 +94,29 @@ public class GameDeckService {
         // Conversion of response to format suitable for extraction
         JsonNode rootNode = objectMapper.readTree(newDeckResponse.body());
         GameDeck gameDeck = new GameDeck();
+
+        // For init of game deck from scratch we need to remove a deactivation for each player and there should be always 1 less explosion.
+        if(init){
+            int numPlayers = game.getPlayers().size();
+            HttpResponse<String> removeBombRes = null;
+            // remove deactivation - better to handle it in the pile creator
+            // remove all bombs
+            for(int i = 0; i<4; i++){
+                String text = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s";
+                String removeBombURI = String.format(text, rootNode.get("deck_id").asText(), "bombs", "A"+suits.get(i));
+                HttpRequest removeBombReq = HttpRequest.newBuilder()
+                        .GET()
+                        .uri(URI.create(removeBombURI))
+                        .build();
+
+                removeBombRes = httpClient.send(removeBombReq, HttpResponse.BodyHandlers.ofString());
+                logger.info(removeBombRes.body());
+            }
+            // Refresh info of deck req
+            if(removeBombRes != null){
+                rootNode = objectMapper.readTree(removeBombRes.body());
+            }
+        }
 
         // Extraction of necessary variables
         gameDeck.setDeckID(rootNode.get("deck_id").asText());
@@ -165,10 +209,11 @@ public class GameDeckService {
         // Extraction of necessary variables
         for (JsonNode cardNode : cardsNode) {
             Card card = new Card();
+            String cardVal = cardMapper(cardNode.get("code").asText());
             card.setCode(cardNode.get("code").asText());
-            card.setValue(cardNode.get("value").asText());
+            card.setValue(cardVal);
             card.setSuit(cardNode.get("suit").asText());
-            card.setImage(cardNode.get("image").asText());
+            card.setImage(cardNode.get("image").asText()); // Change this value based on the cardVal and the cards we are going to use
             card.setDeckId(deckId);
 
             cards.add(card);
@@ -179,5 +224,57 @@ public class GameDeckService {
         gameDeckRepository.saveAndFlush(gameDeck);
 
         return cards;
+    }
+
+    /**
+     * Draw the initial set of piles for the players
+     * @param gameDeck object from which the cards were drawn.
+     * @return cards objects.
+     * @throws IOException
+     **/
+    // For the moment void. We are storing the cards in each player hand in the http response body
+    public void initialDraw(Game game, GameDeck gameDeck) throws IOException, InterruptedException {
+        int numPlayers = game.getPlayers().size();
+        String player = "player";
+        String card_group = "1";
+        String giveDeactivation = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s";
+        HttpResponse<String> pileRes = null;
+
+        for(int i=0; i<numPlayers;i++){
+            // Give each player a deactivation
+            if(i%4 == 0){
+                // TODO : Change joker for the actual code of joker
+                card_group = "JOKER"; // We have 5 players
+            }
+            giveDeactivation = String.format(giveDeactivation, gameDeck.getDeckID(), "player"+(i+1), card_group+suits.get(i));
+            HttpRequest deactivationRequest = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(giveDeactivation))
+                    .build();
+
+            HttpResponse<String> deactivationResponse = httpClient.send(deactivationRequest, HttpResponse.BodyHandlers.ofString());
+            logger.info(deactivationResponse.body());
+
+            // Give each player the rest of cards
+            List<Card> cards = drawCards(gameDeck, 7);
+
+        }
+        // Add bombs to the deck
+        String returnURI = "https://www.deckofcardsapi.com/api/deck/%s/return/?cards=%s";
+
+        for(int i=0; i<numPlayers-1;i++){
+            returnURI = String.format(returnURI, gameDeck.getDeckID(), "A"+suits.get(i));
+            HttpRequest returnBombReq = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(returnURI))
+                    .build();
+
+            HttpResponse<String> returnBombRes = httpClient.send(returnBombReq, HttpResponse.BodyHandlers.ofString());
+            logger.info(returnBombRes.body());
+        }
+    }
+
+    String cardMapper(String value){
+        return dictionary.get(String.valueOf(value.charAt(0)));
     }
 }

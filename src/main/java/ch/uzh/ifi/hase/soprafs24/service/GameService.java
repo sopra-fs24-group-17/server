@@ -67,7 +67,9 @@ public class GameService {
 
         try {
             // Create corresponding deck of cards for the game
-            GameDeck gameDeck = gameDeckService.fetchDeck(game);
+            GameDeck gameDeck = gameDeckService.fetchDeck(game, true);
+            // Create piles for each player
+            gameDeckService.initialDraw(game, gameDeck);
 
             game.setGameDeck(gameDeck);
             Game updatedGame = gameRepository.saveAndFlush(game);
