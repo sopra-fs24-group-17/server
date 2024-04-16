@@ -57,7 +57,7 @@ public class GameDeckService {
         put("J", "cat_5");
         put("Q", "future");
         put("K", "no");
-        put("JOKER", "deactivation"); // TODO : Modify this to the current value of joker
+        put("X", "deactivation");
     }};
 
     @Autowired
@@ -243,10 +243,9 @@ public class GameDeckService {
         for(int i=0; i<numPlayers;i++){
             // Give each player a deactivation
             if(i%4 == 0){
-                // TODO : Change joker for the actual code of joker
-                card_group = "JOKER"; // We have 5 players
+                card_group = "X"; // We have 5 players
             }
-            giveDeactivation = String.format(giveDeactivation, gameDeck.getDeckID(), "player"+(i+1), card_group+suits.get(i));
+            giveDeactivation = String.format(giveDeactivation, gameDeck.getDeckID(), player+(i+1), card_group+suits.get(i));
             HttpRequest deactivationRequest = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(giveDeactivation))
