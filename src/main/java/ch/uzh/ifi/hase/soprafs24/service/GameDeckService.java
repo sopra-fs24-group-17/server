@@ -97,7 +97,6 @@ public class GameDeckService {
 
         // For init of game deck from scratch we need to remove a deactivation for each player and there should be always 1 less explosion.
         if(init){
-            int numPlayers = game.getPlayers().size();
             HttpResponse<String> removeBombRes = null;
             // remove deactivation - better to handle it in the pile creator
             // remove all bombs
@@ -245,7 +244,7 @@ public class GameDeckService {
             if(i%4 == 0){
                 card_group = "X"; // We have 5 players
             }
-            giveDeactivation = String.format(giveDeactivation, gameDeck.getDeckID(), player+(i+1), card_group+suits.get(i));
+            giveDeactivation = String.format(giveDeactivation, gameDeck.getDeckID(), "player"+(i+1), card_group+suits.get(i));
             HttpRequest deactivationRequest = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(giveDeactivation))
