@@ -194,6 +194,22 @@ public class GameService {
     }
 
     /**
+     * Handler for the shuffle action card
+     *
+     */
+    public void shuffleAction(String token, Long gameId) throws IOException, InterruptedException {
+        Optional<Game> optionalGame = gameRepository.findByGameId(gameId);
+
+        if (!optionalGame.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
+        }
+
+        Game currentGame = optionalGame.get();
+        // Extract pile for each player
+        gameDeckService.shuffleCards(currentGame.getGameDeck());
+    }
+
+    /**
      * Generates a unique, six digit gameId
      * @return a unique, six digit gameId
      */
