@@ -44,20 +44,20 @@ public class GameDeckService {
     private List<Character> suits = new ArrayList<>(List.of('S', 'H', 'C', 'D'));
 
     private Map<String, String> dictionary = new HashMap<>() {{
-        put("A", "bomb");
-        put("2", "deactivation");
-        put("3", "cat_1");
-        put("4", "attack");
-        put("5", "skip");
-        put("6", "pick");
-        put("7", "shuffle");
-        put("8", "cat_2");
-        put("9", "cat_3");
-        put("0", "cat_4");
-        put("J", "cat_5");
-        put("Q", "future");
+        put("A", "Exploding Kitten"); // Would prefer only one word, but discuss this and if change required change FE aswell
+        put("2", "Defuse");
+        put("3", "Taco Cat"); // Same
+        put("4", "Attack");
+        put("5", "Skip");
+        put("6", "Favor");
+        put("7", "Shuffle");
+        put("8", "extra_cat");
+        put("9", "Cattermelon");
+        put("0", "Hairy Potato Cat"); //Same
+        put("J", "Beard Cat");
+        put("Q", "See the future"); //Same observation
         put("K", "no");
-        put("X", "deactivation");
+        put("X", "Defuse");
     }};
 
     @Autowired
@@ -111,6 +111,8 @@ public class GameDeckService {
                 removeBombRes = httpClient.send(removeBombReq, HttpResponse.BodyHandlers.ofString());
                 logger.info(removeBombRes.body());
             }
+            // Shuffle deck so we can start sharing cars
+            shuffleCards(gameDeck);
             // Refresh info of deck req
             if(removeBombRes != null){
                 rootNode = objectMapper.readTree(removeBombRes.body());
@@ -270,6 +272,8 @@ public class GameDeckService {
             HttpResponse<String> returnBombRes = httpClient.send(returnBombReq, HttpResponse.BodyHandlers.ofString());
             logger.info(returnBombRes.body());
         }
+        // We need to reshuffle the deck
+        shuffleCards(gameDeck);
     }
 
     String cardMapper(String value){
