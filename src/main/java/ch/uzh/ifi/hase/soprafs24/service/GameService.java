@@ -189,6 +189,8 @@ public class GameService {
         Game currentGame = optionalGame.get();
         // Extract pile for each player
         gameDeckService.initialDraw(currentGame, currentGame.getGameDeck()); // Store which card for each player??
+        // Generates the dealerStack from which cards will be drawn during the game session
+        gameDeckService.createDealerPile(currentGame);
         // Define turns
         return startTurns(currentGame);
     }
