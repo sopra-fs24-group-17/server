@@ -19,9 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -67,7 +66,7 @@ public class GameService {
 
         try {
             // Create corresponding deck of cards for the game
-            GameDeck gameDeck = gameDeckService.fetchDeck(game);
+            GameDeck gameDeck = gameDeckService.fetchDeck(game, true);
 
             game.setGameDeck(gameDeck);
             Game updatedGame = gameRepository.saveAndFlush(game);
@@ -161,6 +160,37 @@ public class GameService {
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not part of the game");
         }
+    }
+
+    public Game startTurns(Game game) {
+        List<Integer> playerIndices = new ArrayList<>();
+        int num_players = game.getPlayers().size();
+        for (int i = 0; i < num_players; i++) {
+            playerIndices.add(i);
+        }
+        Collections.shuffle(playerIndices); // Shuffle the indices
+        String turns = playerIndices.stream().map(Object::toString).collect(Collectors.joining(" "));
+        game.setTurns(turns);
+        gameRepository.save(game);
+        return game;
+    }
+
+    /**
+     * Set a new game
+     * @return a game with turns and initial hands
+     */
+    public Game startGame(String token, Long gameId) throws IOException, InterruptedException {
+        Optional<Game> optionalGame = gameRepository.findByGameId(gameId);
+
+        if (!optionalGame.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
+        }
+
+        Game currentGame = optionalGame.get();
+        // Extract pile for each player
+        gameDeckService.initialDraw(currentGame, currentGame.getGameDeck()); // Store which card for each player??
+        // Define turns
+        return startTurns(currentGame);
     }
 
     /**

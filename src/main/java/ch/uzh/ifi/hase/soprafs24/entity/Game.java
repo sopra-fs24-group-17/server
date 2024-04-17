@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs24.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameMode;
@@ -48,6 +49,9 @@ public class Game implements Serializable {
 
     @Column(nullable = true)
     private Long scoreBoard;
+
+    @Column(nullable = true)
+    private String turns;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
