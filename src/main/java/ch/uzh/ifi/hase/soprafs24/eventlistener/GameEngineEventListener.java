@@ -1,9 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.eventlistener;
 
-import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
-import ch.uzh.ifi.hase.soprafs24.event.GameCreationEvent;
-import ch.uzh.ifi.hase.soprafs24.event.PeekIntoDeckEvent;
-import ch.uzh.ifi.hase.soprafs24.event.ShufflingEvent;
+import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +36,12 @@ public class GameEngineEventListener {
     public void onPeekIntoDeck(PeekIntoDeckEvent event) {
         logger.info("PeekIntoDeckEvent triggered for game ID: {} by user {}", event.getGameId(), event.getInvokingPlayerUserName());
         webSocketService.sendMessagePeekIntoDeck(event.getGameId(), event.getInvokingPlayerUserName());
+    }
+
+    @EventListener
+    public void returnExplosionToDeck(ExplosionReturnedToDeckEvent event) {
+        logger.info("ExplosionReturnedToDeckEvent triggered for game ID: {} by user {}", event.getGameId(), event.getInvokingPlayerUserName());
+        webSocketService.sendMessageExplosionReturnedToDeck(event.getGameId(), event.getInvokingPlayerUserName());
     }
 
 }
