@@ -4,11 +4,11 @@ import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
+import ch.uzh.ifi.hase.soprafs24.event.PeekIntoDeckEvent;
 import ch.uzh.ifi.hase.soprafs24.event.ShufflingEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.coyote.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,7 +119,7 @@ public class GameDeckService {
 
         // Extraction of necessary variables
         gameDeck.setDeckID(rootNode.get("deck_id").asText());
-        gameDeck.setRemainingCards(rootNode.get("remaining").asLong());
+        gameDeck.setRemainingCards(rootNode.get("remaining").asInt());
         gameDeck.setGame(game);
         gameDeck = gameDeckRepository.saveAndFlush(gameDeck);
         return gameDeck;
@@ -134,26 +134,55 @@ public class GameDeckService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public List<Card> drawCards(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
+    public List<Card> drawCardsFromDeck(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
 
         if (numberOfCards > gameDeck.getRemainingCards()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
         }
 
-        String drawCardsUri = String.format("https://deckofcardsapi.com/api/deck/%s/draw/?count=%s", gameDeck.getDeckID(), numberOfCards);
+        String drawCardsFromDeckUri = String.format("https://deckofcardsapi.com/api/deck/%s/draw/?count=%s", gameDeck.getDeckID(), numberOfCards);
 
-        HttpRequest drawCardsRequest = HttpRequest.newBuilder()
+        HttpRequest drawCardsFromDeckRequest = HttpRequest.newBuilder()
                 .GET()
-                .uri(URI.create(drawCardsUri))
+                .uri(URI.create(drawCardsFromDeckUri))
                 .build();
 
-        HttpResponse<String> drawCardsResponse = httpClient.send(drawCardsRequest, HttpResponse.BodyHandlers.ofString());
-        logger.info(drawCardsResponse.body());
+        HttpResponse<String> drawCardsFromDeckResponse = httpClient.send(drawCardsFromDeckRequest, HttpResponse.BodyHandlers.ofString());
+        logger.info(drawCardsFromDeckResponse.body());
 
-        List<Card> cards = parseCards(drawCardsResponse.body(), gameDeck);
+        List<Card> cards = parseCards(drawCardsFromDeckResponse.body(), gameDeck);
 
         cards = cardRepository.saveAll(cards);
         cardRepository.flush();
+
+        return cards;
+    }
+
+    /**
+     * Allows drawing a specified number of cards from the dealer pile.
+     * An exception is thrown if the number of cards to be drawn exceeds the available cards in the pile.
+     * @param gameDeck object from whose dealer stack the cards shall be drawn.
+     * @param numberOfCards specifying how many cards are to be drawn.
+     * @return the cards objects.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
+        if (numberOfCards > gameDeck.getRemainingCardsDealerStack()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
+        }
+
+        String drawCardsFromPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?count=%s", gameDeck.getDeckID(), gameDeck.getDealerPileId(), numberOfCards);
+
+        HttpRequest drawCardsFromPileRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(drawCardsFromPileUri))
+                .build();
+
+        HttpResponse<String> drawCardsFromPileResponse = httpClient.send(drawCardsFromPileRequest, HttpResponse.BodyHandlers.ofString());
+        logger.info(drawCardsFromPileResponse.body());
+
+        List<Card> cards = parseCards(drawCardsFromPileResponse.body(), gameDeck);
 
         // Publish a draw cards event
         DrawCardsEvent drawCardsEvent = new DrawCardsEvent(this, numberOfCards, gameDeck.getGame().getGameId(), "placeholder");
@@ -161,6 +190,7 @@ public class GameDeckService {
 
         return cards;
     }
+
 
     /**
      * Allows shuffling of a card deck
@@ -219,7 +249,7 @@ public class GameDeckService {
         }
 
         // Update remaining cards in the deck
-        gameDeck.setRemainingCards(rootNode.get("remaining").asLong());
+        gameDeck.setRemainingCards(rootNode.get("remaining").asInt());
         gameDeckRepository.saveAndFlush(gameDeck);
 
         return cards;
@@ -228,8 +258,8 @@ public class GameDeckService {
     /**
      * Draw the initial set of piles for the players
      * @param gameDeck object from which the cards were drawn.
-     * @return cards objects.
      * @throws IOException
+     * @throws InterruptedException
      **/
     // For the moment void. We are storing the cards in each player hand in the http response body
     public void initialDraw(Game game, GameDeck gameDeck) throws IOException, InterruptedException {
@@ -254,7 +284,7 @@ public class GameDeckService {
             logger.info(deactivationResponse.body());
 
             // Give each player the rest of cards
-            List<Card> cards = drawCards(gameDeck, 7);
+            List<Card> cards = drawCardsFromDeck(gameDeck, 7);
 
         }
         // Add bombs to the deck
@@ -270,6 +300,91 @@ public class GameDeckService {
             HttpResponse<String> returnBombRes = httpClient.send(returnBombReq, HttpResponse.BodyHandlers.ofString());
             logger.info(returnBombRes.body());
         }
+    }
+
+    /**
+     * Generates a dealer pile by transferting all cards from a deck to a pile called "dealer"
+     * @param game object for which the dealer pile shall be created
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void createDealerPile(Game game) throws IOException, InterruptedException {
+
+        // Deplete cardDeck entirely
+        List<Card> drawnCards = drawCardsFromDeck(game.getGameDeck(), game.getGameDeck().getRemainingCards());
+
+        // Add cards to the dealer pile
+        List<String> cardValues = new ArrayList<>();
+
+        for (Card card : drawnCards) {
+            cardValues.add(card.getCode());
+        }
+
+        // Concatenates all drawn cards and adds them to the dealer pile. Note: order gets reverted as such.
+        String joinedCardValues = String.join(",", cardValues);
+
+        String createDealerPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/dealer/add/?cards=%s", game.getGameDeck().getDeckID(), joinedCardValues);
+
+        HttpRequest createDealerPileRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(createDealerPileUri))
+                .build();
+
+        HttpResponse<String> createDealerPileResponse = httpClient.send(createDealerPileRequest, HttpResponse.BodyHandlers.ofString());
+        logger.info(createDealerPileResponse.body());
+
+        game.getGameDeck().setDealerPileId("dealer");
+        game.getGameDeck().setRemainingCardsDealerStack(game.getGameDeck().getRemainingCards());
+        game.getGameDeck().setRemainingCards(0);
+        gameDeckRepository.saveAndFlush(game.getGameDeck());
+    }
+
+    /**
+     * This method shall be called dynamically to update the top three cards in the dealer pile.
+     * @param game
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public List<Card> peekIntoDealerPile(Game game) throws IOException, InterruptedException {
+
+        List<Card> topThreeCards = drawCardsFromDealerPile(game.getGameDeck(), 3);
+
+        List<String> cardsToBePlacedBackOnDealerPile = new ArrayList<>();
+
+        for (Card card : topThreeCards) {
+            cardsToBePlacedBackOnDealerPile.add(card.getCode());
+        }
+
+        // Place cards back to the dealer pile
+        String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile);
+        returnCardsToDealerPile(game, returnCards);
+
+        // Publish event for peeking into deck
+        PeekIntoDeckEvent peekIntoDeckEvent = new PeekIntoDeckEvent(this, game.getGameId(), "placeholder");
+        eventPublisher.publishEvent(peekIntoDeckEvent);
+
+        return topThreeCards;
+    }
+
+    /**
+     * Helper method that places cards on top of the dealer pile
+     * @param game object for which the cards shall be placed on top of the dealer pile.
+     * @param cardsToBeReturned a string of the cards to be returned, like "AS,KS,X1"
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void returnCardsToDealerPile(Game game, String cardsToBeReturned) throws IOException, InterruptedException {
+
+        String returnCardsToPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/return/?cards=%s", game.getGameDeck().getDeckID(), game.getGameDeck().getDealerPileId(), cardsToBeReturned);
+
+        HttpRequest returnCardsToDealerPileRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(returnCardsToPileUri))
+                .build();
+
+        HttpResponse<String> returnCardsToDealerPileResponse = httpClient.send(returnCardsToDealerPileRequest, HttpResponse.BodyHandlers.ofString());
+        logger.info(returnCardsToDealerPileResponse.body());
+
     }
 
     String cardMapper(String value){
