@@ -443,6 +443,7 @@ public class GameDeckService {
             for (Card card : drawnDeck) {
                 cardsToBePlacedBackOnDealerPile.add(card.getCode());
             }
+
             String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + cardToBeReturned.getCode();
             returnCardsToDealerPile(game, returnCards);
         }
@@ -453,6 +454,7 @@ public class GameDeckService {
             for (Card card : drawnCards) {
                 cardsToBePlacedBackOnDealerPile.add(card.getCode());
             }
+
             String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + cardToBeReturned.getCode();
             returnCardsToDealerPile(game, returnCards);
         }

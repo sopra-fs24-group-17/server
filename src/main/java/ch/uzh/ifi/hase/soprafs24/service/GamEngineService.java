@@ -1,2 +1,4 @@
-package ch.uzh.ifi.hase.soprafs24.service;public class GamEngineService {
+package ch.uzh.ifi.hase.soprafs24.service;
+
+public class GamEngineService {
 }

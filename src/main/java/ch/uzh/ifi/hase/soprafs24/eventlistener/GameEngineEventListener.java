@@ -43,5 +43,4 @@ public class GameEngineEventListener {
         logger.info("ExplosionReturnedToDeckEvent triggered for game ID: {} by user {}", event.getGameId(), event.getInvokingPlayerUserName());
         webSocketService.sendMessageExplosionReturnedToDeck(event.getGameId(), event.getInvokingPlayerUserName());
     }
-
 }
