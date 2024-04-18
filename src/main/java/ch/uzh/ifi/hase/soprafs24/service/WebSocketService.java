@@ -86,6 +86,14 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
+    public void sendMessageExplosionReturnedToDeck(Long gameId, String invokingPlayerUserName) {
+        JSONObject message = new JSONObject();
+        message.put("type", "placedBackToDeck");
+        message.put("gameId", gameId);
+        message.put("user", invokingPlayerUserName);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+    }
 
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);

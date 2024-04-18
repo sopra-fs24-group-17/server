@@ -4,6 +4,7 @@ import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
+import ch.uzh.ifi.hase.soprafs24.event.ExplosionReturnedToDeckEvent;
 import ch.uzh.ifi.hase.soprafs24.event.PeekIntoDeckEvent;
 import ch.uzh.ifi.hase.soprafs24.event.ShufflingEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
@@ -191,7 +192,6 @@ public class GameDeckService {
         return cards;
     }
 
-
     /**
      * Allows shuffling of a card deck
      * @param gameDeck object which shall be reshuffled
@@ -200,7 +200,7 @@ public class GameDeckService {
      */
     public void shuffleCards(GameDeck gameDeck) throws IOException, InterruptedException {
 
-        if (gameDeck.getRemainingCards() >=1) {
+        if (gameDeck.getRemainingCards() <=1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shuffle doesn't alter the state of the remaining deck");
         }
 
@@ -219,6 +219,32 @@ public class GameDeckService {
         eventPublisher.publishEvent(shufflingEvent);
     }
 
+    /**
+     * Allows shuffling of a card deck
+     * @param gameDeck object which shall be reshuffled
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void shuffleCardsInPile(GameDeck gameDeck) throws IOException, InterruptedException {
+
+        if (gameDeck.getRemainingCardsDealerStack() <=1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shuffle doesn't alter the state of the remaining pile");
+        }
+
+        String shuffleCardsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/shuffle/", gameDeck.getDeckID(), gameDeck.getDealerPileId());
+
+        HttpRequest shuffleCardsRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(shuffleCardsUri))
+                .build();
+
+        HttpResponse<String> shuffleCardsResponse = httpClient.send(shuffleCardsRequest, HttpResponse.BodyHandlers.ofString());
+        logger.info(shuffleCardsResponse.body());
+
+        // Publish a shuffling event
+        ShufflingEvent shufflingEvent = new ShufflingEvent(this, gameDeck.getGame().getGameId(), "placeholder");
+        eventPublisher.publishEvent(shufflingEvent);
+    }
 
     /**
      * Helper method to parse the response from the draw cards api call.
@@ -384,9 +410,60 @@ public class GameDeckService {
 
         HttpResponse<String> returnCardsToDealerPileResponse = httpClient.send(returnCardsToDealerPileRequest, HttpResponse.BodyHandlers.ofString());
         logger.info(returnCardsToDealerPileResponse.body());
-
     }
 
+    /**
+     * Allows returning of an explosion card to the dealer pile at an arbitrary location
+     * @param game object in which the card is to be returned
+     * @param location at which the returned explosion card is to be placed
+     * 69 or an integer smaller than -1 -> random location
+     * 0 -> top of the pile
+     * -1 or a location that exceeds the number of remaining cards in the dealer pile returns it to the bottom of the pile
+     *  any other integer > 0 and smaller than the number of remaining cards invokes an exact placement at the desired location.
+     * @param cardToBeReturned
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void returnExplosionCardToDealerPile(Game game, Integer location, Card cardToBeReturned) throws IOException, InterruptedException {
+
+        // Random placement in the pile
+        if (location == 69 || location < -1) {
+            returnCardsToDealerPile(game, cardToBeReturned.getCode());
+            shuffleCardsInPile(game.getGameDeck());
+        }
+        // Return to Top of Stack
+        else if (location == 0) {
+            returnCardsToDealerPile(game, cardToBeReturned.getCode());
+        }
+        // Return to Bottom of Stack
+        else if (location == -1 || game.getGameDeck().getRemainingCards() <= location) {
+            List<Card> drawnDeck = drawCardsFromDealerPile(game.getGameDeck(), game.getGameDeck().getRemainingCardsDealerStack());
+            List<String> cardsToBePlacedBackOnDealerPile = new ArrayList<>();
+
+            for (Card card : drawnDeck) {
+                cardsToBePlacedBackOnDealerPile.add(card.getCode());
+            }
+
+            String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + cardToBeReturned.getCode();
+            returnCardsToDealerPile(game, returnCards);
+        }
+        else {
+            List<Card> drawnCards = drawCardsFromDealerPile(game.getGameDeck(), location);
+            List<String> cardsToBePlacedBackOnDealerPile = new ArrayList<>();
+
+            for (Card card : drawnCards) {
+                cardsToBePlacedBackOnDealerPile.add(card.getCode());
+            }
+
+            String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + cardToBeReturned.getCode();
+            returnCardsToDealerPile(game, returnCards);
+        }
+
+        // Publish event for returning explosion card
+        ExplosionReturnedToDeckEvent explosionReturnedToDeckEvent = new ExplosionReturnedToDeckEvent(this, game.getGameId(), "placeholder");
+        eventPublisher.publishEvent(explosionReturnedToDeckEvent);
+    }
+    
     String cardMapper(String value){
         return dictionary.get(String.valueOf(value.charAt(0)));
     }
