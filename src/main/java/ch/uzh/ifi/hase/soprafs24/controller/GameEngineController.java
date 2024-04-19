@@ -1,21 +1,30 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
+import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import java.io.IOException;
 
 @Controller
 public class GameEngineController {
 
     @Autowired
     private GameDeckService gameDeckService;
+
+    @Autowired
+    private GameEngineService gameEngineService;
 
     @Autowired
     private WebSocketService webSocketService;
@@ -48,21 +57,18 @@ public class GameEngineController {
 
     @MessageMapping("/start/{gameId}")
     public void handleStartGame(
-            @PathVariable("gameId") Long gameId) {
+            @DestinationVariable("gameId") Long gameId) throws IOException, InterruptedException {
 
         logger.info(String.format("Game: %s, started" , gameId));
 
-        // To do -- handle start of game logic
+        // To do -- distribute cards (Jorge)
+        Game initializedGame = gameEngineService.startGame(gameId);
 
-        // Swap state of game to ACTIVE
+        // publish event including the distributed cards
 
-        // Distribute cards (Jorge)
-
-        // create dealer pile
-
-        // assign active player to be the first player in the list
 
         // publish an event that it's this players time to make a move
+
 
     }
 

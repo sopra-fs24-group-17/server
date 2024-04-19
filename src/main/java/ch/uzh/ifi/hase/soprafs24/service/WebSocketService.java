@@ -1,11 +1,15 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.event.GameStartEvent;
 import ch.uzh.ifi.hase.soprafs24.eventlistener.GameCreationEventListener;
+import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardGetDTO;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -93,6 +97,15 @@ public class WebSocketService {
         message.put("user", invokingPlayerUserName);
 
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    public void sendMessageGameStarted(Long gameId, Long userId, List<CardGetDTO> playerCards) {
+        JSONObject message = new JSONObject();
+        message.put("type", "start");
+        message.put("gameId", gameId);
+        // To Do -- append initial cards
+
+        this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
     }
 
     public void sendMessageGameCreated(Long gameId) {
