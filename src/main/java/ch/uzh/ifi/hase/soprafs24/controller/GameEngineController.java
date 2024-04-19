@@ -64,22 +64,23 @@ public class GameEngineController {
         // To do -- distribute cards (Jorge)
         Game initializedGame = gameEngineService.startGame(gameId);
 
-        // publish event including the distributed cards
-
-
-        // publish an event that it's this players time to make a move
-
-
     }
 
     @MessageMapping("/terminateMove/{gameId}/{userId}")
     public void handleTerminatingMove(
-            @PathVariable("gameId") Long gameId,
-            @PathVariable("userId") Long userId) {
+            @DestinationVariable("gameId") Long gameId,
+            @DestinationVariable("userId") Long userId) throws IOException, InterruptedException{
 
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
         // To do -- handle terminating move logic
+
+        // To do -- Awaiting mapper from Jorge
+        // User is required to draw a card from the dealer pile
+        // Send the card through the websocket to the user
+
+        // Handle turnValidation (finding next player and communicating through websocket)
+        gameEngineService.turnValidation(gameId, userId);
     }
 
     @MessageMapping("leaving/{gameId}/{userId}")

@@ -51,4 +51,16 @@ public class GameEngineEventListener {
         webSocketService.sendMessageGameStarted(event.getGameId(), event.getUserId(), event.getPlayerCards());
     }
 
+    @EventListener
+    public void yourTurn(YourTurnEvent event) {
+        logger.info("Player {}: Your turn", event.getUserId());
+        webSocketService.sendMessageYourTurn(event.getUserId(), event.getGameId());
+    }
+
+    @EventListener
+    public void endTurn(EndTurnEvent event) {
+        logger.info("Player {} terminated his turn", event.getUserName());
+        webSocketService.setSendMessageEndTurn(event.getGameId(), event.getUserName());
+    }
+
 }

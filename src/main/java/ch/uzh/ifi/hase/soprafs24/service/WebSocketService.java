@@ -108,6 +108,23 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
     }
 
+    public void sendMessageYourTurn(Long userId, Long gameId) {
+        JSONObject message = new JSONObject();
+        message.put("type", "startTurn");
+
+        this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    public void setSendMessageEndTurn(Long gameId, String userName) {
+        JSONObject message = new JSONObject();
+        message.put("type", "endTurn");
+        message.put("terminatingUser", userName);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+
+    }
+
+
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);
     }
