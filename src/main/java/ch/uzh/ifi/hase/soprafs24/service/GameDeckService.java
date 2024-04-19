@@ -96,28 +96,6 @@ public class GameDeckService {
         JsonNode rootNode = objectMapper.readTree(newDeckResponse.body());
         GameDeck gameDeck = new GameDeck();
 
-        // For init of game deck from scratch we need to remove a deactivation for each player and there should be always 1 less explosion.
-        if(init){
-            HttpResponse<String> removeBombRes = null;
-            // remove deactivation - better to handle it in the pile creator
-            // remove all bombs
-            for(int i = 0; i<4; i++){
-                String text = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s";
-                String removeBombURI = String.format(text, rootNode.get("deck_id").asText(), "bombs", "A"+suits.get(i));
-                HttpRequest removeBombReq = HttpRequest.newBuilder()
-                        .GET()
-                        .uri(URI.create(removeBombURI))
-                        .build();
-
-                removeBombRes = httpClient.send(removeBombReq, HttpResponse.BodyHandlers.ofString());
-                logger.info(removeBombRes.body());
-            }
-            // Refresh info of deck req
-            if(removeBombRes != null){
-                rootNode = objectMapper.readTree(removeBombRes.body());
-            }
-        }
-
         // Extraction of necessary variables
         gameDeck.setDeckID(rootNode.get("deck_id").asText());
         gameDeck.setRemainingCards(rootNode.get("remaining").asInt());

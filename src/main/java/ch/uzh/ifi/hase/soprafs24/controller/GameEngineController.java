@@ -31,6 +31,19 @@ public class GameEngineController {
         logger.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
 
         // To do -- handle game logic
+
+        // Shuffling
+
+        // Drawing
+
+        // Explosion drawn -> don't end user's turn, await for his defuse card, else count as loss and put the user out of the game.
+        // Ensure that he is skipped for the next iterations
+
+        // Playing defuse card -> place explosion back on deck
+
+        // Skip -> end turn without drawing
+
+        // No -> block another users action -> wait on client side for couple of seconds after card play to see if a user interferes
     }
 
     @MessageMapping("/start/{gameId}")
@@ -40,6 +53,17 @@ public class GameEngineController {
         logger.info(String.format("Game: %s, started" , gameId));
 
         // To do -- handle start of game logic
+
+        // Swap state of game to ACTIVE
+
+        // Distribute cards (Jorge)
+
+        // create dealer pile
+
+        // assign active player to be the first player in the list
+
+        // publish an event that it's this players time to make a move
+
     }
 
     @MessageMapping("/terminateMove/{gameId}/{userId}")
@@ -60,5 +84,9 @@ public class GameEngineController {
         logger.info(String.format("User %s left game %s" , userId, gameId));
 
         // To do -- handle leaving user logic
+
+        // Update gamesPlayed count for each player
+
+        // Consider this as a loss
     }
 }
