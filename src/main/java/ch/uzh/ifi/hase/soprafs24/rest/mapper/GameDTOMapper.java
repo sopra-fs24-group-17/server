@@ -14,12 +14,17 @@ public interface GameDTOMapper {
 
     GameDTOMapper INSTANCE = Mappers.getMapper(GameDTOMapper.class);
 
+    default Integer calculateAvailableSlots(Game game) {
+        return game.getMaxPlayers() - game.getPlayers().size();
+    }
+
     // Mapping for Game to GameGetDTO
     @Mapping(source = "gameId", target = "gameId")
     @Mapping(source = "mode", target = "mode")
     @Mapping(source = "maxPlayers", target = "maxPlayers")
     @Mapping(source = "initiatingUser.username", target = "initiatingUserName")
     @Mapping(source = "state", target = "state")
+    @Mapping(target = "availableSlots", expression = "java(calculateAvailableSlots(game))")
     @Mapping(target = "deckId", ignore = true)
     GameGetDTO convertEntityToGameGetDTO(Game game);
 

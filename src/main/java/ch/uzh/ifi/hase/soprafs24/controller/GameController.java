@@ -6,9 +6,9 @@ import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 public class GameController {
@@ -47,7 +47,7 @@ public class GameController {
      * Allows a user to leave a game. Leaving the game is only possible if the game hasn't started so far (state = Preparation)
      * @param token of the user leaving a particular game
      * @param gameId of the game that the user wants to leave.
-     * @return a GameGETDTO instance containing gameId, mode, max-player count and name of the initiating user.
+     * @return a GameGETDTO instance containing gameId, mode, max-player count, name of the initiating user and available slots.
      */
     @PutMapping("/dashboard/games/leave/{gameId}")
     @ResponseStatus(HttpStatus.OK)
@@ -57,4 +57,20 @@ public class GameController {
         return GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(updatedGame);
     }
 
+    /**
+     * API endpoint to fetch all public games that are still in preparation phase
+     * @param token of the user requesting to see all public games
+     * @return a list of GameGetDTO isntances.
+     */
+    @GetMapping("dashboard/games")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<GameGetDTO> getAllJoinablePublicGames(@RequestHeader("token") String token) {
+        List<Game> preparingGames = gameService.getGames(token);
+        List<GameGetDTO> gameGetDTOs = new ArrayList<>();
+        for (Game game : preparingGames) {
+            gameGetDTOs.add(GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(game));
+        }
+        return gameGetDTOs;
+    }
 }
