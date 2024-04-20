@@ -255,7 +255,7 @@ public class GameDeckService {
         }
 
         // Update remaining cards in the deck
-        gameDeck.setRemainingCards(rootNode.get("remaining").asInt());
+        //gameDeck.setRemainingCards(rootNode.get("remaining").asInt());
         gameDeckRepository.saveAndFlush(gameDeck);
 
         return cards;
@@ -271,7 +271,6 @@ public class GameDeckService {
     public void initialDraw(Game game, GameDeck gameDeck) throws IOException, InterruptedException {
         int numPlayers = game.getPlayers().size();
         Set<User> Players = game.getPlayers();
-        String card_group = "1";
         String drawFromPile = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s";
         String addToPile = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s";
         String createPlayerPile = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s";
@@ -280,16 +279,18 @@ public class GameDeckService {
 
         // Remove required deactivations
         for(int i = 0; i<numPlayers; i++){
-            if(i%4 == 0){
+            if(i!=0 && i%4 == 0){
                 deactivations.add("X1"); // We have 5 players, we add a joker
             }else
-                deactivations.add("1"+suits.get(player_counter));
+                deactivations.add("2"+suits.get(i));
         }
         String drawFromPileURI = String.format(drawFromPile, gameDeck.getDeckID(), gameDeck.getDealerPileId(), String.join(",", bombs)+","+String.join(",", deactivations));
         HttpRequest drawFromPileReq = HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(drawFromPileURI))
                 .build();
+        logger.info("Remove deactivations and bombs");
+        logger.info(drawFromPileURI);
         HttpResponse<String> drawFromPileRes = httpClient.send(drawFromPileReq, HttpResponse.BodyHandlers.ofString());
         logger.info(drawFromPileRes.body());
 
@@ -301,7 +302,8 @@ public class GameDeckService {
                     .GET()
                     .uri(URI.create(addToPileURI))
                     .build();
-
+            logger.info("Add top deactivation to pile");
+            logger.info(addToPileURI);
             HttpResponse<String> addToPileRes = httpClient.send(addToPileReq, HttpResponse.BodyHandlers.ofString());
             logger.info(addToPileRes.body());
 
@@ -317,7 +319,8 @@ public class GameDeckService {
                     .GET()
                     .uri(URI.create(createPlayerPileURI))
                     .build();
-
+            logger.info("Create player pile");
+            logger.info(createPlayerPileURI);
             HttpResponse<String> createPlayerPileRes = httpClient.send(createPlayerPileReq, HttpResponse.BodyHandlers.ofString());
             logger.info(createPlayerPileRes.body());
             player_counter++;
@@ -329,7 +332,8 @@ public class GameDeckService {
                 .GET()
                 .uri(URI.create(addToPileURI))
                 .build();
-
+        logger.info("Add bombs");
+        logger.info(addToPileURI);
         HttpResponse<String> addToPileRes = httpClient.send(addToPileReq, HttpResponse.BodyHandlers.ofString());
         logger.info(addToPileRes.body());
 
@@ -369,7 +373,7 @@ public class GameDeckService {
         logger.info(createDealerPileResponse.body());
 
         game.getGameDeck().setDealerPileId("dealer");
-        game.getGameDeck().setRemainingCardsDealerStack(game.getGameDeck().getRemainingCards());
+        game.getGameDeck().setRemainingCardsDealerStack(54);
         game.getGameDeck().setRemainingCards(0);
         gameDeckRepository.saveAndFlush(game.getGameDeck());
     }

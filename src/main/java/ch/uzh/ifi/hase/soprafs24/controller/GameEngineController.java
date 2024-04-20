@@ -7,10 +7,14 @@ import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.io.IOException;
 
@@ -69,6 +73,27 @@ public class GameEngineController {
         // publish an event that it's this players time to make a move
 
     }
+
+    // THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE
+//    @GetMapping ("/start/{gameId}")
+//    @ResponseStatus(HttpStatus.OK)
+//    @ResponseBody
+//    public void test_handleStartGame(
+//            @PathVariable("gameId") Long gameId) throws IOException, InterruptedException {
+//
+//        logger.info(String.format("Game: %s, started" , gameId));
+//
+//        // To do -- handle start of game logic
+//        // Swap state of game to ACTIVE
+//        // Distribute cards (Jorge)
+//        // create dealer pile
+//        gameService.startGame(gameId);
+//
+//        // assign active player to be the first player in the list
+//
+//        // publish an event that it's this players time to make a move
+//
+//    }
 
     @MessageMapping("/terminateMove/{gameId}/{userId}")
     public void handleTerminatingMove(
