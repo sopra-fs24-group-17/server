@@ -179,7 +179,7 @@ public class GameService {
      * Set a new game
      * @return a game with turns and initial hands
      */
-    public Game startGame(String token, Long gameId) throws IOException, InterruptedException {
+    public Game startGame(Long gameId) throws IOException, InterruptedException {
         Optional<Game> optionalGame = gameRepository.findByGameId(gameId);
 
         if (!optionalGame.isPresent()) {
@@ -187,10 +187,13 @@ public class GameService {
         }
 
         Game currentGame = optionalGame.get();
-        // Extract pile for each player
-        gameDeckService.initialDraw(currentGame, currentGame.getGameDeck()); // Store which card for each player??
+        // set game as active
+        currentGame.setState(GameState.ONGOING);
+        gameRepository.save(currentGame);
         // Generates the dealerStack from which cards will be drawn during the game session
         gameDeckService.createDealerPile(currentGame);
+        // Extract pile for each player
+        gameDeckService.initialDraw(currentGame, currentGame.getGameDeck()); // Store which card for each player??
         // Define turns
         return startTurns(currentGame);
     }

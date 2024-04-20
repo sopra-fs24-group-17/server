@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs24.service;
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
+import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
 import ch.uzh.ifi.hase.soprafs24.event.ExplosionReturnedToDeckEvent;
 import ch.uzh.ifi.hase.soprafs24.event.PeekIntoDeckEvent;
@@ -10,6 +11,7 @@ import ch.uzh.ifi.hase.soprafs24.event.ShufflingEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.api.services.sqladmin.SQLAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.server.ResponseStatusException;
@@ -60,6 +59,9 @@ public class GameDeckService {
         put("K", "no");
         put("X", "deactivation");
     }};
+
+    private List<String> bombs = new ArrayList<>(List.of("AS", "AH", "AC", "AD"));
+    private List<String> deactivations = new ArrayList<>();
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -268,42 +270,71 @@ public class GameDeckService {
     // For the moment void. We are storing the cards in each player hand in the http response body
     public void initialDraw(Game game, GameDeck gameDeck) throws IOException, InterruptedException {
         int numPlayers = game.getPlayers().size();
-        String player = "player";
+        Set<User> Players = game.getPlayers();
         String card_group = "1";
-        String giveDeactivation = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s";
+        String drawFromPile = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s";
+        String addToPile = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s";
+        String createPlayerPile = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s";
         HttpResponse<String> pileRes = null;
+        int player_counter = 0;
 
-        for(int i=0; i<numPlayers;i++){
-            // Give each player a deactivation
+        // Remove required deactivations
+        for(int i = 0; i<numPlayers; i++){
             if(i%4 == 0){
-                card_group = "X"; // We have 5 players
-            }
-            giveDeactivation = String.format(giveDeactivation, gameDeck.getDeckID(), "player"+(i+1), card_group+suits.get(i));
-            HttpRequest deactivationRequest = HttpRequest.newBuilder()
+                deactivations.add("X1"); // We have 5 players, we add a joker
+            }else
+                deactivations.add("1"+suits.get(player_counter));
+        }
+        String drawFromPileURI = String.format(drawFromPile, gameDeck.getDeckID(), gameDeck.getDealerPileId(), String.join(",", bombs)+","+String.join(",", deactivations));
+        HttpRequest drawFromPileReq = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(drawFromPileURI))
+                .build();
+        HttpResponse<String> drawFromPileRes = httpClient.send(drawFromPileReq, HttpResponse.BodyHandlers.ofString());
+        logger.info(drawFromPileRes.body());
+
+        // Assign cards to each player
+        for(User user : Players){
+            // Give each player a deactivation
+            String addToPileURI = String.format(addToPile, gameDeck.getDeckID(), gameDeck.getDealerPileId(), deactivations.get(player_counter));
+            HttpRequest addToPileReq = HttpRequest.newBuilder()
                     .GET()
-                    .uri(URI.create(giveDeactivation))
+                    .uri(URI.create(addToPileURI))
                     .build();
 
-            HttpResponse<String> deactivationResponse = httpClient.send(deactivationRequest, HttpResponse.BodyHandlers.ofString());
-            logger.info(deactivationResponse.body());
+            HttpResponse<String> addToPileRes = httpClient.send(addToPileReq, HttpResponse.BodyHandlers.ofString());
+            logger.info(addToPileRes.body());
 
-            // Give each player the rest of cards
-            List<Card> cards = drawCardsFromDeck(gameDeck, 7);
+            // Give each player 8 top cars
+            List<Card> cards = drawCardsFromDealerPile(gameDeck, 8);
+            // Add cards to the dealer pile
+            List<String> cardValues = new ArrayList<>();
+            for (Card card : cards) {
+                cardValues.add(card.getCode());
+            }
+            String createPlayerPileURI = String.format(createPlayerPile, gameDeck.getDeckID(), user.getId(), String.join(",", cardValues));
+            HttpRequest createPlayerPileReq = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(URI.create(createPlayerPileURI))
+                    .build();
+
+            HttpResponse<String> createPlayerPileRes = httpClient.send(createPlayerPileReq, HttpResponse.BodyHandlers.ofString());
+            logger.info(createPlayerPileRes.body());
+            player_counter++;
 
         }
         // Add bombs to the deck
-        String returnURI = "https://www.deckofcardsapi.com/api/deck/%s/return/?cards=%s";
+        String addToPileURI = String.format(addToPile, gameDeck.getDeckID(), gameDeck.getDealerPileId(), String.join(",", bombs));
+        HttpRequest addToPileReq = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(addToPileURI))
+                .build();
 
-        for(int i=0; i<numPlayers-1;i++){
-            returnURI = String.format(returnURI, gameDeck.getDeckID(), "A"+suits.get(i));
-            HttpRequest returnBombReq = HttpRequest.newBuilder()
-                    .GET()
-                    .uri(URI.create(returnURI))
-                    .build();
+        HttpResponse<String> addToPileRes = httpClient.send(addToPileReq, HttpResponse.BodyHandlers.ofString());
+        logger.info(addToPileRes.body());
 
-            HttpResponse<String> returnBombRes = httpClient.send(returnBombReq, HttpResponse.BodyHandlers.ofString());
-            logger.info(returnBombRes.body());
-        }
+        // Shuffle the dealer pile
+        shuffleCardsInPile(gameDeck);
     }
 
     /**

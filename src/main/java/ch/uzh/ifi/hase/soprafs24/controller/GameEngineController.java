@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
+import ch.uzh.ifi.hase.soprafs24.service.GameService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
 import org.slf4j.Logger;
@@ -11,11 +12,16 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.io.IOException;
+
 @Controller
 public class GameEngineController {
 
     @Autowired
     private GameDeckService gameDeckService;
+
+    @Autowired
+    private GameService gameService;
 
     @Autowired
     private WebSocketService webSocketService;
@@ -48,17 +54,15 @@ public class GameEngineController {
 
     @MessageMapping("/start/{gameId}")
     public void handleStartGame(
-            @PathVariable("gameId") Long gameId) {
+            @PathVariable("gameId") Long gameId) throws IOException, InterruptedException {
 
         logger.info(String.format("Game: %s, started" , gameId));
 
         // To do -- handle start of game logic
-
         // Swap state of game to ACTIVE
-
         // Distribute cards (Jorge)
-
         // create dealer pile
+        gameService.startGame(gameId);
 
         // assign active player to be the first player in the list
 
