@@ -43,4 +43,24 @@ public class GameEngineEventListener {
         logger.info("ExplosionReturnedToDeckEvent triggered for game ID: {} by user {}", event.getGameId(), event.getInvokingPlayerUserName());
         webSocketService.sendMessageExplosionReturnedToDeck(event.getGameId(), event.getInvokingPlayerUserName());
     }
+
+    @EventListener
+    public void startGame(GameStartEvent event) {
+        logger.info("Game: {}, Successfully started for user {}", event.getGameId(), event.getUserId());
+        // TO DO: Send playerIds and their initial cards
+        webSocketService.sendMessageGameStarted(event.getGameId(), event.getUserId(), event.getPlayerCards());
+    }
+
+    @EventListener
+    public void yourTurn(YourTurnEvent event) {
+        logger.info("Player {}: Your turn", event.getUserId());
+        webSocketService.sendMessageYourTurn(event.getUserId(), event.getGameId());
+    }
+
+    @EventListener
+    public void endTurn(EndTurnEvent event) {
+        logger.info("Player {} terminated his turn", event.getUserName());
+        webSocketService.setSendMessageEndTurn(event.getGameId(), event.getUserName());
+    }
+
 }

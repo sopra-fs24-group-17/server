@@ -1,21 +1,30 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
+import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import java.io.IOException;
 
 @Controller
 public class GameEngineController {
 
     @Autowired
     private GameDeckService gameDeckService;
+
+    @Autowired
+    private GameEngineService gameEngineService;
 
     @Autowired
     private WebSocketService webSocketService;
@@ -48,32 +57,30 @@ public class GameEngineController {
 
     @MessageMapping("/start/{gameId}")
     public void handleStartGame(
-            @PathVariable("gameId") Long gameId) {
+            @DestinationVariable("gameId") Long gameId) throws IOException, InterruptedException {
 
         logger.info(String.format("Game: %s, started" , gameId));
 
-        // To do -- handle start of game logic
-
-        // Swap state of game to ACTIVE
-
-        // Distribute cards (Jorge)
-
-        // create dealer pile
-
-        // assign active player to be the first player in the list
-
-        // publish an event that it's this players time to make a move
+        // To do -- distribute cards (Jorge)
+        Game initializedGame = gameEngineService.startGame(gameId);
 
     }
 
     @MessageMapping("/terminateMove/{gameId}/{userId}")
     public void handleTerminatingMove(
-            @PathVariable("gameId") Long gameId,
-            @PathVariable("userId") Long userId) {
+            @DestinationVariable("gameId") Long gameId,
+            @DestinationVariable("userId") Long userId) throws IOException, InterruptedException{
 
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
         // To do -- handle terminating move logic
+
+        // To do -- Awaiting mapper from Jorge
+        // User is required to draw a card from the dealer pile
+        // Send the card through the websocket to the user
+
+        // Handle turnValidation (finding next player and communicating through websocket)
+        gameEngineService.turnValidation(gameId, userId);
     }
 
     @MessageMapping("leaving/{gameId}/{userId}")

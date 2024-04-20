@@ -314,6 +314,8 @@ public class GameDeckService {
      */
     public void createDealerPile(Game game) throws IOException, InterruptedException {
 
+        Integer remainingCardsGameDeck = game.getGameDeck().getRemainingCards();
+
         // Deplete cardDeck entirely
         List<Card> drawnCards = drawCardsFromDeck(game.getGameDeck(), game.getGameDeck().getRemainingCards());
 
@@ -335,10 +337,10 @@ public class GameDeckService {
                 .build();
 
         HttpResponse<String> createDealerPileResponse = httpClient.send(createDealerPileRequest, HttpResponse.BodyHandlers.ofString());
-        logger.info(createDealerPileResponse.body());
+        //logger.info(createDealerPileResponse.body());
 
         game.getGameDeck().setDealerPileId("dealer");
-        game.getGameDeck().setRemainingCardsDealerStack(game.getGameDeck().getRemainingCards());
+        game.getGameDeck().setRemainingCardsDealerStack(remainingCardsGameDeck);
         game.getGameDeck().setRemainingCards(0);
         gameDeckRepository.saveAndFlush(game.getGameDeck());
     }

@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs24.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +39,7 @@ public class Game implements Serializable {
             joinColumns = @JoinColumn(name = "gameId"),
             inverseJoinColumns = @JoinColumn(name = "id")
     )
-    private Set<User> players = new HashSet<>();
+    private Set<User> players = new LinkedHashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "currentTurn", referencedColumnName = "id")

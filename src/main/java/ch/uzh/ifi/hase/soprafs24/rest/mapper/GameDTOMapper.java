@@ -20,7 +20,7 @@ public interface GameDTOMapper {
     @Mapping(source = "maxPlayers", target = "maxPlayers")
     @Mapping(source = "initiatingUser.username", target = "initiatingUserName")
     @Mapping(source = "state", target = "state")
-    @Mapping(target = "deckId", expression = "java(game.getGameDeck() != null ? game.getGameDeck().getDeckID() : null)")
+    @Mapping(target = "deckId", ignore = true)
     GameGetDTO convertEntityToGameGetDTO(Game game);
 
     // Conversion of GamePostDTO to Game Entity
