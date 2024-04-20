@@ -190,21 +190,21 @@ public class GameService {
      * Set a new game
      * @return a game with turns and initial hands
      */
-    public Game startGame(String token, Long gameId) throws IOException, InterruptedException {
-        Optional<Game> optionalGame = gameRepository.findByGameId(gameId);
-
-        if (!optionalGame.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
-        }
-
-        Game currentGame = optionalGame.get();
-        // Extract pile for each player
-        gameDeckService.initialDraw(currentGame, currentGame.getGameDeck()); // Store which card for each player??
-        // Generates the dealerStack from which cards will be drawn during the game session
-        gameDeckService.createDealerPile(currentGame);
-        // Define turns
-        return startTurns(currentGame);
-    }
+//    public Game startGame(String token, Long gameId) throws IOException, InterruptedException {
+//        Optional<Game> optionalGame = gameRepository.findByGameId(gameId);
+//
+//        if (!optionalGame.isPresent()) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
+//        }
+//
+//        Game currentGame = optionalGame.get();
+//        // Extract pile for each player
+//        gameDeckService.initialDraw(currentGame, currentGame.getGameDeck()); // Store which card for each player??
+//        // Generates the dealerStack from which cards will be drawn during the game session
+//        gameDeckService.createDealerPile(currentGame);
+//        // Define turns
+//        return startTurns(currentGame);
+//    }
 
     /**
      * Generates a unique, six digit gameId
