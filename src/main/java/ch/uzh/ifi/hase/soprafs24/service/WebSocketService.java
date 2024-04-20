@@ -121,9 +121,15 @@ public class WebSocketService {
         message.put("terminatingUser", userName);
 
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
-
     }
 
+    public void sendMessageEndGame(Long gameId, String userName) {
+        JSONObject message = new JSONObject();
+        message.put("type", "endGame");
+        message.put("winningUser", userName);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+    }
 
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);

@@ -39,6 +39,8 @@ public class GameEngineController {
 
         logger.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
 
+        // To do -- Awaiting mapper from Jorge
+
         // To do -- handle game logic
 
         // Shuffling
@@ -73,8 +75,6 @@ public class GameEngineController {
 
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
-        // To do -- handle terminating move logic
-
         // To do -- Awaiting mapper from Jorge
         // User is required to draw a card from the dealer pile
         // Send the card through the websocket to the user
@@ -85,15 +85,12 @@ public class GameEngineController {
 
     @MessageMapping("leaving/{gameId}/{userId}")
     public void handleLeavingUser(
-            @PathVariable("gamId") Long gameId,
-            @PathVariable("userId") Long userId) {
+            @DestinationVariable("gameId") Long gameId,
+            @DestinationVariable("userId") Long userId) throws IOException, InterruptedException {
 
         logger.info(String.format("User %s left game %s" , userId, gameId));
 
-        // To do -- handle leaving user logic
-
-        // Update gamesPlayed count for each player
-
-        // Consider this as a loss
+        // Handle user leaving an ongoing game session
+        gameEngineService.userLeavingOngoingGame(gameId, userId);
     }
 }

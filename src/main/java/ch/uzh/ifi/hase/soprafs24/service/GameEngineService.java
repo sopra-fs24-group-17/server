@@ -4,6 +4,7 @@ import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
+import ch.uzh.ifi.hase.soprafs24.event.EndGameEvent;
 import ch.uzh.ifi.hase.soprafs24.event.EndTurnEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameStartEvent;
 import ch.uzh.ifi.hase.soprafs24.event.YourTurnEvent;
@@ -55,16 +56,20 @@ public class GameEngineService {
         this.eventPublisher = eventPublisher;
     }
 
-    public Game startGame(Long gameId) throws IOException, InterruptedException {
-
+    public Game findGameById(Long gameId) {
         Optional<Game> optionalGame = this.gameRepository.findByGameId(gameId);
 
         // Ensure that the gameId is valid
         if (!optionalGame.isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
         }
+        return optionalGame.get();
+    }
 
-        Game currentGame = optionalGame.get();
+
+    public Game startGame(Long gameId) throws IOException, InterruptedException {
+
+        Game currentGame = findGameById(gameId);
         GameState state = currentGame.getState();
 
         // Verify that the game can actually be started
@@ -129,14 +134,7 @@ public class GameEngineService {
     public void turnValidation(Long gameId, Long userId) throws IOException, InterruptedException{
 
         User terminatingUser = userService.getUserById(userId);
-        Optional<Game> optionalGame = this.gameRepository.findByGameId(gameId);
-
-        // Ensure that the gameId is valid
-        if (!optionalGame.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
-        }
-
-        Game currentGame = optionalGame.get();
+        Game currentGame = findGameById(gameId);
 
         if (!userId.equals(currentGame.getCurrentTurn().getId())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "It's not your turn");
@@ -190,5 +188,62 @@ public class GameEngineService {
             nextUser = players.iterator().next();
         }
         return nextUser;
+    }
+
+    public void userLeavingOngoingGame(Long gameId, Long userId) throws IOException, InterruptedException {
+
+        // Assert first that user was actually part of the game
+        User terminatingUser = userService.getUserById(userId);
+
+        Game currentGame = findGameById(gameId);
+
+        if (!currentGame.getState().equals(GameState.ONGOING)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User can only leave ongoing games");
+        }
+
+        Set<User> players = currentGame.getPlayers();
+
+        if (!players.contains(terminatingUser)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not part of the game");
+        }
+
+        // If it was the turn of the leaving player, invoke turnValidation to find next player
+        if (currentGame.getCurrentTurn().getId().equals(userId)) {
+            turnValidation(gameId, userId);
+        }
+
+        // Remove from the player list for the game
+        players.remove(terminatingUser);
+        gameRepository.saveAndFlush(currentGame);
+        if (players.size() <= 1) {
+            // terminate game
+            terminatingGame(gameId);
+        }
+    }
+
+    public void terminatingGame(Long gameId) {
+
+        Game gameToBeTerminated = findGameById(gameId);
+
+        // Assert that just one player is left in the game
+        Set<User> players = gameToBeTerminated.getPlayers();
+
+        if (players.size() != 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Still more than one active player in the game session found");
+        }
+
+        // Set game state to finished
+        gameToBeTerminated.setState(GameState.FINISHED);
+
+        // Determine winning player
+        User winningUser = players.iterator().next();
+        gameToBeTerminated.setWinningPlayer(winningUser);
+        winningUser.getUserStats().setGamesWon(winningUser.getUserStats().getGamesWon()+1);
+
+        gameRepository.saveAndFlush(gameToBeTerminated);
+
+        // Publish end game event
+        EndGameEvent endGameEvent = new EndGameEvent(this, winningUser.getUsername(), gameId);
+        eventPublisher.publishEvent(endGameEvent);
     }
 }
