@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.GameMode;
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
@@ -160,6 +161,16 @@ public class GameService {
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not part of the game");
         }
+    }
+
+    /**
+     * Returns all games that are in the preparing state and have a public game mode.
+     * @param token of the user requesting to see all available public games.
+     * @return
+     */
+    public List<Game> getGames(String token) {
+        User verifiedUser = userService.verifyUserByToken(token);
+        return gameRepository.findByStateAndMode(GameState.PREPARING, GameMode.PUBLIC);
     }
 
     public Game startTurns(Game game) {

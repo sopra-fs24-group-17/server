@@ -22,4 +22,6 @@ public class GameGetDTO {
 
     private String deckId;
 
+    private Integer availableSlots;
+
 }

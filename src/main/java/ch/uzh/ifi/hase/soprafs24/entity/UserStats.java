@@ -38,4 +38,14 @@ public class UserStats implements Serializable {
 
     @Column()
     private Date lastPlayed;
+
+    @PrePersist
+    @PreUpdate
+    private void calculateWinLossRatio() {
+        if (gamesPlayed != null && gamesPlayed > 0) {
+            this.winLossRatio = (double) gamesWon / gamesPlayed;
+        } else {
+            this.winLossRatio = 0.0;
+        }
+    }
 }
