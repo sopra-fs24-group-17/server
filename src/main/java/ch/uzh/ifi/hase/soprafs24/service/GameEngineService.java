@@ -1,13 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
+import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
-import ch.uzh.ifi.hase.soprafs24.event.EndGameEvent;
-import ch.uzh.ifi.hase.soprafs24.event.EndTurnEvent;
-import ch.uzh.ifi.hase.soprafs24.event.GameStartEvent;
-import ch.uzh.ifi.hase.soprafs24.event.YourTurnEvent;
+import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardGetDTO;
@@ -23,6 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional
@@ -66,7 +66,6 @@ public class GameEngineService {
         return optionalGame.get();
     }
 
-
     public Game startGame(Long gameId) throws IOException, InterruptedException {
 
         Game currentGame = findGameById(gameId);
@@ -85,35 +84,72 @@ public class GameEngineService {
 
         List <Long> playerIds = new ArrayList<>();
 
+        // Create dealer pile
+        this.gameDeckService.createDealerPile(currentGame);
+
+        // Remove Explosions and Defusions from Deck
+        List<Card> explosions = gameDeckService.removeExplosionsFromDealerPile(currentGame.getGameDeck());
+        List<Card> defusions = gameDeckService.removeDefusionsFromDealerPile(currentGame.getGameDeck());
+
         // Update lastPlayed and gamesPlayed for each user and update userIds
         for (User player: players) {
+
+            GameStartEvent gameStartEvent = new GameStartEvent(this, currentGame.getGameId(), player.getId());
+            eventPublisher.publishEvent(gameStartEvent);
+
             UserStats stats = player.getUserStats();
             stats.setGamesPlayed(stats.getGamesPlayed()+1);
 
             stats.setLastPlayed(new Date());
             playerIds.add(player.getId());
+
+            // Create individual player piles
+            List<Card> playerCards = gameDeckService.drawCardsFromDealerPile(currentGame.getGameDeck(), 7);
+            List<String> cardValues = new ArrayList<>();
+
+            for (Card card : playerCards) {
+                cardValues.add(card.getCode());
+            }
+
+            // Add defusion to the player pile
+            if (!defusions.isEmpty()) {
+                Card defusionCard = defusions.remove(0);
+                cardValues.add(defusionCard.getCode());
+                playerCards.add(defusionCard);
+            }
+            gameDeckService.createPlayerPile(currentGame.getGameDeck(), player.getId(), String.join(",", cardValues));
+
+            for (Card card : playerCards) {
+                if (card.getInternalCode() == null) {
+                    logger.error("Internal code is null for card code: " + card.getCode());
+                }
+            }
+
+            // Publish cards to user through websocket
+            PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, player.getId(), gameId, playerCards);
+            eventPublisher.publishEvent(playerCardEvent);
         }
 
-        // Distribute Cards
-        // To Do -- awaiting Jorge
+        // Return Explosions and Defusions to DealerPile
+        int explosionsToReturn = Math.max(0, players.size() - 1);
+        List<Card> explosionsToBeReturned = explosions.stream().limit(explosionsToReturn).toList();
 
-        // Change below to a CardGetDTO or something similar.
-        List<CardGetDTO> dummyCardsPlayers = new ArrayList<>();
+        List<String> cardValues = new ArrayList<>();
+        List<Card> combined = Stream.concat(explosionsToBeReturned.stream(), defusions.stream()).toList();
 
-        // Create dealer pile
-        this.gameDeckService.createDealerPile(currentGame);
+        for (Card card : combined) {
+            cardValues.add(card.getCode());
+        }
+        gameDeckService.returnCardsToDealerPile(currentGame, String.join(",", cardValues));
+
+        // Shuffle Dealer Pile
+        gameDeckService.shuffleCardsInPile(currentGame.getGameDeck());
 
         // Assign active player
         if (!players.isEmpty()) {
             User firstPlayer = players.iterator().next();
             currentGame.setCurrentTurn(firstPlayer);
             gameRepository.saveAndFlush(currentGame);
-        }
-
-        // Publish Event that game Started along with the corresponding cards to a game- and user-specific channel
-        for (Long id: playerIds) {
-            GameStartEvent gameStartEvent = new GameStartEvent(this, currentGame.getGameId(), id, dummyCardsPlayers);
-            eventPublisher.publishEvent(gameStartEvent);
         }
 
         // Publish event whose turn it is

@@ -19,12 +19,9 @@ public class GameStartEvent extends ApplicationEvent {
 
     public GameStartEvent (Object source,
                            Long gameId,
-                           Long userId,
-                           List<CardGetDTO> playerCards) {
+                           Long userId) {
         super(source);
         this.gameId = gameId;
         this.userId = userId;
-        this.playerCards = playerCards;
-
     }
 }
