@@ -73,4 +73,10 @@ public class GameEngineEventListener {
         logger.info("Player {} cards dispatched", event.getUserId());
         webSocketService.sendMessagePlayerCards(event.getGameId(), event.getUserId(), event.getPlayerCards());
     }
+
+    @EventListener
+    public void playedCard(CardPlayedEvent event) {
+        logger.info("Player {} played card {}", event.getInvokingPlayerUserName(), event.getInternalCode());
+        webSocketService.sendMessageCardPlayed(event.getGameId(), event.getInvokingPlayerUserName(), event.getInternalCode());
+    }
 }

@@ -148,6 +148,16 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
     }
 
+    public void sendMessageCardPlayed(Long gameId, String userName, String internalCode) {
+        JSONObject message = new JSONObject();
+        message.put("type", "cardPlayed");
+        message.put("userName", userName);
+        message.put("cardPlayed", internalCode);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+    }
+
+
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);
     }
