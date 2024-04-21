@@ -14,6 +14,7 @@ public interface CardDTOMapper {
 
     // Mapping from Card Entity to CardGetDTO
     @Mapping(source = "code", target = "code")
+    @Mapping(source = "internalCode", target = "internalCode")
     @Mapping(source = "image", target = "image")
     CardGetDTO convertEntityToCardGetDTO(Card card);
 

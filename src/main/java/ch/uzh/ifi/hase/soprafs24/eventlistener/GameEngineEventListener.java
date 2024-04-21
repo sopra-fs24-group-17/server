@@ -47,8 +47,7 @@ public class GameEngineEventListener {
     @EventListener
     public void startGame(GameStartEvent event) {
         logger.info("Game: {}, Successfully started for user {}", event.getGameId(), event.getUserId());
-        // TO DO: Send playerIds and their initial cards
-        webSocketService.sendMessageGameStarted(event.getGameId(), event.getUserId(), event.getPlayerCards());
+        webSocketService.sendMessageGameStarted(event.getGameId(), event.getUserId());
     }
 
     @EventListener
@@ -69,4 +68,9 @@ public class GameEngineEventListener {
         webSocketService.sendMessageEndGame(event.getGameId(), event.getUserName());
     }
 
+    @EventListener
+    public void playerCard(PlayerCardEvent event) {
+        logger.info("Player {} cards dispatched", event.getUserId());
+        webSocketService.sendMessagePlayerCards(event.getGameId(), event.getUserId(), event.getPlayerCards());
+    }
 }

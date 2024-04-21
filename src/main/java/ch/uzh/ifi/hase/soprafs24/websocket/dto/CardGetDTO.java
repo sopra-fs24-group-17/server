@@ -7,5 +7,6 @@ import lombok.Setter;
 @Getter
 public class CardGetDTO {
     private String code;
+    private String internalCode;
     private String image;
 }
