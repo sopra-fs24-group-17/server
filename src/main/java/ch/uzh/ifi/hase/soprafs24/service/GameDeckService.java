@@ -3,10 +3,8 @@ package ch.uzh.ifi.hase.soprafs24.service;
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
-import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
-import ch.uzh.ifi.hase.soprafs24.event.ExplosionReturnedToDeckEvent;
-import ch.uzh.ifi.hase.soprafs24.event.PeekIntoDeckEvent;
-import ch.uzh.ifi.hase.soprafs24.event.ShufflingEvent;
+import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -39,18 +37,18 @@ public class GameDeckService {
 
     private CardRepository cardRepository;
 
-    private List<Character> suits = new ArrayList<>(List.of('S', 'H', 'C', 'D'));
-
+    private UserService userService;
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
     Logger logger = LoggerFactory.getLogger(GameDeckService.class);
-    public GameDeckService(GameDeckRepository gameDeckRepository, CardRepository cardRepository, ApplicationEventPublisher eventPublisher) {
+    public GameDeckService(GameDeckRepository gameDeckRepository, CardRepository cardRepository, UserService userService ,ApplicationEventPublisher eventPublisher) {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.gameDeckRepository = gameDeckRepository;
         this.cardRepository = cardRepository;
+        this.userService = userService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -363,6 +361,14 @@ public class GameDeckService {
         HttpResponse<String> returnCardsToDealerPileResponse = httpClient.send(returnCardsToDealerPileRequest, HttpResponse.BodyHandlers.ofString());
     }
 
+    /**
+     * Helper method that places cards on player piles, whereby player piles are labeled by the respective userId.
+     * @param gameDeck indicating the playing deck
+     * @param userId indicating the participating user
+     * @param cardsToBeReturned indicating the cards to be placed on the user pile
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void returnCardsToPlayerPile(GameDeck gameDeck, Long userId, String cardsToBeReturned) throws IOException, InterruptedException {
 
         String returnCardsToPlayerPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s", gameDeck.getDeckID(), userId, cardsToBeReturned);
@@ -373,6 +379,62 @@ public class GameDeckService {
                 .build();
 
         HttpResponse<String> returnCardsToPlayerPileResponse = httpClient.send(returnCardsToPlayerPileRequest, HttpResponse.BodyHandlers.ofString());
+    }
+
+    /**
+     * Helper method to remove cards from a player pile (facilitate playing cards and stealing mechanisms)
+     * @param game corresponding to the current game session
+     * @param userId of the user facilitating a card move
+     * @param cardsToBeRemoved indicating the cards to be played
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void removeCardsFromPlayerPile(Game game, Long userId, String cardsToBeRemoved) throws IOException, InterruptedException {
+
+        String removeCardsFromPlayerPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s", game.getGameDeck().getDeckID(), userId, cardsToBeRemoved);
+
+        HttpRequest removeCardsFromPlayerPileRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(removeCardsFromPlayerPileUri))
+                .build();
+
+        HttpResponse<String> removeCardsFromPlayerPileResponse = httpClient.send(removeCardsFromPlayerPileRequest, HttpResponse.BodyHandlers.ofString());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(removeCardsFromPlayerPileResponse.body());
+
+        // Assert that the user held possessed the cards he played
+        if (rootNode.has("success") && !rootNode.get("success").asBoolean()) {
+            String errorMessage = rootNode.has("error") ? rootNode.get("error").asText() : "Unknown error";
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Move is invalid, user doesn't poses the card(s) played");
+        }
+    }
+
+    /**
+     * Helper method to place cards on the play stack
+     * @param game corresponding to the current game session
+     * @param cardsPlayed indicating the cards that were played
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void placeCardsToPlayPile(Game game, Long userId, List<Card> cards, String cardsPlayed) throws IOException, InterruptedException {
+
+        User player = userService.getUserById(userId);
+
+        String placeCardsOnPlayPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/play/add/?cards=%s", game.getGameDeck().getDeckID(), cardsPlayed);
+
+        HttpRequest placeCardsOnPlayPileRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(placeCardsOnPlayPileUri))
+                .build();
+
+        HttpResponse<String> placeCardsOnPlayPileResponse = httpClient.send(placeCardsOnPlayPileRequest, HttpResponse.BodyHandlers.ofString());
+
+        // Publish event(s)
+        for (Card card: cards) {
+            CardPlayedEvent cardPlayedEvent = new CardPlayedEvent(this, card.getInternalCode(), game.getGameId(), player.getUsername());
+            eventPublisher.publishEvent(cardPlayedEvent);
+        }
     }
 
     /**

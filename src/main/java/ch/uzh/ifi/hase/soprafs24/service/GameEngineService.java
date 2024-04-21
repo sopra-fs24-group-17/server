@@ -9,6 +9,8 @@ import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardGetDTO;
+import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardPutDTO;
+import ch.uzh.ifi.hase.soprafs24.websocket.mapper.CardDTOMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -281,5 +283,18 @@ public class GameEngineService {
         // Publish end game event
         EndGameEvent endGameEvent = new EndGameEvent(this, winningUser.getUsername(), gameId);
         eventPublisher.publishEvent(endGameEvent);
+    }
+
+    public List<Card> transformCardsToInternalRepresentation(List<String> cardsToBeTransformed) {
+
+        List<Card> cardsPlayed = new ArrayList<>();
+
+        for (String cardId : cardsToBeTransformed) {
+            CardPutDTO cardPutDTO = new CardPutDTO();
+            cardPutDTO.setCode(cardId);
+            cardsPlayed.add(CardDTOMapper.INSTANCE.convertCardPutDTOToEntity(cardPutDTO));
+        }
+
+        return cardsPlayed;
     }
 }

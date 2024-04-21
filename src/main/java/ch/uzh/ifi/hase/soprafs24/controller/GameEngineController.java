@@ -1,11 +1,14 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
+import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardPutDTO;
+import ch.uzh.ifi.hase.soprafs24.websocket.mapper.CardDTOMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +19,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 public class GameEngineController {
@@ -33,11 +38,24 @@ public class GameEngineController {
 
     @MessageMapping("/move/cards/{gameId}/{userId}")
     public void handleCardMove(
-            @PathVariable Long gameId,
-            @PathVariable Long userId,
-            @Payload CardMoveRequest cardMoveRequest) {
+            @DestinationVariable Long gameId,
+            @DestinationVariable Long userId,
+            @Payload CardMoveRequest cardMoveRequest) throws IOException, InterruptedException {
 
         logger.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
+
+        // Transformation to internal representation
+        List<Card> transformedCards = gameEngineService.transformCardsToInternalRepresentation(cardMoveRequest.getCardIds());
+
+        Game game = gameEngineService.findGameById(gameId);
+
+        // Remove from the player pile (verifies that the moves are valid, and that the user actually possessed the cards he played)
+        gameDeckService.removeCardsFromPlayerPile(game, userId, String.join(",", cardMoveRequest.getCardIds()));
+
+        // Add cards to the play pile (i.e. game stack)
+        gameDeckService.placeCardsToPlayPile(game, userId ,transformedCards, String.join(",", cardMoveRequest.getCardIds()));
+
+        // PlayerStack
 
         // To do -- Awaiting mapper from Jorge
 
@@ -62,10 +80,7 @@ public class GameEngineController {
             @DestinationVariable("gameId") Long gameId) throws IOException, InterruptedException {
 
         logger.info(String.format("Game: %s, started" , gameId));
-
-        // To do -- distribute cards (Jorge)
         Game initializedGame = gameEngineService.startGame(gameId);
-
     }
 
     @MessageMapping("/terminateMove/{gameId}/{userId}")
