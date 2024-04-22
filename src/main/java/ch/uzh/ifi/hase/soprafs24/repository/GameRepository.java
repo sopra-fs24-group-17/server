@@ -17,4 +17,6 @@ public interface GameRepository extends JpaRepository<Game, Long> {
 
     List<Game> findByStateAndMode(GameState state, GameMode mode);
 
+    List<Game> findByInitiatingUserAndStateAndMode(User initiatingUser, GameState state, GameMode mode);
+
 }

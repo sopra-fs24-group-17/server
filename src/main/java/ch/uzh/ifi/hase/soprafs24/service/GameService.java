@@ -9,6 +9,7 @@ import ch.uzh.ifi.hase.soprafs24.event.GameCreationEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameLeaveEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.FriendsGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import org.hibernate.service.spi.ServiceException;
@@ -170,7 +171,16 @@ public class GameService {
      */
     public List<Game> getGames(String token) {
         User verifiedUser = userService.verifyUserByToken(token);
-        return gameRepository.findByStateAndMode(GameState.PREPARING, GameMode.PUBLIC);
+        List<User> friends = userService.getUsersFriends(verifiedUser.getId());
+        List<Game> publicGames =  gameRepository.findByStateAndMode(GameState.PREPARING, GameMode.PUBLIC);
+
+        Set<Game> combinedGames = new HashSet<>(publicGames);
+
+        for (User friend: friends) {
+            List<Game> privateFriendGames = gameRepository.findByInitiatingUserAndStateAndMode(friend, GameState.PREPARING, GameMode.PRIVATE);
+            combinedGames.addAll(privateFriendGames);
+        }
+        return new ArrayList<>(combinedGames);
     }
 
     /**
