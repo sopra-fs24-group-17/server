@@ -77,7 +77,7 @@ public interface UserDTOMapper {
   @Mapping(source = "countryoforigin", target = "countryoforigin")
   @Mapping(source = "avatar", target = "avatar")
   @Mapping(target = "otp", ignore = true)
-  @Mapping(target = "tutorialflag", ignore = true)
+  @Mapping(source = "tutorialflag", target = "tutorialflag")
   @Mapping(source = "profilevisibility", target = "profilevisibility")
   @Mapping(target = "token", ignore = true) //Will be sent in the header
 
