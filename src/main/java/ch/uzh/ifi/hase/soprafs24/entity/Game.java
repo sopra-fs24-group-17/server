@@ -65,4 +65,6 @@ public class Game implements Serializable {
     @OneToOne(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private GameDeck gameDeck;
 
+    private boolean skipDraw = false;
+
 }

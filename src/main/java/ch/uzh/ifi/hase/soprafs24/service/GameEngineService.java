@@ -333,4 +333,23 @@ public class GameEngineService {
         eventPublisher.publishEvent(favorEvent);
     }
 
+    public void drawCardMoveTermination(Long gameId, Long userId) throws IOException, InterruptedException {
+        Game game = findGameById(gameId);
+
+        if (game.isSkipDraw()) {
+            game.setSkipDraw(false);
+        } else {
+            List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(), 1);
+            gameDeckService.returnCardsToPlayerPile(game.getGameDeck(), userId, cards.get(0).getCode());
+
+            PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, userId, gameId, cards);
+            eventPublisher.publishEvent(playerCardEvent);
+        }
+    }
+
+    public void handleSkipCard(Game game, Long userId, String cardCode) throws IOException, InterruptedException {
+        SkipEvent skipEvent = new SkipEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
+        eventPublisher.publishEvent(skipEvent);
+    }
+
 }

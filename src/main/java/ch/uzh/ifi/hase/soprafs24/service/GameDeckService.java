@@ -331,6 +331,9 @@ public class GameDeckService {
             cardsToBePlacedBackOnDealerPile.add(card.getCode());
         }
 
+        // Reverse the List to maintain correct ordering
+        Collections.reverse(cardsToBePlacedBackOnDealerPile);
+
         // Place cards back to the dealer pile
         String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile);
         returnCardsToDealerPile(game, returnCards);
@@ -379,6 +382,7 @@ public class GameDeckService {
                 .build();
 
         HttpResponse<String> returnCardsToPlayerPileResponse = httpClient.send(returnCardsToPlayerPileRequest, HttpResponse.BodyHandlers.ofString());
+
     }
 
     /**
