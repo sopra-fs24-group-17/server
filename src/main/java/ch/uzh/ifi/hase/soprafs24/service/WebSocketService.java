@@ -83,13 +83,22 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
-    public void sendMessagePeekIntoDeck(Long gameId, String invokingPlayerUserName) {
+    public void sendMessagePeekIntoDeck(Long gameId, String invokingPlayerUserName, Long userId, List<Card> futureCards) {
         JSONObject message = new JSONObject();
         message.put("type", "peekIntoDeck");
         message.put("gameId", gameId);
         message.put("user", invokingPlayerUserName);
 
-        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+        JSONArray cardsArray = new JSONArray();
+        for (Card card : futureCards) {
+            JSONObject cardJson = new JSONObject();
+            cardJson.put("code", card.getCode());
+            cardJson.put("internalCode", card.getInternalCode());
+            cardsArray.put(cardJson);
+        }
+        message.put("cards", cardsArray);
+
+        this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
     }
 
     public void sendMessageExplosionReturnedToDeck(Long gameId, String invokingPlayerUserName) {

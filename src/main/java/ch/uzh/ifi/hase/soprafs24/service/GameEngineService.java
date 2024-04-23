@@ -6,9 +6,10 @@ import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
 import ch.uzh.ifi.hase.soprafs24.event.*;
+import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
-import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardGetDTO;
+import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardPutDTO;
 import ch.uzh.ifi.hase.soprafs24.websocket.mapper.CardDTOMapper;
 import org.slf4j.Logger;
@@ -23,7 +24,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -33,6 +33,10 @@ public class GameEngineService {
     private GameDeckRepository gameDeckRepository;
 
     private GameRepository gameRepository;
+
+    private UserRepository userRepository;
+
+    private CardRepository cardRepository;
 
     private GameDeckService gameDeckService;
 
@@ -47,12 +51,16 @@ public class GameEngineService {
     @Autowired
     public GameEngineService(@Qualifier("gameRepository") GameRepository gameRepository,
                              GameDeckRepository gameDeckRepository,
+                             CardRepository cardRepository,
+                             UserRepository userRepository,
                              GameDeckService gameDeckService,
                              UserService userService,
                              ApplicationEventPublisher eventPublisher) {
 
         this.gameRepository = gameRepository;
         this.gameDeckRepository = gameDeckRepository;
+        this.cardRepository = cardRepository;
+        this.userRepository = userRepository;
         this.gameDeckService = gameDeckService;
         this.userService = userService;
         this.eventPublisher = eventPublisher;
@@ -145,7 +153,7 @@ public class GameEngineService {
         gameDeckService.returnCardsToDealerPile(currentGame, String.join(",", cardValues));
 
         // Shuffle Dealer Pile
-        gameDeckService.shuffleCardsInPile(currentGame.getGameDeck());
+        gameDeckService.shuffleCardsInDealerPile(currentGame.getGameDeck());
 
         // Assign active player
         if (!players.isEmpty()) {
@@ -290,11 +298,39 @@ public class GameEngineService {
         List<Card> cardsPlayed = new ArrayList<>();
 
         for (String cardId : cardsToBeTransformed) {
-            CardPutDTO cardPutDTO = new CardPutDTO();
-            cardPutDTO.setCode(cardId);
-            cardsPlayed.add(CardDTOMapper.INSTANCE.convertCardPutDTOToEntity(cardPutDTO));
+            Card transformedCard = this.cardRepository.findByCode(cardId);
+            cardsPlayed.add(transformedCard);
         }
 
         return cardsPlayed;
     }
+
+    public void handleShuffleCard(Game game, Long userId) throws IOException, InterruptedException {
+        gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
+    }
+
+    public void handleFutureCard(Game game, Long userId) throws IOException, InterruptedException {
+        gameDeckService.peekIntoDealerPile(game);
+    }
+
+    public void handleFavorCard(Game game, Long userId, Long targetUserId) throws IOException, InterruptedException {
+        User targetUser = userRepository.findUserById(targetUserId);
+
+        // Assert that the targetUser is still part of the game
+        Set<User> players = game.getPlayers();
+
+        if(!players.contains(targetUser)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted User is not part of the game");
+        }
+
+        // Grab a card
+        Card randomCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), targetUserId);
+        // Give it to triggering user
+        gameDeckService.returnCardsToPlayerPile(game.getGameDeck(), userId, randomCard.getCode());
+
+        // Publish a draw cards event
+        FavorEvent favorEvent = new FavorEvent(this, game.getGameId(), game.getCurrentTurn().getUsername(), targetUser.getUsername(), randomCard.getCode());
+        eventPublisher.publishEvent(favorEvent);
+    }
+
 }

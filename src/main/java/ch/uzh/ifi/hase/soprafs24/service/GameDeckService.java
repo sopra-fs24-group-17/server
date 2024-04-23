@@ -177,7 +177,7 @@ public class GameDeckService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void shuffleCardsInPile(GameDeck gameDeck) throws IOException, InterruptedException {
+    public void shuffleCardsInDealerPile(GameDeck gameDeck) throws IOException, InterruptedException {
 
         if (gameDeck.getRemainingCardsDealerStack() <=1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shuffle doesn't alter the state of the remaining pile");
@@ -336,7 +336,7 @@ public class GameDeckService {
         returnCardsToDealerPile(game, returnCards);
 
         // Publish event for peeking into deck
-        PeekIntoDeckEvent peekIntoDeckEvent = new PeekIntoDeckEvent(this, game.getGameId(), "placeholder");
+        PeekIntoDeckEvent peekIntoDeckEvent = new PeekIntoDeckEvent(this, game.getGameId(), game.getCurrentTurn().getUsername(), game.getCurrentTurn().getId(), topThreeCards);
         eventPublisher.publishEvent(peekIntoDeckEvent);
 
         return topThreeCards;
@@ -398,14 +398,19 @@ public class GameDeckService {
                 .uri(URI.create(removeCardsFromPlayerPileUri))
                 .build();
 
-        HttpResponse<String> removeCardsFromPlayerPileResponse = httpClient.send(removeCardsFromPlayerPileRequest, HttpResponse.BodyHandlers.ofString());
+        try {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode rootNode = objectMapper.readTree(removeCardsFromPlayerPileResponse.body());
+            HttpResponse<String> removeCardsFromPlayerPileResponse = httpClient.send(removeCardsFromPlayerPileRequest, HttpResponse.BodyHandlers.ofString());
 
-        // Assert that the user held possessed the cards he played
-        if (rootNode.has("success") && !rootNode.get("success").asBoolean()) {
-            String errorMessage = rootNode.has("error") ? rootNode.get("error").asText() : "Unknown error";
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(removeCardsFromPlayerPileResponse.body());
+
+            // Assert that the user held possessed the cards he played
+            if (rootNode.has("success") && !rootNode.get("success").asBoolean()) {
+                String errorMessage = rootNode.has("error") ? rootNode.get("error").asText() : "Unknown error";
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Move is invalid, user doesn't poses the card(s) played");
+            }
+        } catch (IOException | InterruptedException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Move is invalid, user doesn't poses the card(s) played");
         }
     }
@@ -454,7 +459,7 @@ public class GameDeckService {
         // Random placement in the pile
         if (location == 69 || location < -1) {
             returnCardsToDealerPile(game, cardToBeReturned.getCode());
-            shuffleCardsInPile(game.getGameDeck());
+            shuffleCardsInDealerPile(game.getGameDeck());
         }
         // Return to Top of Stack
         else if (location == 0) {
@@ -519,6 +524,26 @@ public class GameDeckService {
         List<Card> cards = parseCardsDealer(drawDefusionResponse.body(), gameDeck);
 
         return  saveCards(cards);
+    }
+
+    public Card drawCardFromPlayerPile(GameDeck gameDeck, Long targetUserId) throws IOException, InterruptedException {
+        // Validation on target player should be done at the front end. A player without cards shouldn't be allowed to grab cards from
+        String drawCardFromPlayerUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random", gameDeck.getDeckID(), targetUserId);
+
+        HttpRequest drawCardFromPlayerRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(drawCardFromPlayerUri))
+                .build();
+        try {
+            HttpResponse<String> drawCardFromPlayerResponse = httpClient.send(drawCardFromPlayerRequest, HttpResponse.BodyHandlers.ofString());
+
+            List<Card> cards = parseCards(drawCardFromPlayerResponse.body(), gameDeck);
+
+            return cards.get(0);
+
+        }  catch (IOException | InterruptedException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted user doesn't poses any card");
+        }
     }
 
     @Transactional
