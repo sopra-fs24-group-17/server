@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 public class GameEngineController {
@@ -44,6 +45,10 @@ public class GameEngineController {
 
         logger.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
 
+        boolean avoid_draw = false;
+
+        Long targetUserId = cardMoveRequest.getTargetUserId();
+
         // Transformation to internal representation
         List<Card> transformedCards = gameEngineService.transformCardsToInternalRepresentation(cardMoveRequest.getCardIds());
 
@@ -55,9 +60,14 @@ public class GameEngineController {
         // Add cards to the play pile (i.e. game stack)
         gameDeckService.placeCardsToPlayPile(game, userId ,transformedCards, String.join(",", cardMoveRequest.getCardIds()));
 
-        // PlayerStack
-
-        // To do -- Awaiting mapper from Jorge
+        // Game Logic
+        if(transformedCards.size() == 1) {
+            if (Objects.equals(transformedCards.get(0).getInternalCode(), "shuffle")) {
+                gameEngineService.handleShuffleCard(game, userId);
+            } else if (Objects.equals(transformedCards.get(0).getInternalCode(), "future")) {
+                gameEngineService.handleFutureCard(game, userId);
+            }
+        }
 
         // To do -- handle game logic
 

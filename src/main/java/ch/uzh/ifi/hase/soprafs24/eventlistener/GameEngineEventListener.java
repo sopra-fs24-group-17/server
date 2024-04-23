@@ -35,7 +35,7 @@ public class GameEngineEventListener {
     @EventListener
     public void onPeekIntoDeck(PeekIntoDeckEvent event) {
         logger.info("PeekIntoDeckEvent triggered for game ID: {} by user {}", event.getGameId(), event.getInvokingPlayerUserName());
-        webSocketService.sendMessagePeekIntoDeck(event.getGameId(), event.getInvokingPlayerUserName());
+        webSocketService.sendMessagePeekIntoDeck(event.getGameId(), event.getInvokingPlayerUserName(), event.getUserId() ,event.getFutureCards());
     }
 
     @EventListener
