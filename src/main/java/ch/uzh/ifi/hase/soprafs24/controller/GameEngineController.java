@@ -65,8 +65,9 @@ public class GameEngineController {
             } else if (Objects.equals(transformedCards.get(0).getInternalCode(), "future")) {
                 gameEngineService.handleFutureCard(game, userId);
             } else if (Objects.equals(transformedCards.get(0).getInternalCode(), "skip")) {
-                game.setSkipDraw(true);
                 gameEngineService.handleSkipCard(game, userId, transformedCards.get(0).getCode());
+            }else if (Objects.equals(transformedCards.get(0).getInternalCode(), "favor")) {
+                gameEngineService.handleFavorCard(game, userId, targetUserId);
             }
         }
 

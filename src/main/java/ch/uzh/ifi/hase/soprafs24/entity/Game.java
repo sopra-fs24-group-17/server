@@ -33,7 +33,7 @@ public class Game implements Serializable {
     @Column(nullable = false)
     private Integer maxPlayers;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "game_stats_players",
             joinColumns = @JoinColumn(name = "gameId"),
