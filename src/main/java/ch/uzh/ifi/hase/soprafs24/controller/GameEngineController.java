@@ -55,7 +55,7 @@ public class GameEngineController {
 
         // Dispatch Stats
         gameEngineService.dispatchGameState(gameId,userId);
-        
+
         // Game Logic
         if(transformedCards.size() == 1) {
             if (Objects.equals(transformedCards.get(0).getInternalCode(), "shuffle")) {
