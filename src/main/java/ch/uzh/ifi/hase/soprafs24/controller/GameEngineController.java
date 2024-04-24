@@ -62,16 +62,36 @@ public class GameEngineController {
         if(transformedCards.size() == 1) {
             if (Objects.equals(transformedCards.get(0).getInternalCode(), "shuffle")) {
                 gameEngineService.handleShuffleCard(game, userId);
-            } else if (Objects.equals(transformedCards.get(0).getInternalCode(), "future")) {
+            }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), "future")) {
                 gameEngineService.handleFutureCard(game, userId);
-            } else if (Objects.equals(transformedCards.get(0).getInternalCode(), "skip")) {
-                gameEngineService.handleSkipCard(game, userId, transformedCards.get(0).getCode());
-            }else if (Objects.equals(transformedCards.get(0).getInternalCode(), "favor")) {
+            }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), "skip")) {
+                gameEngineService.handleSkipCard(game, userId);
+            }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), "favor")) {
                 gameEngineService.handleFavorCard(game, userId, targetUserId);
-            } else if(Objects.equals(transformedCards.get(0).getInternalCode(), "attack")){
+            }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), "attack")) {
                 gameEngineService.handleAttackCard(game, userId);
             }
         }
+        else if(transformedCards.size()==2) {
+            if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "tacocat"))) {
+                gameEngineService.handleFutureCard(game, userId);
+            }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "cattermelon"))) {
+                gameEngineService.handleAttackCard(game, userId);
+            }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "hairypotatocat"))) {
+                gameEngineService.handleSkipCard(game, userId);
+            }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "beardcat"))) {
+                gameEngineService.handleShuffleCard(game, userId);
+            }
+        }
+    }
+
 
         // To do -- handle game logic
 
@@ -87,7 +107,6 @@ public class GameEngineController {
         // Skip -> end turn without drawing
 
         // No -> block another users action -> wait on client side for couple of seconds after card play to see if a user interferes
-    }
 
     @MessageMapping("/start/{gameId}")
     public void handleStartGame(
