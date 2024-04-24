@@ -455,7 +455,7 @@ public class GameEngineService {
             topCardPlayPile.setCode("");
             topCardPlayPile.setInternalCode("");
         } else {
-            topCardPlayPile = topCardsPlayPile.get(0);
+            topCardPlayPile = topCardsPlayPile.get(topCardsPlayPile.size() - 1);
         }
         // Publish Event
         GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts);
