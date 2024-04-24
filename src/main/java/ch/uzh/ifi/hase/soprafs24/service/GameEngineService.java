@@ -384,6 +384,9 @@ public class GameEngineService {
         gameRepository.saveAndFlush(game);
         SkipEvent skipEvent = new SkipEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(skipEvent);
+
+        turnValidation(game.getGameId(), userId);
+
     }
 
     public void handleAttackCard(Game game, Long userId) throws IOException, InterruptedException {
@@ -406,6 +409,9 @@ public class GameEngineService {
         // To Do - Trigger Attack Event but on next user channel.
         AttackEvent attackEvent = new AttackEvent(this, game.getGameId(), game.getCurrentTurn().getUsername(), nextUserUserName);
         eventPublisher.publishEvent(attackEvent);
+
+        turnValidation(game.getGameId(), userId);
+
     }
 
     public void handleExplosionCard(Long gameId, Long userId, String explosionId) throws IOException, InterruptedException {
@@ -437,6 +443,8 @@ public class GameEngineService {
             gameDeckService.returnCardsToDealerPile(game, explosionId);
             gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
 
+            turnValidation(gameId, userId);
+
         } else {
             // If he has no defuse card, put the user out of the game
             removeUserFromGame(game.getGameId(), userId);
@@ -455,7 +463,7 @@ public class GameEngineService {
             topCardPlayPile.setCode("");
             topCardPlayPile.setInternalCode("");
         } else {
-            topCardPlayPile = topCardsPlayPile.get(0);
+            topCardPlayPile = topCardsPlayPile.get(topCardsPlayPile.size() - 1);
         }
         // Publish Event
         GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts);
