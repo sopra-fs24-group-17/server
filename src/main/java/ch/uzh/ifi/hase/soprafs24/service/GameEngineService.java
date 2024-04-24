@@ -423,6 +423,9 @@ public class GameEngineService {
         ExplosionEvent explosionEvent = new ExplosionEvent(this, gameId, explodedUser.getUsername());
         eventPublisher.publishEvent(explosionEvent);
 
+        ExplosionEventIndividual explosionEventIndividual = new ExplosionEventIndividual(this, gameId, explodedUser.getId());
+        eventPublisher.publishEvent(explosionEventIndividual);
+
         // Browse Pile of the Exploding User
         String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
 

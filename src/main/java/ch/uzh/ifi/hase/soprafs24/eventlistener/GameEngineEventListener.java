@@ -121,4 +121,9 @@ public class GameEngineEventListener {
         logger.info("Game Stats for {} dispatched", event.getGameId());
         webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats());
     }
+
+    @EventListener
+    public void explosionIndividual(ExplosionEventIndividual event) {
+        webSocketService.sendMessageExplosionIndividual(event.getGameId(), event.getUserId());
+    }
 }
