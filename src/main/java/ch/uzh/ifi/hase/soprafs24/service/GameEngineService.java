@@ -443,6 +443,8 @@ public class GameEngineService {
             gameDeckService.returnCardsToDealerPile(game, explosionId);
             gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
 
+            turnValidation(gameId, userId);
+
         } else {
             // If he has no defuse card, put the user out of the game
             removeUserFromGame(game.getGameId(), userId);
