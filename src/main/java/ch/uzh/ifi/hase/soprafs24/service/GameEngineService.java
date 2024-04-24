@@ -10,8 +10,6 @@ import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
-import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardPutDTO;
-import ch.uzh.ifi.hase.soprafs24.websocket.mapper.CardDTOMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,7 +112,7 @@ public class GameEngineService {
             playerIds.add(player.getId());
 
             // Create individual player piles
-            List<Card> playerCards = gameDeckService.drawCardsFromDealerPile(currentGame.getGameDeck(), 7);
+            List<Card> playerCards = gameDeckService.drawCardsFromDealerPile(currentGame.getGameDeck(), 5);
             List<String> cardValues = new ArrayList<>();
 
             for (Card card : playerCards) {
@@ -252,7 +250,7 @@ public class GameEngineService {
         return nextUser;
     }
 
-    public void userLeavingOngoingGame(Long gameId, Long userId) throws IOException, InterruptedException {
+    public void removeUserFromGame(Long gameId, Long userId) throws IOException, InterruptedException {
 
         // Assert first that user was actually part of the game
         User terminatingUser = userService.getUserById(userId);
@@ -281,6 +279,9 @@ public class GameEngineService {
             // terminate game
             terminatingGame(gameId);
         }
+
+        // Publish Loss Event
+        LossEvent lossEvent = new LossEvent(this, gameId, terminatingUser.getUsername());
     }
 
     public void terminatingGame(Long gameId) {
@@ -317,7 +318,6 @@ public class GameEngineService {
             Card transformedCard = this.cardRepository.findByCode(cardId);
             cardsPlayed.add(transformedCard);
         }
-
         return cardsPlayed;
     }
 
@@ -330,7 +330,6 @@ public class GameEngineService {
     }
 
     public void handleFavorCard(Game game, Long userId, Long targetUserId) throws IOException, InterruptedException {
-        User targetUser = userRepository.findUserById(targetUserId);
 
         // Assert that the targetUser is still part of the game
         Set<User> players = game.getPlayers();
@@ -345,15 +344,22 @@ public class GameEngineService {
 
         // Grab a card
         Card randomCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), targetUserId);
+        List<Card> randomCards = new ArrayList<>();
+        randomCards.add(randomCard);
+
+        // Publish a steal card event
+        StealCardEvent stealCardEvent = new StealCardEvent(this, targetUserId, game.getGameId(), randomCards);
+        eventPublisher.publishEvent(stealCardEvent);
+
         // Give it to triggering user
         gameDeckService.returnCardsToPlayerPile(game.getGameDeck(), userId, randomCard.getCode());
 
         // Publish a draw cards event
-        FavorEvent favorEvent = new FavorEvent(this, game.getGameId(), game.getCurrentTurn().getUsername(), targetUser.getUsername(), randomCard.getCode());
-        eventPublisher.publishEvent(favorEvent);
+        PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, userId, game.getGameId(), randomCards);
+        eventPublisher.publishEvent(playerCardEvent);
     }
 
-    public void drawCardMoveTermination(Long gameId, Long userId) throws IOException, InterruptedException {
+    public String drawCardMoveTermination(Long gameId, Long userId) throws IOException, InterruptedException {
         Game game = findGameById(gameId);
 
         if (game.isSkipDraw()) {
@@ -362,9 +368,15 @@ public class GameEngineService {
             List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(), 1);
             gameDeckService.returnCardsToPlayerPile(game.getGameDeck(), userId, cards.get(0).getCode());
 
+            if (Objects.equals(cards.get(0).getInternalCode(), "explosion")) {
+                game.setSkipDraw(true);
+                return cards.get(0).getCode();
+            }
+
             PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, userId, gameId, cards);
             eventPublisher.publishEvent(playerCardEvent);
         }
+        return null;
     }
 
     public void handleSkipCard(Game game, Long userId) throws IOException, InterruptedException {
@@ -396,4 +408,38 @@ public class GameEngineService {
         eventPublisher.publishEvent(attackEvent);
     }
 
+    public void handleExplosionCard(Long gameId, Long userId, String explosionId) throws IOException, InterruptedException {
+
+        Game game = findGameById(gameId);
+
+        User explodedUser = userRepository.findUserById(userId);
+
+        ExplosionEvent explosionEvent = new ExplosionEvent(this, gameId, explodedUser.getUsername());
+        eventPublisher.publishEvent(explosionEvent);
+
+        // Browse Pile of the Exploding User
+        String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
+
+        // If he has a defuse card, request him to play the defuse card
+        if (defuseCard != null) {
+            // Draw the card from the user pile and place it on top of the play pile
+            Card drawnCard = gameDeckService.drawExactCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
+            List<Card> drawnCards = new ArrayList<>();
+            drawnCards.add(drawnCard);
+            gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
+
+            // Send message to respective user that his defuse card was taken
+            DefuseEvent defuseEvent = new DefuseEvent(this, userId, game.getGameId(), drawnCards);
+            eventPublisher.publishEvent(defuseEvent);
+
+            // Place explosion card back on deck at random location
+            // To do -- allow user to select where exactly to place the explosion card
+            gameDeckService.returnCardsToDealerPile(game, explosionId);
+            gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
+
+        } else {
+            // If he has no defuse card, put the user out of the game
+            removeUserFromGame(game.getGameId(), userId);
+        }
+    }
 }

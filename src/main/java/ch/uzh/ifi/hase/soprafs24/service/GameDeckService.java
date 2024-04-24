@@ -278,6 +278,50 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    public List<Card> parseCardsPlayer(String jsonResponse, Long userId) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+
+        String deckId = rootNode.get("deck_id").asText();
+        JsonNode pileNode = rootNode.path("piles").path(userId.toString());
+        JsonNode cardsNode = pileNode.path("cards");
+        List<Card> cards = new ArrayList<>();
+
+        // Extraction of necessary variables
+        for (JsonNode cardNode : cardsNode) {
+            Card card = new Card();
+            card.setCode(cardNode.get("code").asText());
+            card.setSuit(cardNode.get("suit").asText());
+            card.setImage(cardNode.get("image").asText()); // Change this value based on the cardVal and the cards we are going to use
+            card.setDeckId(deckId);
+
+            cards.add(card);
+        }
+        return saveCards(cards);
+    }
+
+    public List<Card> parseCardsDrawnFromPlayerPile(String jsonResponse, Long userId) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+
+        String deckId = rootNode.get("deck_id").asText();
+        JsonNode cardsNode = rootNode.get("cards");
+        List<Card> cards = new ArrayList<>();
+
+        // Extraction of necessary variables
+        for (JsonNode cardNode : cardsNode) {
+            Card card = new Card();
+            card.setCode(cardNode.get("code").asText());
+            card.setSuit(cardNode.get("suit").asText());
+            card.setImage(cardNode.get("image").asText()); // Change this value based on the cardVal and the cards we are going to use
+            card.setDeckId(deckId);
+
+            cards.add(card);
+        }
+        return saveCards(cards);
+    }
+
     /**
      * Creates the piles for the individual players
      * @param gameDeck from which the cards are drawn
@@ -551,23 +595,53 @@ public class GameDeckService {
     }
 
     public Card drawCardFromPlayerPile(GameDeck gameDeck, Long targetUserId) throws IOException, InterruptedException {
-        String drawCardFromPlayerUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random", gameDeck.getDeckID(), targetUserId);
+        String drawCardFromPlayerUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random/", gameDeck.getDeckID(), targetUserId);
 
         HttpRequest drawCardFromPlayerRequest = HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(drawCardFromPlayerUri))
                 .build();
-        try {
-            HttpResponse<String> drawCardFromPlayerResponse = httpClient.send(drawCardFromPlayerRequest, HttpResponse.BodyHandlers.ofString());
 
-            List<Card> cards = parseCards(drawCardFromPlayerResponse.body(), gameDeck);
-            logger.info(drawCardFromPlayerResponse.body());
-            return cards.get(0);
-
-        }  catch (IOException | InterruptedException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted user doesn't poses any card");
-        }
+        HttpResponse<String> drawCardFromPlayerResponse = httpClient.send(drawCardFromPlayerRequest, HttpResponse.BodyHandlers.ofString());
+        List<Card> cards = parseCardsDrawnFromPlayerPile(drawCardFromPlayerResponse.body(), targetUserId);
+        return cards.get(0);
     }
+
+    public Card drawExactCardFromPlayerPile(GameDeck gameDeck, Long userId, String cardId) throws IOException, InterruptedException {
+        String drawCardFromPlayerUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s", gameDeck.getDeckID(), userId, cardId);
+
+        HttpRequest drawCardFromPlayerRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(drawCardFromPlayerUri))
+                .build();
+
+        HttpResponse<String> drawCardFromPlayerResponse = httpClient.send(drawCardFromPlayerRequest, HttpResponse.BodyHandlers.ofString());
+        List<Card> cards = parseCardsDrawnFromPlayerPile(drawCardFromPlayerResponse.body(), userId);
+        return cards.get(0);
+    }
+
+    public String exploreDefuseCardInPlayerPile(GameDeck gameDeck, Long userId) throws IOException, InterruptedException {
+
+        String listCardInPlayerPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), userId);
+
+        HttpRequest listCardInPlayerPileRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(listCardInPlayerPileUri))
+                .build();
+
+        HttpResponse<String> drawCardFromPlayerResponse = httpClient.send(listCardInPlayerPileRequest, HttpResponse.BodyHandlers.ofString());
+        List<Card> cards = parseCardsPlayer(drawCardFromPlayerResponse.body(), userId);
+
+        for (Card card: cards) {
+            if (Objects.equals(card.getInternalCode(), "defuse")) {
+                return card.getCode();
+            }
+        }
+        return null;
+
+
+    }
+
 
     @Transactional
     public List<Card> saveCards(List<Card> cards) {

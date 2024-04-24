@@ -2,13 +2,10 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
-import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
-import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardPutDTO;
-import ch.uzh.ifi.hase.soprafs24.websocket.mapper.CardDTOMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +13,8 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -43,9 +38,9 @@ public class GameEngineController {
             @DestinationVariable Long userId,
             @Payload CardMoveRequest cardMoveRequest) throws IOException, InterruptedException {
 
-        logger.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
-
         Long targetUserId = cardMoveRequest.getTargetUserId();
+        logger.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
+        logger.info(targetUserId.toString());
 
         // Transformation to internal representation
         List<Card> transformedCards = gameEngineService.transformCardsToInternalRepresentation(cardMoveRequest.getCardIds());
@@ -92,21 +87,7 @@ public class GameEngineController {
         }
     }
 
-
-        // To do -- handle game logic
-
-        // Shuffling
-
-        // Drawing
-
-        // Explosion drawn -> don't end user's turn, await for his defuse card, else count as loss and put the user out of the game.
-        // Ensure that he is skipped for the next iterations
-
-        // Playing defuse card -> place explosion back on deck
-
-        // Skip -> end turn without drawing
-
-        // No -> block another users action -> wait on client side for couple of seconds after card play to see if a user interferes
+    // No -> block another users action -> wait on client side for couple of seconds after card play to see if a user interferes
 
     @MessageMapping("/start/{gameId}")
     public void handleStartGame(
@@ -124,7 +105,12 @@ public class GameEngineController {
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
         // Handle termination of move draw
-        gameEngineService.drawCardMoveTermination(gameId, userId);
+        String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId);
+
+        if (explosionCard != null) {
+            // To DO -- handle explosion
+            gameEngineService.handleExplosionCard(gameId, userId, explosionCard);
+        }
 
         // Handle turnValidation (finding next player and communicating through websocket)
         gameEngineService.turnValidation(gameId, userId);
@@ -138,6 +124,6 @@ public class GameEngineController {
         logger.info(String.format("User %s left game %s" , userId, gameId));
 
         // Handle user leaving an ongoing game session
-        gameEngineService.userLeavingOngoingGame(gameId, userId);
+        gameEngineService.removeUserFromGame(gameId, userId);
     }
 }

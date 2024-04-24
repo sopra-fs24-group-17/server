@@ -9,15 +9,15 @@ import java.util.List;
 
 @Setter
 @Getter
-public class StealCardEvent extends ApplicationEvent {
+public class DefuseEvent extends ApplicationEvent {
     private Long userId;
     private Long gameId;
-    private List<Card> stolenCards;
+    private List<Card> playerCards;
 
-    public StealCardEvent(Object source, Long userId, Long gameId, List<Card> stolenCards) {
+    public DefuseEvent(Object source, Long userId, Long gameId, List<Card> playerCards) {
         super(source);
         this.userId = userId;
         this.gameId = gameId;
-        this.stolenCards = stolenCards;
+        this.playerCards = playerCards;
     }
 }

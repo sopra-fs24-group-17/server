@@ -166,6 +166,53 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
+    public void sendMessageStolenCard(Long gameId, Long userId, List<Card> stolenCards) {
+        JSONObject message = new JSONObject();
+        message.put("type", "cardStolen");
+
+        JSONArray cardsArray = new JSONArray();
+        for (Card card : stolenCards) {
+            JSONObject cardJson = new JSONObject();
+            cardJson.put("code", card.getCode());
+            cardJson.put("internalCode", card.getInternalCode());
+            cardsArray.put(cardJson);
+        }
+        message.put("cards", cardsArray);
+
+        this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    public void sendMessageDefuseCardPlayed(Long gameId, Long userId, List<Card> defuseCard) {
+        JSONObject message = new JSONObject();
+        message.put("type", "defuseCard");
+
+        JSONArray cardsArray = new JSONArray();
+        for (Card card : defuseCard) {
+            JSONObject cardJson = new JSONObject();
+            cardJson.put("code", card.getCode());
+            cardJson.put("internalCode", card.getInternalCode());
+            cardsArray.put(cardJson);
+        }
+        message.put("cards", cardsArray);
+        this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    public void sendMessageExplosion(Long gameId, String userName) {
+        JSONObject message = new JSONObject();
+        message.put("type", "explosion");
+        message.put("terminatingUser", userName);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    public void lossEvent(Long gameId, String userName) {
+        JSONObject message = new JSONObject();
+        message.put("type", "loss");
+        message.put("looserUser", userName);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+    }
+    
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);
     }
