@@ -114,6 +114,9 @@ public class GameEngineController {
 
         // Handle turnValidation (finding next player and communicating through websocket)
         gameEngineService.turnValidation(gameId, userId);
+
+        // Dispatch gameState
+        gameEngineService.dispatchGameState(gameId, userId);
     }
 
     @MessageMapping("leaving/{gameId}/{userId}")

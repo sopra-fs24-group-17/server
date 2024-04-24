@@ -442,4 +442,24 @@ public class GameEngineService {
             removeUserFromGame(game.getGameId(), userId);
         }
     }
+
+    public void dispatchGameState(Long gameId, Long userId) throws IOException, InterruptedException {
+        Game game = findGameById(gameId);
+        String jsonResponse = gameDeckService.getRemainingPileStats(game.getGameDeck(), userId);
+        Map<String, Integer> parsedPileCardCounts = gameDeckService.parsePileCardCounts(jsonResponse);
+
+        List<Card> topCardsPlayPile = gameDeckService.exploreTopCardPlayPile(game.getGameDeck());
+        Card topCardPlayPile;
+        if (topCardsPlayPile == null) {
+            topCardPlayPile = new Card();
+            topCardPlayPile.setCode("");
+            topCardPlayPile.setInternalCode("");
+        } else {
+            topCardPlayPile = topCardsPlayPile.get(0);
+        }
+        // Publish Event
+        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts);
+        eventPublisher.publishEvent(gameStateEvent);
+
+    }
 }
