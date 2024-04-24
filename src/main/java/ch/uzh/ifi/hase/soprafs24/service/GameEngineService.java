@@ -192,14 +192,25 @@ public class GameEngineService {
 
         Set<User> players = currentGame.getPlayers();
 
-        // Assign next player as active player
         User nextPlayer = getNextPlayer(terminatingUser, players);
+
+        if (currentGame.isRepeatTurn()) {
+            nextPlayer = terminatingUser;
+            currentGame.setRepeatTurn(false);
+            gameRepository.saveAndFlush(currentGame);
+        }
 
         if (nextPlayer != null) {
             currentGame.setCurrentTurn(nextPlayer);
             gameRepository.saveAndFlush(currentGame);
         } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No next user found, if just one user is left - terminate game");
+        }
+
+        if (currentGame.isAttacked()) {
+            currentGame.setRepeatTurn(true);
+            currentGame.setAttacked(false);
+            gameRepository.saveAndFlush(currentGame);
         }
 
         // Publish event whose turn it is (user- and game-specific channel)
@@ -214,6 +225,10 @@ public class GameEngineService {
      * @return
      */
     private User getNextPlayer(User currentUser, Set<User> players) {
+        if (players.isEmpty() || (players.size() == 1 && players.contains(currentUser))) {
+            // TO Do -- Initiate termination of game
+            return null;  // No next user possible
+        }
 
         Iterator<User> iterator = players.iterator();
         User nextUser = null;
@@ -229,6 +244,7 @@ public class GameEngineService {
                 found = true;
             }
         }
+
         // If current user is last, wrap around to the first user
         if (found && nextUser == null) {
             nextUser = players.iterator().next();
@@ -352,6 +368,28 @@ public class GameEngineService {
         gameRepository.saveAndFlush(game);
         SkipEvent skipEvent = new SkipEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(skipEvent);
+    }
+
+    public void handleAttackCard(Game game, Long userId) throws IOException, InterruptedException {
+        User currentUser = userRepository.findUserById(userId);
+        User nextUser = getNextPlayer(currentUser, game.getPlayers());
+
+        String nextUserUserName = "placeholder";
+
+        if (nextUser != null) {
+            nextUserUserName = nextUser.getUsername();
+        }
+
+        // Implies that current User skips his draw
+        game.setSkipDraw(true);
+
+        // Make the next user to grab two cards from pile
+        game.setAttacked(true);
+        gameRepository.saveAndFlush(game);
+
+        // To Do - Trigger Attack Event but on next user channel.
+        AttackEvent attackEvent = new AttackEvent(this, game.getGameId(), game.getCurrentTurn().getUsername(), nextUserUserName);
+        eventPublisher.publishEvent(attackEvent);
     }
 
 }

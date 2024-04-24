@@ -85,4 +85,10 @@ public class GameEngineEventListener {
         logger.info("Player {} played a skip card in game {}", event.getInvokingPlayerUserName(), event.getGameId());
         // No message triggered
     }
+
+    @EventListener
+    public void attackCardPlayed(AttackEvent event) {
+        logger.info("Player {} played an attack card in game {} to attack player {}", event.getInvokingPlayerUserName(), event.getGameId(), event.getTargetUsername());
+        // No message triggered
+    }
 }
