@@ -91,4 +91,28 @@ public class GameEngineEventListener {
         logger.info("Player {} played an attack card in game {} to attack player {}", event.getInvokingPlayerUserName(), event.getGameId(), event.getTargetUsername());
         // No message triggered
     }
+
+    @EventListener
+    public void stolenCard(StealCardEvent event) {
+        logger.info("A card was stolen from user {} in game {}", event.getUserId(), event.getGameId());
+        webSocketService.sendMessageStolenCard(event.getGameId(), event.getUserId(), event.getStolenCards());
+    }
+
+    @EventListener
+    public void defuseActivated(DefuseEvent event) {
+        logger.info("User {} played a defuse card in game {}", event.getUserId(), event.getGameId());
+        webSocketService.sendMessageDefuseCardPlayed(event.getGameId(), event.getUserId(), event.getPlayerCards());
+    }
+
+    @EventListener
+    public void explosionTriggered(ExplosionEvent event) {
+        logger.info("User {} exploded, can he react with a defuse card?", event.getInvokingPlayerUserName());
+        webSocketService.sendMessageExplosion(event.getGameId(), event.getInvokingPlayerUserName());
+    }
+
+    @EventListener
+    public void downOneUser(LossEvent event) {
+        logger.info("User {} lost in game {}", event.getLooserPlayer(), event.getGameId());
+        webSocketService.lossEvent(event.getGameId(), event.getLooserPlayer());
+    }
 }
