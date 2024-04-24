@@ -173,9 +173,10 @@ public class GameService {
         User verifiedUser = userService.verifyUserByToken(token);
         List<User> friends = userService.getUsersFriends(verifiedUser.getId());
         List<Game> publicGames =  gameRepository.findByStateAndMode(GameState.PREPARING, GameMode.PUBLIC);
-
+// Fetch private games initiated by the verified user
+        List<Game> privateUserGames = gameRepository.findByInitiatingUserAndStateAndMode(verifiedUser, GameState.PREPARING, GameMode.PRIVATE);
         Set<Game> combinedGames = new HashSet<>(publicGames);
-
+        combinedGames.addAll(privateUserGames); // Add the user's own private games
         for (User friend: friends) {
             List<Game> privateFriendGames = gameRepository.findByInitiatingUserAndStateAndMode(friend, GameState.PREPARING, GameMode.PRIVATE);
             combinedGames.addAll(privateFriendGames);
