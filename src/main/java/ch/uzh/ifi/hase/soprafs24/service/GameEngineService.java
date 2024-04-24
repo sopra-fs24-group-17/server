@@ -334,8 +334,12 @@ public class GameEngineService {
 
         // Assert that the targetUser is still part of the game
         Set<User> players = game.getPlayers();
+        List<Long> playerIds = new ArrayList<>();
+        for(User player: players) {
+            playerIds.add(player.getId());
+        }
 
-        if(!players.contains(targetUser)) {
+        if(!playerIds.contains(targetUserId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted User is not part of the game");
         }
 
@@ -363,7 +367,7 @@ public class GameEngineService {
         }
     }
 
-    public void handleSkipCard(Game game, Long userId, String cardCode) throws IOException, InterruptedException {
+    public void handleSkipCard(Game game, Long userId) throws IOException, InterruptedException {
         game.setSkipDraw(true);
         gameRepository.saveAndFlush(game);
         SkipEvent skipEvent = new SkipEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
