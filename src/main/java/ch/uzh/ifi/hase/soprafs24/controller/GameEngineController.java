@@ -68,6 +68,8 @@ public class GameEngineController {
                 gameEngineService.handleSkipCard(game, userId, transformedCards.get(0).getCode());
             }else if (Objects.equals(transformedCards.get(0).getInternalCode(), "favor")) {
                 gameEngineService.handleFavorCard(game, userId, targetUserId);
+            } else if(Objects.equals(transformedCards.get(0).getInternalCode(), "attack")){
+                gameEngineService.handleAttackCard(game, userId);
             }
         }
 

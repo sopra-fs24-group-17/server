@@ -138,8 +138,14 @@ public class GameDeckService {
 
         List<Card> savedCards = saveCards(cards);
 
+        String playerName = "dealer";
+
+        if (gameDeck.getGame().getCurrentTurn() != null) {
+            playerName = gameDeck.getGame().getCurrentTurn().getUsername();
+        }
+
         // Publish a draw cards event
-        DrawCardsEvent drawCardsEvent = new DrawCardsEvent(this, numberOfCards, gameDeck.getGame().getGameId(), "placeholder");
+        DrawCardsEvent drawCardsEvent = new DrawCardsEvent(this, numberOfCards, gameDeck.getGame().getGameId(), playerName);
         eventPublisher.publishEvent(drawCardsEvent);
 
         return cards;
@@ -166,8 +172,14 @@ public class GameDeckService {
 
         HttpResponse<String> shuffleCardsResponse = httpClient.send(shuffleCardsRequest, HttpResponse.BodyHandlers.ofString());
 
+        String playerName = "dealer";
+
+        if (gameDeck.getGame().getCurrentTurn() != null) {
+            playerName = gameDeck.getGame().getCurrentTurn().getUsername();
+        }
+
         // Publish a shuffling event
-        ShufflingEvent shufflingEvent = new ShufflingEvent(this, gameDeck.getGame().getGameId(), "placeholder");
+        ShufflingEvent shufflingEvent = new ShufflingEvent(this, gameDeck.getGame().getGameId(), playerName);
         eventPublisher.publishEvent(shufflingEvent);
     }
 
@@ -192,8 +204,16 @@ public class GameDeckService {
 
         HttpResponse<String> shuffleCardsResponse = httpClient.send(shuffleCardsRequest, HttpResponse.BodyHandlers.ofString());
 
+        Game currentGame = gameDeck.getGame();
+
+        String playerName = "dealer";
+
+        if (currentGame.getCurrentTurn() != null) {
+            playerName = currentGame.getCurrentTurn().getUsername();
+        }
+
         // Publish a shuffling event
-        ShufflingEvent shufflingEvent = new ShufflingEvent(this, gameDeck.getGame().getGameId(), "placeholder");
+        ShufflingEvent shufflingEvent = new ShufflingEvent(this, gameDeck.getGame().getGameId(), playerName);
         eventPublisher.publishEvent(shufflingEvent);
     }
 
@@ -494,7 +514,7 @@ public class GameDeckService {
         }
 
         // Publish event for returning explosion card
-        ExplosionReturnedToDeckEvent explosionReturnedToDeckEvent = new ExplosionReturnedToDeckEvent(this, game.getGameId(), "placeholder");
+        ExplosionReturnedToDeckEvent explosionReturnedToDeckEvent = new ExplosionReturnedToDeckEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(explosionReturnedToDeckEvent);
     }
 

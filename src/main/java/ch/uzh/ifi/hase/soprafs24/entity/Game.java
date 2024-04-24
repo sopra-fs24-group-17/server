@@ -67,4 +67,8 @@ public class Game implements Serializable {
 
     private boolean skipDraw = false;
 
+    private  boolean attacked = false;
+
+    private boolean repeatTurn = false;
+
 }
