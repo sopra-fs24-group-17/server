@@ -45,8 +45,6 @@ public class GameEngineController {
 
         logger.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
 
-        boolean avoid_draw = false;
-
         Long targetUserId = cardMoveRequest.getTargetUserId();
 
         // Transformation to internal representation
@@ -66,6 +64,9 @@ public class GameEngineController {
                 gameEngineService.handleShuffleCard(game, userId);
             } else if (Objects.equals(transformedCards.get(0).getInternalCode(), "future")) {
                 gameEngineService.handleFutureCard(game, userId);
+            } else if (Objects.equals(transformedCards.get(0).getInternalCode(), "skip")) {
+                game.setSkipDraw(true);
+                gameEngineService.handleSkipCard(game, userId, transformedCards.get(0).getCode());
             }
         }
 
@@ -100,9 +101,8 @@ public class GameEngineController {
 
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
-        // To do -- Awaiting mapper from Jorge
-        // User is required to draw a card from the dealer pile
-        // Send the card through the websocket to the user
+        // Handle termination of move draw
+        gameEngineService.drawCardMoveTermination(gameId, userId);
 
         // Handle turnValidation (finding next player and communicating through websocket)
         gameEngineService.turnValidation(gameId, userId);

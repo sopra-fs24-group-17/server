@@ -79,4 +79,10 @@ public class GameEngineEventListener {
         logger.info("Player {} played card {}", event.getInvokingPlayerUserName(), event.getInternalCode());
         webSocketService.sendMessageCardPlayed(event.getGameId(), event.getInvokingPlayerUserName(), event.getInternalCode());
     }
+
+    @EventListener
+    public void skipCardPlayed(SkipEvent event) {
+        logger.info("Player {} played a skip card in game {}", event.getInvokingPlayerUserName(), event.getGameId());
+        // No message triggered
+    }
 }
