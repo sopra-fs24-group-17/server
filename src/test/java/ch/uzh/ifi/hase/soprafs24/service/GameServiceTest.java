@@ -68,7 +68,7 @@ public class GameServiceTest {
     public void testCreateNewGame_Success() throws IOException, InterruptedException {
         when(userService.verifyUserByToken(anyString())).thenReturn(mockUser);
         when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(gameDeckService.fetchDeck(any(Game.class))).thenReturn(new GameDeck());
+        when(gameDeckService.fetchDeck(any(Game.class), eq(true))).thenReturn(new GameDeck());
         Game createdGame = gameService.createNewGame("validToken", gamePostDTO);
 
         assertNotNull(createdGame.getGameId());
@@ -79,7 +79,7 @@ public class GameServiceTest {
     @Test
     public void testCreateNewGame_UniqueGameIdGeneration() throws IOException, InterruptedException {
         when(userService.verifyUserByToken(anyString())).thenReturn(mockUser);
-        when(gameDeckService.fetchDeck(any(Game.class))).thenReturn(new GameDeck());
+        when(gameDeckService.fetchDeck(any(Game.class), eq(true))).thenReturn(new GameDeck());
         when(gameRepository.findByGameId(anyLong())).thenReturn(Optional.empty());
         when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

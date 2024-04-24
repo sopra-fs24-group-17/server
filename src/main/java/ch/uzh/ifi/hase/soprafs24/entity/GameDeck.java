@@ -5,6 +5,8 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -16,9 +18,16 @@ public class GameDeck implements Serializable {
     private String deckID;
 
     @Column
-    private Long remainingCards;
+    private Integer remainingCards;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gameId", referencedColumnName = "gameId")
     private Game game;
+
+    @Column
+    private String dealerPileId;
+
+    @Column
+    private Integer remainingCardsDealerStack;
+
 }

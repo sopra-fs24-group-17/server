@@ -3,6 +3,8 @@ package ch.uzh.ifi.hase.soprafs24.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameMode;
@@ -31,13 +33,13 @@ public class Game implements Serializable {
     @Column(nullable = false)
     private Integer maxPlayers;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "game_stats_players",
             joinColumns = @JoinColumn(name = "gameId"),
             inverseJoinColumns = @JoinColumn(name = "id")
     )
-    private Set<User> players = new HashSet<>();
+    private Set<User> players = new LinkedHashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "currentTurn", referencedColumnName = "id")
@@ -49,6 +51,9 @@ public class Game implements Serializable {
     @Column(nullable = true)
     private Long scoreBoard;
 
+    @Column(nullable = true)
+    private String turns;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private GameState state = GameState.PREPARING;
@@ -59,5 +64,11 @@ public class Game implements Serializable {
 
     @OneToOne(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private GameDeck gameDeck;
+
+    private boolean skipDraw = false;
+
+    private  boolean attacked = false;
+
+    private boolean repeatTurn = false;
 
 }

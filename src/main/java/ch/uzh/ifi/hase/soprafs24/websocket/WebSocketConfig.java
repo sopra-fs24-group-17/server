@@ -34,6 +34,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic", "/game", "/login", "/logout", "/friendshiprequest")
                 .setTaskScheduler(heartBeatScheduler())
                 .setHeartbeatValue(new long[] {60000, 120000});
+        registry.setApplicationDestinationPrefixes("/app");
     }
 
     @Bean

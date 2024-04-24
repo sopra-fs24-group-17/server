@@ -176,9 +176,6 @@ public class UserService {
   public User setOnline(String username) {
       User userByUsername = userRepository.findByUsername(username);
 
-      if (userByUsername.getStatus() == UserStatus.ONLINE) {
-          throw new ResponseStatusException(HttpStatus.FORBIDDEN, "user is already logged in");
-      }
       userByUsername.setStatus(UserStatus.ONLINE);
       userByUsername = userRepository.save(userByUsername);
       userRepository.flush();

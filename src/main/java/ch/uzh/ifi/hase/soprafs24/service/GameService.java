@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.GameMode;
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
@@ -8,6 +9,7 @@ import ch.uzh.ifi.hase.soprafs24.event.GameCreationEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameJoinEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameLeaveEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.FriendsGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import org.hibernate.service.spi.ServiceException;
@@ -19,9 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -67,7 +68,7 @@ public class GameService {
 
         try {
             // Create corresponding deck of cards for the game
-            GameDeck gameDeck = gameDeckService.fetchDeck(game);
+            GameDeck gameDeck = gameDeckService.fetchDeck(game, true);
 
             game.setGameDeck(gameDeck);
             Game updatedGame = gameRepository.saveAndFlush(game);
@@ -161,6 +162,26 @@ public class GameService {
         } else {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not part of the game");
         }
+    }
+
+    /**
+     * Returns all games that are in the preparing state and have a public game mode.
+     * @param token of the user requesting to see all available public games.
+     * @return
+     */
+    public List<Game> getGames(String token) {
+        User verifiedUser = userService.verifyUserByToken(token);
+        List<User> friends = userService.getUsersFriends(verifiedUser.getId());
+        List<Game> publicGames =  gameRepository.findByStateAndMode(GameState.PREPARING, GameMode.PUBLIC);
+// Fetch private games initiated by the verified user
+        List<Game> privateUserGames = gameRepository.findByInitiatingUserAndStateAndMode(verifiedUser, GameState.PREPARING, GameMode.PRIVATE);
+        Set<Game> combinedGames = new HashSet<>(publicGames);
+        combinedGames.addAll(privateUserGames); // Add the user's own private games
+        for (User friend: friends) {
+            List<Game> privateFriendGames = gameRepository.findByInitiatingUserAndStateAndMode(friend, GameState.PREPARING, GameMode.PRIVATE);
+            combinedGames.addAll(privateFriendGames);
+        }
+        return new ArrayList<>(combinedGames);
     }
 
     /**

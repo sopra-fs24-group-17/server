@@ -58,7 +58,8 @@ public interface UserDTOMapper {
   @Mapping(source = "avatar", target = "avatar")
   User convertUserPutDTOtoEntity(UserPutDTO userPutDTO);
 
-  @Mapping(target = "userid", ignore = true)
+  // @Mapping(target = "userid", ignore = true)
+  @Mapping(source = "id", target = "userid")
   @Mapping(source = "username", target = "username")
   @Mapping(source = "userStats.gamesPlayed", target = "gamesplayed")
   @Mapping(source = "userStats.gamesWon", target = "gameswon")
@@ -76,7 +77,7 @@ public interface UserDTOMapper {
   @Mapping(source = "countryoforigin", target = "countryoforigin")
   @Mapping(source = "avatar", target = "avatar")
   @Mapping(target = "otp", ignore = true)
-  @Mapping(target = "tutorialflag", ignore = true)
+  @Mapping(source = "tutorialflag", target = "tutorialflag")
   @Mapping(source = "profilevisibility", target = "profilevisibility")
   @Mapping(target = "token", ignore = true) //Will be sent in the header
 
