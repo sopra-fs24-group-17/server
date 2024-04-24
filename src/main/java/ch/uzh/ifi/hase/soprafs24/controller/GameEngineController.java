@@ -78,16 +78,16 @@ public class GameEngineController {
         }
         else if(transformedCards.size()==2) {
             if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "tacocat"))) {
-                gameEngineService.handleFutureCard(game, userId);
+                gameEngineService.handleFavorCard(game, userId, targetUserId);
             }
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "cattermelon"))) {
-                gameEngineService.handleAttackCard(game, userId);
+                gameEngineService.handleFavorCard(game, userId, targetUserId);
             }
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "hairypotatocat"))) {
-                gameEngineService.handleSkipCard(game, userId);
+                gameEngineService.handleFavorCard(game, userId, targetUserId);
             }
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "beardcat"))) {
-                gameEngineService.handleShuffleCard(game, userId);
+                gameEngineService.handleFavorCard(game, userId, targetUserId);
             }
         }
     }
