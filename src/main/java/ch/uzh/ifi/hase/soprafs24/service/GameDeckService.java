@@ -531,7 +531,6 @@ public class GameDeckService {
     }
 
     public Card drawCardFromPlayerPile(GameDeck gameDeck, Long targetUserId) throws IOException, InterruptedException {
-        // Validation on target player should be done at the front end. A player without cards shouldn't be allowed to grab cards from
         String drawCardFromPlayerUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random", gameDeck.getDeckID(), targetUserId);
 
         HttpRequest drawCardFromPlayerRequest = HttpRequest.newBuilder()
@@ -542,7 +541,7 @@ public class GameDeckService {
             HttpResponse<String> drawCardFromPlayerResponse = httpClient.send(drawCardFromPlayerRequest, HttpResponse.BodyHandlers.ofString());
 
             List<Card> cards = parseCards(drawCardFromPlayerResponse.body(), gameDeck);
-
+            logger.info(drawCardFromPlayerResponse.body());
             return cards.get(0);
 
         }  catch (IOException | InterruptedException e) {

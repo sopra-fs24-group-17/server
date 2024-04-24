@@ -348,6 +348,8 @@ public class GameEngineService {
     }
 
     public void handleSkipCard(Game game, Long userId, String cardCode) throws IOException, InterruptedException {
+        game.setSkipDraw(true);
+        gameRepository.saveAndFlush(game);
         SkipEvent skipEvent = new SkipEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(skipEvent);
     }
