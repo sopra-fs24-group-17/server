@@ -206,6 +206,13 @@ public class WebSocketService {
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
 
+    public void sendMessageExplosionIndividual(Long gameId, Long userId) {
+        JSONObject message = new JSONObject();
+        message.put("type", "explosion");
+
+        this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
     public void lossEvent(Long gameId, String userName) {
         JSONObject message = new JSONObject();
         message.put("type", "loss");
