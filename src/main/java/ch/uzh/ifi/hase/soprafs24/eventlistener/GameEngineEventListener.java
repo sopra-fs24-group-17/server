@@ -115,4 +115,10 @@ public class GameEngineEventListener {
         logger.info("User {} lost in game {}", event.getLooserPlayer(), event.getGameId());
         webSocketService.lossEvent(event.getGameId(), event.getLooserPlayer());
     }
+
+    @EventListener
+    public void provideGameStats(GameStateEvent event) {
+        logger.info("Game Stats for {} dispatched", event.getGameId());
+        webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats());
+    }
 }

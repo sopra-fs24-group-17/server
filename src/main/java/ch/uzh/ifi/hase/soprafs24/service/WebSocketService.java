@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -212,7 +213,26 @@ public class WebSocketService {
 
         this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
     }
-    
+
+    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats) {
+        JSONObject message = new JSONObject();
+        message.put("type", "gameState");
+
+        // Add Info for topCard
+        message.put("topCardCode", topCard.getCode());
+        message.put("topCardInternalCode", topCard.getInternalCode());
+
+        JSONObject pilesJson = new JSONObject();
+        for (Map.Entry<String, Integer> entry : remainingCardStats.entrySet()) {
+            pilesJson.put(entry.getKey(), entry.getValue());
+        }
+        message.put("piles", pilesJson);
+
+        this.sendMessage.convertAndSend("/game/" + gameId, message.toString());
+
+    }
+
+
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);
     }

@@ -638,10 +638,7 @@ public class GameDeckService {
             }
         }
         return null;
-
-
     }
-
 
     @Transactional
     public List<Card> saveCards(List<Card> cards) {
@@ -651,5 +648,77 @@ public class GameDeckService {
         List<Card> savedCards = cardRepository.saveAll(cards);
         cardRepository.flush();
         return savedCards;
+    }
+
+    public String getRemainingPileStats(GameDeck gameDeck, Long userId) throws IOException, InterruptedException {
+        String remainingCardStatsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), userId);
+
+        HttpRequest remainingCardsStatsRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(remainingCardStatsUri))
+                .build();
+
+        HttpResponse<String> remainingCardsStatsResponse = httpClient.send(remainingCardsStatsRequest, HttpResponse.BodyHandlers.ofString());
+        return remainingCardsStatsResponse.body();
+    }
+
+    public Map<String, Integer> parsePileCardCounts(String jsonResponse) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+
+        JsonNode pilesNode = rootNode.path("piles");
+        Map<String, Integer> pileCardCounts = new HashMap<>();
+
+        if (pilesNode.isMissingNode()) {
+            throw new IllegalStateException("The 'piles' node is missing");
+        }
+
+        pilesNode.fields().forEachRemaining(pile -> {
+            String pileName = pile.getKey();
+            JsonNode pileDetails = pile.getValue();
+            int remainingCards = pileDetails.path("remaining").asInt();
+            pileCardCounts.put(pileName, remainingCards);
+        });
+
+        return pileCardCounts;
+    }
+
+    public List<Card> exploreTopCardPlayPile(GameDeck gameDeck) throws IOException, InterruptedException{
+        String remainingPlayPileCards = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/play/list/", gameDeck.getDeckID());
+
+        HttpRequest remainingCardsStatsRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(remainingPlayPileCards))
+                .build();
+
+        HttpResponse<String> remainingPlayCardsResponse = httpClient.send(remainingCardsStatsRequest, HttpResponse.BodyHandlers.ofString());
+        List<Card> cards = parseCardsPlayed(remainingPlayCardsResponse.body());
+
+        if (cards.isEmpty()){
+            return null;
+        }
+        return saveCards(cards);
+    }
+
+    public List<Card> parseCardsPlayed(String jsonResponse) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+
+        String deckId = rootNode.get("deck_id").asText();
+        JsonNode pileNode = rootNode.path("piles").path("play");
+        JsonNode cardsNode = pileNode.path("cards");
+        List<Card> cards = new ArrayList<>();
+
+        // Extraction of necessary variables
+        for (JsonNode cardNode : cardsNode) {
+            Card card = new Card();
+            card.setCode(cardNode.get("code").asText());
+            card.setSuit(cardNode.get("suit").asText());
+            card.setImage(cardNode.get("image").asText()); // Change this value based on the cardVal and the cards we are going to use
+            card.setDeckId(deckId);
+
+            cards.add(card);
+        }
+        return saveCards(cards);
     }
 }
