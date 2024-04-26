@@ -196,6 +196,7 @@ public class WebSocketService {
     public void sendMessageYourTurn(Long userId, Long gameId) {
         JSONObject message = new JSONObject();
         message.put("type", "startTurn");
+        message.put("userId", userId);
 
         this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
     }
@@ -324,6 +325,13 @@ public class WebSocketService {
      * @param gameId referencing an active game
      * @param userName referencing the affected user
      */
+    public void sendMessageExplosionIndividual(Long gameId, Long userId) {
+        JSONObject message = new JSONObject();
+        message.put("type", "explosion");
+
+        this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
     public void lossEvent(Long gameId, String userName) {
         JSONObject message = new JSONObject();
         message.put("type", "loss");

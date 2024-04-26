@@ -448,6 +448,9 @@ public class GameEngineService {
         gameRepository.saveAndFlush(game);
         SkipEvent skipEvent = new SkipEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(skipEvent);
+
+        turnValidation(game.getGameId(), userId);
+
     }
 
     /**
@@ -477,6 +480,9 @@ public class GameEngineService {
         // To Do - Trigger Attack Event but on next user channel.
         AttackEvent attackEvent = new AttackEvent(this, game.getGameId(), game.getCurrentTurn().getUsername(), nextUserUserName);
         eventPublisher.publishEvent(attackEvent);
+
+        turnValidation(game.getGameId(), userId);
+
     }
 
     /**
@@ -495,6 +501,9 @@ public class GameEngineService {
 
         ExplosionEvent explosionEvent = new ExplosionEvent(this, gameId, explodedUser.getUsername());
         eventPublisher.publishEvent(explosionEvent);
+
+        ExplosionEventIndividual explosionEventIndividual = new ExplosionEventIndividual(this, gameId, explodedUser.getId());
+        eventPublisher.publishEvent(explosionEventIndividual);
 
         // Browse Pile of the Exploding User
         String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
@@ -515,6 +524,8 @@ public class GameEngineService {
             // To do -- allow user to select where exactly to place the explosion card
             gameDeckService.returnCardsToDealerPile(game, explosionId);
             gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
+
+            turnValidation(gameId, userId);
 
         } else {
             // If he has no defuse card, put the user out of the game
@@ -541,7 +552,7 @@ public class GameEngineService {
             topCardPlayPile.setCode("");
             topCardPlayPile.setInternalCode("");
         } else {
-            topCardPlayPile = topCardsPlayPile.get(0);
+            topCardPlayPile = topCardsPlayPile.get(topCardsPlayPile.size() - 1);
         }
         // Publish Event
         GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts);
