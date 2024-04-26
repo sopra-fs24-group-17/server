@@ -2,13 +2,23 @@ package ch.uzh.ifi.hase.soprafs24.eventlistener;
 
 import static org.mockito.Mockito.*;
 
+import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
+import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@ActiveProfiles("dev")
 public class GameEngineEventListenerTest {
 
     @Mock
@@ -27,90 +37,220 @@ public class GameEngineEventListenerTest {
 
     @Test
     public void testOnDrawCards() {
-        DrawCardsEvent event = new DrawCardsEvent("gameId", "playerUsername", 3);
+        Long gameId = 12345L;
+        String userName = "user";
+        DrawCardsEvent event = new DrawCardsEvent(this, 3, gameId, userName);
         listener.onDrawCards(event);
-        verify(webSocketService).sendMessageCardsDrawn("gameId", "playerUsername", 3);
+        verify(webSocketService).sendMessageCardsDrawn(gameId, userName, 3);
     }
 
     @Test
     public void testOnShuffling() {
-        ShufflingEvent event = new ShufflingEvent("gameId", "playerUsername");
+        Long gameId = 12345L;
+        String userName = "user";
+        ShufflingEvent event = new ShufflingEvent(this, gameId, userName);
         listener.onShuffling(event);
-        verify(webSocketService).sendMessageShuffling("gameId", "playerUsername");
+        verify(webSocketService).sendMessageShuffling(gameId, userName);
     }
 
     @Test
     public void testOnPeekIntoDeck() {
-        PeekIntoDeckEvent event = new PeekIntoDeckEvent("gameId", "playerUsername", "userId", new int[]{1, 2, 3});
+        Long gameId = 12345L;
+        String userName = "user";
+        List<Card> futureCards = new ArrayList<>();
+        Card card1 = new Card();
+        card1.setCode("AB");
+        card1.setSuit("suit");
+        card1.setImage("image");
+        card1.setInternalCode("internalCode");
+        futureCards.add(card1);
+
+        Card card2 = new Card();
+        card2.setCode("CD");
+        card2.setSuit("suit");
+        card2.setImage("image");
+        card2.setInternalCode("internalCode");
+        futureCards.add(card2);
+
+        Card card3 = new Card();
+        card3.setCode("EF");
+        card3.setSuit("suit");
+        card3.setImage("image");
+        card3.setInternalCode("internalCode");
+        futureCards.add(card3);
+
+        PeekIntoDeckEvent event = new PeekIntoDeckEvent(this, gameId, userName, 1L, futureCards);
         listener.onPeekIntoDeck(event);
-        verify(webSocketService).sendMessagePeekIntoDeck("gameId", "playerUsername", "userId", new int[]{1, 2, 3});
+        verify(webSocketService).sendMessagePeekIntoDeck(gameId, userName, 1L, futureCards);
     }
 
     @Test
     public void testReturnExplosionToDeck() {
-        ExplosionReturnedToDeckEvent event = new ExplosionReturnedToDeckEvent("gameId", "playerUsername");
+        Long gameId = 12345L;
+        String userName = "user";
+        ExplosionReturnedToDeckEvent event = new ExplosionReturnedToDeckEvent(this, gameId, userName);
         listener.returnExplosionToDeck(event);
-        verify(webSocketService).sendMessageExplosionReturnedToDeck("gameId", "playerUsername");
+        verify(webSocketService).sendMessageExplosionReturnedToDeck(gameId, userName);
     }
 
     @Test
     public void testStartGame() {
-        GameStartEvent event = new GameStartEvent("gameId", "userId");
+        Long gameId = 12345L;
+        String userName = "user";
+        GameStartEvent event = new GameStartEvent(this, gameId, 1L);
         listener.startGame(event);
-        verify(webSocketService).sendMessageGameStarted("gameId", "userId");
+        verify(webSocketService).sendMessageGameStarted(gameId, 1L);
     }
 
     @Test
     public void testYourTurn() {
-        YourTurnEvent event = new YourTurnEvent("userId", "gameId");
+        Long gameId = 12345L;
+        String userName = "user";
+        YourTurnEvent event = new YourTurnEvent(this, 1L, gameId);
         listener.yourTurn(event);
-        verify(webSocketService).sendMessageYourTurn("userId", "gameId");
+        verify(webSocketService).sendMessageYourTurn(1L, gameId);
     }
 
     @Test
     public void testEndTurn() {
-        EndTurnEvent event = new EndTurnEvent("gameId", "userName");
+        Long gameId = 12345L;
+        String userName = "user";
+        EndTurnEvent event = new EndTurnEvent(this, userName, gameId);
         listener.endTurn(event);
-        verify(webSocketService).setSendMessageEndTurn("gameId", "userName");
+        verify(webSocketService).setSendMessageEndTurn(gameId, userName);
     }
 
     @Test
     public void testEndGame() {
-        EndGameEvent event = new EndGameEvent("gameId", "userName");
+        Long gameId = 12345L;
+        String userName = "user";
+        EndGameEvent event = new EndGameEvent(this, userName, gameId);
         listener.endGame(event);
-        verify(webSocketService).sendMessageEndGame("gameId", "userName");
+        verify(webSocketService).sendMessageEndGame(gameId, userName);
     }
 
     @Test
     public void testPlayerCard() {
-        PlayerCardEvent event = new PlayerCardEvent("gameId", "userId", new String[]{"card1", "card2"});
+        Long gameId = 12345L;
+        String userName = "user";
+
+        List<Card> playedCards = new ArrayList<>();
+        Card card = new Card();
+        card.setCode("AB");
+        card.setSuit("suit");
+        card.setImage("image");
+        card.setInternalCode("internalCode");
+        playedCards.add(card);
+
+        PlayerCardEvent event = new PlayerCardEvent(this, 1L, gameId, playedCards);
         listener.playerCard(event);
-        verify(webSocketService).sendMessagePlayerCards("gameId", "userId", new String[]{"card1", "card2"});
+        verify(webSocketService).sendMessagePlayerCards(gameId, 1L, playedCards);
     }
 
     @Test
     public void testPlayedCard() {
-        CardPlayedEvent event = new CardPlayedEvent("gameId", "playerUsername", "internalCode");
+        Long gameId = 12345L;
+        String userName = "user";
+        CardPlayedEvent event = new CardPlayedEvent(this, "explosion", gameId, userName);
         listener.playedCard(event);
-        verify(webSocketService).sendMessageCardPlayed("gameId", "playerUsername", "internalCode");
+        verify(webSocketService).sendMessageCardPlayed(gameId, userName, "explosion");
     }
-
-    // Add tests for other event methods similarly...
 
     @Test
     public void testStolenCard() {
-        StealCardEvent event = new StealCardEvent("gameId", "userId", new String[]{"card1"});
+        Long gameId = 12345L;
+        String userName = "user";
+        List<Card> stolenCard = new ArrayList<>();
+        Card card = new Card();
+        card.setCode("AB");
+        card.setSuit("suit");
+        card.setImage("image");
+        card.setInternalCode("internalCode");
+        stolenCard.add(card);
+
+        StealCardEvent event = new StealCardEvent(this, 1L, gameId, stolenCard);
         listener.stolenCard(event);
-        verify(webSocketService).sendMessageStolenCard("gameId", "userId", new String[]{"card1"});
+        verify(webSocketService).sendMessageStolenCard(gameId, 1L, stolenCard);
     }
 
     @Test
     public void testDefuseActivated() {
-        DefuseEvent event = new DefuseEvent("gameId", "userId", new String[]{"card1"});
+        Long gameId = 12345L;
+        String userName = "user";
+
+        List<Card> playedCard = new ArrayList<>();
+        Card card = new Card();
+        card.setCode("AB");
+        card.setSuit("suit");
+        card.setImage("image");
+        card.setInternalCode("internalCode");
+        playedCard.add(card);
+
+        DefuseEvent event = new DefuseEvent(this, 1L, gameId, playedCard);
         listener.defuseActivated(event);
-        verify(webSocketService).sendMessageDefuseCardPlayed("gameId", "userId", new String[]{"card1"});
+        verify(webSocketService).sendMessageDefuseCardPlayed(gameId, 1L, playedCard);
     }
 
     @Test
     public void testExplosionTriggered() {
-        ExplosionEvent event = new Explosion
+        Long gameId = 12345L;
+        String userName = "user";
+        ExplosionEvent event = new ExplosionEvent(this, gameId, userName);
+        listener.explosionTriggered(event);
+        verify(webSocketService).sendMessageExplosion(gameId, userName);
+    }
+
+    @Test
+    public void testDownOneUser() {
+        Long gameId = 12345L;
+        String userName = "user";
+        LossEvent event = new LossEvent(this, gameId, userName);
+        listener.downOneUser(event);
+        verify(webSocketService).lossEvent(gameId, userName);
+    }
+
+    @Test
+    public void testProvideGameStats() {
+        Long gameId = 12345L;
+        Card topCard = new Card();
+        topCard.setCode("KH");
+        topCard.setInternalCode("explosion");
+        topCard.setSuit("suit");
+        topCard.setImage("image");
+        Map<String, Integer> remainingCardStats = new HashMap<>();
+        remainingCardStats.put("deck", 40);
+        remainingCardStats.put("discard", 5);
+
+        GameStateEvent event = new GameStateEvent(this, gameId, topCard, remainingCardStats);
+        listener.provideGameStats(event);
+        verify(webSocketService).sendGameState(eq(gameId), eq(topCard), eq(remainingCardStats));
+    }
+
+    @Test
+    public void testExplosionIndividual() {
+        Long gameId = 12345L;
+        String userName = "user";
+        ExplosionEventIndividual event = new ExplosionEventIndividual(this, gameId, 1L);
+        listener.explosionIndividual(event);
+        verify(webSocketService).sendMessageExplosionIndividual(gameId, 1L);
+    }
+
+    @Test
+    public void testSkipCardPlayed() {
+        Long gameId = 12345L;
+        String userName = "user";
+        SkipEvent event = new SkipEvent(this, gameId, userName);
+        listener.skipCardPlayed(event);
+        verifyNoInteractions(webSocketService);
+    }
+
+    @Test
+    public void testAttackCardPlayed() {
+        Long gameId = 12345L;
+        String userName = "user";
+        String targetName = "userTarget";
+        AttackEvent event = new AttackEvent(this, gameId, userName, targetName);
+        listener.attackCardPlayed(event);
+        verifyNoInteractions(webSocketService);
+    }
+}

@@ -122,6 +122,7 @@ public class WebSocketService {
     public void sendMessageYourTurn(Long userId, Long gameId) {
         JSONObject message = new JSONObject();
         message.put("type", "startTurn");
+        message.put("userId", userId);
 
         this.sendMessage.convertAndSend("/game/" + gameId + "/" + userId, message.toString());
     }
