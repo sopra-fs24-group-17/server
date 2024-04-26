@@ -250,6 +250,13 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    /**
+     * Maps the cards in dealer pile to internal representation
+     * @param jsonResponse the response from invoking the draw cards api.
+     * @param gameDeck object from which the cards were drawn.
+     * @return List of cards objects.
+     * @throws IOException
+     */
     public List<Card> parseCardsDealer(String jsonResponse, GameDeck gameDeck) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = objectMapper.readTree(jsonResponse);
@@ -278,6 +285,13 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    /**
+     * Maps the cards in a player pile to internal representation
+     * @param jsonResponse the response from invoking the draw cards api.
+     * @param userId of the player the hand belongs to.
+     * @return List of cards objects.
+     * @throws IOException
+     */
     public List<Card> parseCardsPlayer(String jsonResponse, Long userId) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = objectMapper.readTree(jsonResponse);
@@ -300,6 +314,13 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    /**
+     * Maps cards drawn from a player pile to internal representation
+     * @param jsonResponse the response from invoking the draw cards api.
+     * @param userId of the player the hand belongs to.
+     * @return List of cards objects.
+     * @throws IOException
+     */
     public List<Card> parseCardsDrawnFromPlayerPile(String jsonResponse, Long userId) throws IOException {
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -342,7 +363,7 @@ public class GameDeckService {
     }
 
     /**
-     * Generates a dealer pile by transferting all cards from a deck to a pile called "dealer"
+     * Generates a dealer pile by transferring all cards from a deck to a pile called "dealer"
      * @param game object for which the dealer pile shall be created
      * @throws IOException
      * @throws InterruptedException
@@ -562,6 +583,12 @@ public class GameDeckService {
         eventPublisher.publishEvent(explosionReturnedToDeckEvent);
     }
 
+    /**
+     * Helper method that removes all the explosion cards present in the dealer pile
+     * @param gameDeck indicating the playing deck
+     * @return List of cards objects.
+     * @throws IOException
+     */
     public List<Card> removeExplosionsFromDealerPile(GameDeck gameDeck) throws IOException, InterruptedException {
 
         String drawExplosionsUri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/dealer/draw/?cards=AS,AH,AC,AD", gameDeck.getDeckID());
@@ -578,6 +605,12 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    /**
+     * Helper method that removes all the defuse cards present in the dealer pile
+     * @param gameDeck indicating the playing deck
+     * @return List of cards objects.
+     * @throws IOException
+     */
     public List<Card> removeDefusionsFromDealerPile(GameDeck gameDeck) throws IOException, InterruptedException {
 
         String drawDefusionsUri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/dealer/draw/?cards=KS,KH,KC,KD,X1,X2", gameDeck.getDeckID());
@@ -594,6 +627,14 @@ public class GameDeckService {
         return  saveCards(cards);
     }
 
+    /**
+     * Helper method that takes top card from the player pile
+     * @param gameDeck indicating the playing deck
+     * @param targetUserId indicating the user pile the card is to be removed from
+     * @return Card object.
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public Card drawCardFromPlayerPile(GameDeck gameDeck, Long targetUserId) throws IOException, InterruptedException {
         String drawCardFromPlayerUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random/", gameDeck.getDeckID(), targetUserId);
 
@@ -607,6 +648,15 @@ public class GameDeckService {
         return cards.get(0);
     }
 
+    /**
+     * Helper method that removes a specific card from the player pile
+     * @param gameDeck indicating the playing deck
+     * @param userId indicating the user pile the card is to be removed from
+     * @param cardId indicating the requested card
+     * @return List of cards objects.
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public Card drawExactCardFromPlayerPile(GameDeck gameDeck, Long userId, String cardId) throws IOException, InterruptedException {
         String drawCardFromPlayerUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s", gameDeck.getDeckID(), userId, cardId);
 
@@ -620,6 +670,14 @@ public class GameDeckService {
         return cards.get(0);
     }
 
+    /**
+     * Helper method that validates if the player is in posesion of a defuse card
+     * @param gameDeck indicating the playing deck
+     * @param userId indicating the active user pile
+     * @return String
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public String exploreDefuseCardInPlayerPile(GameDeck gameDeck, Long userId) throws IOException, InterruptedException {
 
         String listCardInPlayerPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), userId);
@@ -640,6 +698,11 @@ public class GameDeckService {
         return null;
     }
 
+    /**
+     * Helper method that updates the card repository
+     * @param cards cards to be saved
+     * @return List of cards objects.
+     */
     @Transactional
     public List<Card> saveCards(List<Card> cards) {
         if (cards == null || cards.isEmpty()) {
@@ -650,6 +713,14 @@ public class GameDeckService {
         return savedCards;
     }
 
+    /**
+     * Helper method to obtain statistics about a pile
+     * @param gameDeck indicating the playing deck
+     * @param userId indicating the user the pile belongs to
+     * @return Response body of api request
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public String getRemainingPileStats(GameDeck gameDeck, Long userId) throws IOException, InterruptedException {
         String remainingCardStatsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), userId);
 
@@ -662,6 +733,12 @@ public class GameDeckService {
         return remainingCardsStatsResponse.body();
     }
 
+    /**
+     * Helper method to obtain remaining cards of a pile
+     * @param jsonResponse response body of a request to the cards api
+     * @return Integer - Remaining cards
+     * @throws IOException
+     */
     public Map<String, Integer> parsePileCardCounts(String jsonResponse) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = objectMapper.readTree(jsonResponse);
@@ -683,6 +760,13 @@ public class GameDeckService {
         return pileCardCounts;
     }
 
+    /**
+     * Returns top card in the played cards pile
+     * @param gameDeck indicating the playing deck
+     * @return List of cards objects
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public List<Card> exploreTopCardPlayPile(GameDeck gameDeck) throws IOException, InterruptedException{
         String remainingPlayPileCards = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/play/list/", gameDeck.getDeckID());
 
@@ -700,6 +784,12 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    /**
+     * Parse the cards in played stack to internal representation
+     * @param jsonResponse Response body of an api request
+     * @return List of cards objects
+     * @throws IOException
+     */
     public List<Card> parseCardsPlayed(String jsonResponse) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode rootNode = objectMapper.readTree(jsonResponse);
