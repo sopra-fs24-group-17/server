@@ -5,13 +5,13 @@ import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GameGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
+import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.opencensus.trace.Link;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -21,22 +21,18 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.server.ResponseStatusException;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.mock.http.server.reactive.MockServerHttpRequest.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -50,8 +46,14 @@ public class GameControllerTest {
     @MockBean
     private GameService gameService;
 
+    @MockBean
+    private GameEngineService gameEngineService;
+
     @Mock
     private GameDTOMapper gameDTOMapper;
+
+    @InjectMocks
+    private GameEngineController gameEngineController;
 
     @BeforeEach
     public void setup(WebApplicationContext webApplicationContext) {
@@ -146,5 +148,79 @@ public class GameControllerTest {
                         .header("token", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameId").value(gameId));
+    }
+
+    @Test
+    void testHandleTerminatingMove_NoExplosion() throws Exception {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        // Mock behavior: No explosion card is drawn
+        when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(null);
+
+        gameEngineController.handleTerminatingMove(gameId, userId);
+
+        // Verify that drawCardMoveTermination was called
+        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+        // Ensure handleExplosionCard was not called
+        verify(gameEngineService, never()).handleExplosionCard(anyLong(), anyLong(), anyString());
+        // Verify that turnValidation and dispatchGameState were called
+        verify(gameEngineService, times(1)).turnValidation(gameId, userId);
+        verify(gameEngineService, times(1)).dispatchGameState(gameId, userId);
+    }
+
+
+    @Test
+    void testHandleTerminatingMove_WithExplosion() throws Exception {
+        Long gameId = 1L;
+        Long userId = 2L;
+        String explosionCard = "explosion";
+
+        when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(explosionCard);
+        gameEngineController.handleTerminatingMove(gameId, userId);
+
+        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+        verify(gameEngineService, times(1)).handleExplosionCard(gameId, userId, explosionCard);
+        verify(gameEngineService, times(1)).turnValidation(gameId, userId);
+        verify(gameEngineService, times(1)).dispatchGameState(gameId, userId);
+    }
+
+    @Test
+    void testHandleLeavingUser() throws Exception {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        gameEngineController.handleLeavingUser(gameId, userId);
+        verify(gameEngineService, times(1)).removeUserFromGame(gameId, userId);
+    }
+
+    @Test
+    public void getAllJoinablePublicGames_returnsGameList() throws Exception {
+        // Setup
+        String token = "testToken";
+        Game game1 = new Game();
+        game1.setGameId(1L);
+        game1.setMaxPlayers(2);
+        GameGetDTO gameGetDTO1 = new GameGetDTO();
+        gameGetDTO1.setGameId(1L);
+
+        Game game2 = new Game();
+        game2.setGameId(2L);
+        game2.setMaxPlayers(2);
+        GameGetDTO gameGetDTO2 = new GameGetDTO();
+        gameGetDTO2.setGameId(2L);
+
+        List<Game> games = Arrays.asList(game1, game2);
+        List<GameGetDTO> dtos = Arrays.asList(gameGetDTO1, gameGetDTO2);
+
+        when(gameService.getGames(token)).thenReturn(games);
+        when(gameDTOMapper.convertEntityToGameGetDTO(game1)).thenReturn(gameGetDTO1);
+        when(gameDTOMapper.convertEntityToGameGetDTO(game2)).thenReturn(gameGetDTO2);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/dashboard/games")
+                .header("token", token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 }
