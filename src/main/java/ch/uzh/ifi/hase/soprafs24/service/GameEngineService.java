@@ -64,6 +64,11 @@ public class GameEngineService {
         this.eventPublisher = eventPublisher;
     }
 
+    /**
+     * Returns a game instance based on an id
+     * @param gameId referencing a Game
+     * @return Game object
+     */
     public Game findGameById(Long gameId) {
         Optional<Game> optionalGame = this.gameRepository.findByGameId(gameId);
 
@@ -74,6 +79,13 @@ public class GameEngineService {
         return optionalGame.get();
     }
 
+    /**
+     * Transform a game in preparing state to an ongoing game
+     * @param gameId referencing a Game
+     * @return Game object
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public Game startGame(Long gameId) throws IOException, InterruptedException {
 
         Game currentGame = findGameById(gameId);
@@ -250,6 +262,13 @@ public class GameEngineService {
         return nextUser;
     }
 
+    /**
+     * Remove a user from an ongoing game
+     * @param gameId referencing a Game
+     * @param userId referencing the user to be removed
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void removeUserFromGame(Long gameId, Long userId) throws IOException, InterruptedException {
 
         // Assert first that user was actually part of the game
@@ -284,6 +303,10 @@ public class GameEngineService {
         LossEvent lossEvent = new LossEvent(this, gameId, terminatingUser.getUsername());
     }
 
+    /**
+     * Terminates an ongoing game
+     * @param gameId referencing a Game
+     */
     public void terminatingGame(Long gameId) {
 
         Game gameToBeTerminated = findGameById(gameId);
@@ -310,6 +333,11 @@ public class GameEngineService {
         eventPublisher.publishEvent(endGameEvent);
     }
 
+    /**
+     * Return a list of cards with internal code
+     * @param cardsToBeTransformed cards without internal code
+     * @return List of cards objects with internal code
+     */
     public List<Card> transformCardsToInternalRepresentation(List<String> cardsToBeTransformed) {
 
         List<Card> cardsPlayed = new ArrayList<>();
@@ -321,14 +349,35 @@ public class GameEngineService {
         return cardsPlayed;
     }
 
+    /**
+     * Handler of shuffle card
+     * @param game currently active game
+     * @param userId referencing the user that triggered the action
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void handleShuffleCard(Game game, Long userId) throws IOException, InterruptedException {
         gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
     }
 
+    /**
+     * Handler of the look to the future card
+     * @param game currently active game
+     * @param userId referencing the user that triggered the action
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void handleFutureCard(Game game, Long userId) throws IOException, InterruptedException {
         gameDeckService.peekIntoDealerPile(game);
     }
 
+    /**
+     * Handler of the favor card
+     * @param game currently active game
+     * @param userId referencing the user that triggered the action
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void handleFavorCard(Game game, Long userId, Long targetUserId) throws IOException, InterruptedException {
 
         // Assert that the targetUser is still part of the game
@@ -359,6 +408,14 @@ public class GameEngineService {
         eventPublisher.publishEvent(playerCardEvent);
     }
 
+    /**
+     * Implements the final draw that indicates end of turn
+     * @param gameId referencing a game instance
+     * @param userId referencing the user that triggered the action
+     * @return String containing the drawn card
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public String drawCardMoveTermination(Long gameId, Long userId) throws IOException, InterruptedException {
         Game game = findGameById(gameId);
 
@@ -379,6 +436,13 @@ public class GameEngineService {
         return null;
     }
 
+    /**
+     * Handler of the skip turn card
+     * @param game currently active game
+     * @param userId referencing the user that triggered the action
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void handleSkipCard(Game game, Long userId) throws IOException, InterruptedException {
         game.setSkipDraw(true);
         gameRepository.saveAndFlush(game);
@@ -386,6 +450,13 @@ public class GameEngineService {
         eventPublisher.publishEvent(skipEvent);
     }
 
+    /**
+     * Handler of attack card
+     * @param game currently active game
+     * @param userId referencing the user that triggered the action
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void handleAttackCard(Game game, Long userId) throws IOException, InterruptedException {
         User currentUser = userRepository.findUserById(userId);
         User nextUser = getNextPlayer(currentUser, game.getPlayers());
@@ -408,6 +479,14 @@ public class GameEngineService {
         eventPublisher.publishEvent(attackEvent);
     }
 
+    /**
+     * Handler of the bomb card
+     * @param gameId referencing a game instance
+     * @param userId referencing the user that triggered the action
+     * @param explosionId referencing an explosion card
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void handleExplosionCard(Long gameId, Long userId, String explosionId) throws IOException, InterruptedException {
 
         Game game = findGameById(gameId);
@@ -443,6 +522,13 @@ public class GameEngineService {
         }
     }
 
+    /**
+     * Returns current game state
+     * @param gameId referencing a game instance
+     * @param userId referencing the user that triggered the action
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void dispatchGameState(Long gameId, Long userId) throws IOException, InterruptedException {
         Game game = findGameById(gameId);
         String jsonResponse = gameDeckService.getRemainingPileStats(game.getGameDeck(), userId);
