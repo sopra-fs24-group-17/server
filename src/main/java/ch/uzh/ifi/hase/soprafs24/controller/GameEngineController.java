@@ -53,6 +53,9 @@ public class GameEngineController {
         // Add cards to the play pile (i.e. game stack)
         gameDeckService.placeCardsToPlayPile(game, userId ,transformedCards, String.join(",", cardMoveRequest.getCardIds()));
 
+        // Dispatch Stats
+        gameEngineService.dispatchGameState(gameId,userId);
+
         // Game Logic
         if(transformedCards.size() == 1) {
             if (Objects.equals(transformedCards.get(0).getInternalCode(), "shuffle")) {
