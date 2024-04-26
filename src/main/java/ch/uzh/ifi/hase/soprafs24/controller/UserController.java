@@ -1,22 +1,16 @@
 package ch.uzh.ifi.hase.soprafs24.controller;
 
-import ch.uzh.ifi.hase.soprafs24.entity.Notification;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
-import ch.uzh.ifi.hase.soprafs24.rest.mapper.NotificationDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
-import ch.uzh.ifi.hase.soprafs24.service.UserFriendsService;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -261,41 +255,5 @@ public class UserController {
         // Return the path as before
         return path;
     }*/
-
-    /**
-     * API endpoint to retrieve notifications belonging to a user.
-     * @param token of the user requesting the list of notifications.
-     * @return list of all notifications belonging to a given user.
-     */
-    @GetMapping("/dashboard/{userId}/notifications")
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public List<NotificationGetDTO> getNotifications(@RequestHeader("token") String token) {
-        // verify that token and userId belong to the same user
-        User verifiedUser =  userService.verifyUserByToken(token);
-        // fetch users along with their statistics
-        List<Notification> notifications = userService.obtainNotifications(verifiedUser.getId());
-        // Convert notifications to DTOs
-        List<NotificationGetDTO> userNotificationsGetDTOs = new ArrayList<>();
-        for (Notification notification : notifications) {
-            userNotificationsGetDTOs.add(NotificationDTOMapper.INSTANCE.convertEntityToNotificationGetDTO(notification));
-        }
-        return userNotificationsGetDTOs;
-    }
-
-    /**
-     * API endpoint to send a notification from the server to the client.
-     * @param token of the user requesting the list of notifications.
-     * @return list of all notifications belonging to a given user.
-     */
-    // Probably this is redundant. We can only have a notify function on service and the retrieve all notifications endpoint.
-    @PostMapping("/dashboard/{userId}/notifications/send")
-    @ResponseStatus(HttpStatus.OK)
-    @ResponseBody
-    public UserGetDTO sendNotification(@RequestHeader("token") String token, @RequestParam Long userId, @RequestParam String message) {
-        User user = userService.sendNotification(userId, message);
-        // I think is a good idea to return the updated user so we can display the number of unread notifications
-        return UserDTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
-    }
 
 }
