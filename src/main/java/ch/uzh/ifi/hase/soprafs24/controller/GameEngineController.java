@@ -32,6 +32,12 @@ public class GameEngineController {
 
     Logger logger = LoggerFactory.getLogger(GameDeckService.class);
 
+    /**
+     * Handles the request of an user to play a card
+     * @param gameId of the game the user is currently playing
+     * @param userId of the user making the move
+     * @param cardMoveRequest details of the played card
+     */
     @MessageMapping("/move/cards/{gameId}/{userId}")
     public void handleCardMove(
             @DestinationVariable Long gameId,
@@ -89,6 +95,10 @@ public class GameEngineController {
 
     // No -> block another users action -> wait on client side for couple of seconds after card play to see if a user interferes
 
+    /**
+     * Start the setup of the game indicated in the path variable
+     * @param gameId of the game that the user started
+     */
     @MessageMapping("/start/{gameId}")
     public void handleStartGame(
             @DestinationVariable("gameId") Long gameId) throws IOException, InterruptedException {
@@ -97,6 +107,11 @@ public class GameEngineController {
         Game initializedGame = gameEngineService.startGame(gameId);
     }
 
+    /**
+     * Routine executed once the user finished playing, including: draw end of move card, validate explosion, among others
+     * @param gameId of the game that the user started
+     * @param userId of the user finishing a turn
+     */
     @MessageMapping("/terminateMove/{gameId}/{userId}")
     public void handleTerminatingMove(
             @DestinationVariable("gameId") Long gameId,
@@ -119,6 +134,11 @@ public class GameEngineController {
         gameEngineService.dispatchGameState(gameId, userId);
     }
 
+    /**
+     * Removes a player that leaves before losing
+     * @param gameId of the game the player is currently in
+     * @param userId of the user leaving the game
+     */
     @MessageMapping("leaving/{gameId}/{userId}")
     public void handleLeavingUser(
             @DestinationVariable("gameId") Long gameId,
