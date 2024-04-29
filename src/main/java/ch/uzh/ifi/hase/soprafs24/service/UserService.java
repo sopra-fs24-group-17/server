@@ -33,6 +33,8 @@ public class UserService {
   private final EmailSenderService emailSenderService;
   private final UserFriendsService userFriendsService;
 
+  private final ContentModerationService contentModerationService;
+
   @Autowired
   private ApplicationEventPublisher eventPublisher;
 
@@ -41,12 +43,14 @@ public class UserService {
                      PasswordService passwordService,
                      EmailSenderService emailSenderService,
                      UserFriendsService userFriendsService,
+                     ContentModerationService contentModerationService,
                      ApplicationEventPublisher eventPublisher) {
 
     this.userRepository = userRepository;
     this.passwordService = passwordService;
     this.emailSenderService = emailSenderService;
     this.userFriendsService = userFriendsService;
+    this.contentModerationService = contentModerationService;
     this.eventPublisher = eventPublisher;
   }
 
@@ -94,6 +98,13 @@ public class UserService {
       if (userToBeCreated.getUsername().replaceAll("\\s+", "").equals("")) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "username cannot be empty");
       }
+
+      // Assess toxicity
+      double toxicityScore = contentModerationService.checkToxicity(userToBeCreated.getUsername());
+      if(toxicityScore >0.8) {
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offensive username is not permitted");
+      }
+
       User userByUserName = userRepository.findByUsername(userToBeCreated.getUsername());
       if (userByUserName != null) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -129,6 +140,13 @@ public class UserService {
       if (!userToBeCreated.getEmail().contains("@")) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email address is invalid");
       }
+
+      // Assess toxicity
+      double toxicityScore = contentModerationService.checkToxicity(userToBeCreated.getEmail());
+      if(toxicityScore >0.8) {
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offensive email is not permitted");
+      }
+
       User userByEmail = userRepository.findByEmail(userToBeCreated.getEmail());
       if (userByEmail != null) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
