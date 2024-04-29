@@ -69,7 +69,6 @@ public class UserFriendsService {
                 requestingUser.getUsername(),
                 requestedUser.getId());
         eventPublisher.publishEvent(friendshipRequestSendEvent);
-
     }
 
     /**
@@ -96,11 +95,25 @@ public class UserFriendsService {
             userFriends.setFriend(userFriendsRequests.getRequestedUser());
             userFriendsRepository.save(userFriends);
 
+            // Bidirectional Acceptance
+            UserFriends userFriendsBidirectional = new UserFriends();
+            userFriendsBidirectional.setUser(userFriendsRequests.getRequestedUser());
+            userFriendsBidirectional.setFriend(userFriendsRequests.getRequestingUser());
+            userFriendsRepository.save(userFriendsBidirectional);
+
+            userFriendsRepository.flush();
+
             //Publish Friendship acceptance event
             FriendshipRequestAcceptanceEvent friendshipRequestAcceptanceEvent = new FriendshipRequestAcceptanceEvent(this,
                     userFriendsRequests.getRequestingUser().getUsername(),
                     userFriendsRequests.getRequestedUser().getId());
             eventPublisher.publishEvent(friendshipRequestAcceptanceEvent);
+
+            //Publish Bidirectional Friendship acceptance event
+            FriendshipRequestAcceptanceEvent friendshipRequestAcceptanceEventBidirectional = new FriendshipRequestAcceptanceEvent(this,
+                    userFriendsRequests.getRequestedUser().getUsername(),
+                    userFriendsRequests.getRequestingUser().getId());
+            eventPublisher.publishEvent(friendshipRequestAcceptanceEventBidirectional);
 
         }
     }

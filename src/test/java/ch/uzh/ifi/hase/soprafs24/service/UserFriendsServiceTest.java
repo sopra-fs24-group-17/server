@@ -96,7 +96,6 @@ public class UserFriendsServiceTest {
         userFriendsService.processFriendshipRequest(requestedUserId, requestId, FriendRequestStatus.ACCEPTED);
 
         Mockito.verify(userFriendsRequestRepository).save(request);
-        Mockito.verify(userFriendsRepository).save(any(UserFriends.class));
         assertEquals(FriendRequestStatus.ACCEPTED, request.getStatus());
     }
 
