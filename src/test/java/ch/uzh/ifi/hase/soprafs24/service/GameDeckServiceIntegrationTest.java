@@ -68,7 +68,7 @@ public class GameDeckServiceIntegrationTest {
         game = new Game();
         game.setGameId(gameId);
         game.setState(GameState.ONGOING);
-        Set<User> players = new HashSet<>();
+        List<User> players = new ArrayList<>();
         players.add(mockUser);
         game.setPlayers(players);
     }

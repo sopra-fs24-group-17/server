@@ -106,18 +106,19 @@ public class GameEngineEventListenerTest {
     public void testYourTurn() {
         Long gameId = 12345L;
         String userName = "user";
-        YourTurnEvent event = new YourTurnEvent(this, 1L, gameId);
+        YourTurnEvent event = new YourTurnEvent(this, 1L, gameId, userName);
         listener.yourTurn(event);
-        verify(webSocketService).sendMessageYourTurn(1L, gameId);
+        verify(webSocketService).sendMessageYourTurn(1L, gameId, userName);
     }
 
     @Test
     public void testEndTurn() {
         Long gameId = 12345L;
         String userName = "user";
-        EndTurnEvent event = new EndTurnEvent(this, userName, gameId);
+        Long userId = 1L;
+        EndTurnEvent event = new EndTurnEvent(this, userName, gameId, userId);
         listener.endTurn(event);
-        verify(webSocketService).setSendMessageEndTurn(gameId, userName);
+        verify(webSocketService).setSendMessageEndTurn(userId, gameId, userName);
     }
 
     @Test
@@ -220,10 +221,11 @@ public class GameEngineEventListenerTest {
         Map<String, Integer> remainingCardStats = new HashMap<>();
         remainingCardStats.put("deck", 40);
         remainingCardStats.put("discard", 5);
+        Integer numberOfPlayers = 5;
 
-        GameStateEvent event = new GameStateEvent(this, gameId, topCard, remainingCardStats);
+        GameStateEvent event = new GameStateEvent(this, gameId, topCard, remainingCardStats, numberOfPlayers);
         listener.provideGameStats(event);
-        verify(webSocketService).sendGameState(eq(gameId), eq(topCard), eq(remainingCardStats));
+        verify(webSocketService).sendGameState(eq(gameId), eq(topCard), eq(remainingCardStats), eq(numberOfPlayers));
     }
 
     @Test

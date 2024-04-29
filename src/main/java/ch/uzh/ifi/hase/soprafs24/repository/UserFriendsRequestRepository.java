@@ -17,8 +17,11 @@ public interface UserFriendsRequestRepository extends JpaRepository<UserFriendsR
     UserFriendsRequests findUserFriendsRequestsById(Long id);
 
     // Finding a specific friend request
-    @Query("SELECT ufr FROM UserFriendsRequests ufr WHERE ufr.requestingUser.id = :userId AND ufr.requestedUser.id = :friendId")
+    @Query("SELECT ufr FROM UserFriendsRequests ufr WHERE " +
+            "(ufr.requestingUser.id = :userId AND ufr.requestedUser.id = :friendId) OR " +
+            "(ufr.requestingUser.id = :friendId AND ufr.requestedUser.id = :userId)")
     Optional<UserFriendsRequests> findFriendshipRequests(@Param("userId") Long userId, @Param("friendId") Long friendId);
+
 
     // Fetching all received requests by a user
     @Query("SELECT ufr FROM UserFriendsRequests ufr WHERE ufr.requestedUser.id = :userId AND ufr.status = 'PENDING'")

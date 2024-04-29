@@ -100,7 +100,7 @@ public class GameEngineService {
         currentGame.setState(GameState.ONGOING);
 
         // Fetch all active players
-        Set<User> players = currentGame.getPlayers();
+        List<User> players = currentGame.getPlayers();
 
         List <Long> playerIds = new ArrayList<>();
 
@@ -108,8 +108,8 @@ public class GameEngineService {
         this.gameDeckService.createDealerPile(currentGame);
 
         // Remove Explosions and Defusions from Deck
-        List<Card> explosions = gameDeckService.removeExplosionsFromDealerPile(currentGame.getGameDeck());
-        List<Card> defusions = gameDeckService.removeDefusionsFromDealerPile(currentGame.getGameDeck());
+        List<Card> explosions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "AS,AH,AC,AD");
+        List<Card> defusions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "KS,KH,KC,KD,X1,X2");
 
         // Update lastPlayed and gamesPlayed for each user and update userIds
         for (User player: players) {
@@ -160,7 +160,7 @@ public class GameEngineService {
         for (Card card : combined) {
             cardValues.add(card.getCode());
         }
-        gameDeckService.returnCardsToDealerPile(currentGame, String.join(",", cardValues));
+        gameDeckService.returnCardsToPile(currentGame.getGameDeck(), "dealer", String.join(",", cardValues));
 
         // Shuffle Dealer Pile
         gameDeckService.shuffleCardsInDealerPile(currentGame.getGameDeck());
@@ -173,7 +173,7 @@ public class GameEngineService {
         }
 
         // Publish event whose turn it is
-        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId());
+        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId(), currentGame.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(yourTurnEvent);
 
         return currentGame;
@@ -197,15 +197,19 @@ public class GameEngineService {
         }
 
         // All players in the game channel are informed that the user terminated his move
-        EndTurnEvent endTurnEvent = new EndTurnEvent(this, terminatingUser.getUsername(), gameId);
+        EndTurnEvent endTurnEvent = new EndTurnEvent(this, terminatingUser.getUsername(), gameId, userId);
         eventPublisher.publishEvent(endTurnEvent);
 
-        Set<User> players = currentGame.getPlayers();
+        User nextPlayer = getNextPlayer(terminatingUser, currentGame.getPlayers());
 
-        User nextPlayer = getNextPlayer(terminatingUser, players);
+        if (currentGame.isSkipDraw()) {
+            currentGame.setSkipDraw(false);
+            gameRepository.saveAndFlush(currentGame);
+        }
 
         if (currentGame.isRepeatTurn()) {
             nextPlayer = terminatingUser;
+            drawCardMoveTermination(gameId, userId);
             currentGame.setRepeatTurn(false);
             gameRepository.saveAndFlush(currentGame);
         }
@@ -214,7 +218,8 @@ public class GameEngineService {
             currentGame.setCurrentTurn(nextPlayer);
             gameRepository.saveAndFlush(currentGame);
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No next user found, if just one user is left - terminate game");
+            // Just one user left, initiate end of game and evaluation
+            terminatingGame(gameId);
         }
 
         if (currentGame.isAttacked()) {
@@ -224,7 +229,7 @@ public class GameEngineService {
         }
 
         // Publish event whose turn it is (user- and game-specific channel)
-        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId());
+        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId(), currentGame.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(yourTurnEvent);
     }
 
@@ -234,32 +239,13 @@ public class GameEngineService {
      * @param players a linked hash set of the players that are participating in a game
      * @return
      */
-    private User getNextPlayer(User currentUser, Set<User> players) {
+    private User getNextPlayer(User currentUser, List<User> players) {
         if (players.isEmpty() || (players.size() == 1 && players.contains(currentUser))) {
-            // TO Do -- Initiate termination of game
-            return null;  // No next user possible
+            return null;
         }
-
-        Iterator<User> iterator = players.iterator();
-        User nextUser = null;
-        boolean found = false;
-
-        while (iterator.hasNext()) {
-            User user = iterator.next();
-            if (found) {
-                nextUser = user;
-                break;
-            }
-            if (user.equals(currentUser)) {
-                found = true;
-            }
-        }
-
-        // If current user is last, wrap around to the first user
-        if (found && nextUser == null) {
-            nextUser = players.iterator().next();
-        }
-        return nextUser;
+        int currentIndex = players.indexOf(currentUser);
+        int nextIndex = (currentIndex + 1) % players.size();
+        return players.get(nextIndex);
     }
 
     /**
@@ -280,7 +266,7 @@ public class GameEngineService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User can only leave ongoing games");
         }
 
-        Set<User> players = currentGame.getPlayers();
+        List<User> players = currentGame.getPlayers();
 
         if (!players.contains(terminatingUser)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not part of the game");
@@ -312,7 +298,7 @@ public class GameEngineService {
         Game gameToBeTerminated = findGameById(gameId);
 
         // Assert that just one player is left in the game
-        Set<User> players = gameToBeTerminated.getPlayers();
+        List<User> players = gameToBeTerminated.getPlayers();
 
         if (players.size() != 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Still more than one active player in the game session found");
@@ -381,7 +367,7 @@ public class GameEngineService {
     public void handleFavorCard(Game game, Long userId, Long targetUserId) throws IOException, InterruptedException {
 
         // Assert that the targetUser is still part of the game
-        Set<User> players = game.getPlayers();
+        List<User> players = game.getPlayers();
         List<Long> playerIds = new ArrayList<>();
         for(User player: players) {
             playerIds.add(player.getId());
@@ -391,8 +377,8 @@ public class GameEngineService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted User is not part of the game");
         }
 
-        // Grab a card
-        Card randomCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), targetUserId);
+        // Grab a random card
+        Card randomCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), targetUserId, null);
         List<Card> randomCards = new ArrayList<>();
         randomCards.add(randomCard);
 
@@ -401,7 +387,7 @@ public class GameEngineService {
         eventPublisher.publishEvent(stealCardEvent);
 
         // Give it to triggering user
-        gameDeckService.returnCardsToPlayerPile(game.getGameDeck(), userId, randomCard.getCode());
+        gameDeckService.returnCardsToPile(game.getGameDeck(), userId.toString(), randomCard.getCode());
 
         // Publish a draw cards event
         PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, userId, game.getGameId(), randomCards);
@@ -421,12 +407,20 @@ public class GameEngineService {
 
         if (game.isSkipDraw()) {
             game.setSkipDraw(false);
+            gameRepository.saveAndFlush(game);
+            return null;
         } else {
             List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(), 1);
-            gameDeckService.returnCardsToPlayerPile(game.getGameDeck(), userId, cards.get(0).getCode());
+            gameDeckService.returnCardsToPile(game.getGameDeck(), userId.toString(), cards.get(0).getCode());
 
             if (Objects.equals(cards.get(0).getInternalCode(), "explosion")) {
-                game.setSkipDraw(true);
+
+                if (game.isRepeatTurn()) {
+                    game.setRepeatTurn(false);
+                }
+                else {
+                    game.setSkipDraw(true);
+                }
                 return cards.get(0).getCode();
             }
 
@@ -482,7 +476,6 @@ public class GameEngineService {
         eventPublisher.publishEvent(attackEvent);
 
         turnValidation(game.getGameId(), userId);
-
     }
 
     /**
@@ -511,7 +504,7 @@ public class GameEngineService {
         // If he has a defuse card, request him to play the defuse card
         if (defuseCard != null) {
             // Draw the card from the user pile and place it on top of the play pile
-            Card drawnCard = gameDeckService.drawExactCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
+            Card drawnCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
             List<Card> drawnCards = new ArrayList<>();
             drawnCards.add(drawnCard);
             gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
@@ -522,7 +515,7 @@ public class GameEngineService {
 
             // Place explosion card back on deck at random location
             // To do -- allow user to select where exactly to place the explosion card
-            gameDeckService.returnCardsToDealerPile(game, explosionId);
+            gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
             gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
 
             turnValidation(gameId, userId);
@@ -554,8 +547,11 @@ public class GameEngineService {
         } else {
             topCardPlayPile = topCardsPlayPile.get(topCardsPlayPile.size() - 1);
         }
+
+        Integer numberPlayers = game.getPlayers().size();
+
         // Publish Event
-        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts);
+        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts, numberPlayers);
         eventPublisher.publishEvent(gameStateEvent);
 
     }
