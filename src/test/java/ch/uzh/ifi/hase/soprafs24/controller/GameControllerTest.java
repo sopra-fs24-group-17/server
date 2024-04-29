@@ -26,10 +26,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -81,7 +78,7 @@ public class GameControllerTest {
         Game game = new Game();
         game.setMaxPlayers(3);
 
-        Set<User> testPlayers = new LinkedHashSet<>();
+        List<User> testPlayers = new ArrayList<>();
         testPlayers.add(testUser);
 
         game.setPlayers(testPlayers);
@@ -111,7 +108,7 @@ public class GameControllerTest {
 
         game.setMaxPlayers(3);
 
-        Set<User> testPlayers = new LinkedHashSet<>();
+        List<User> testPlayers = new ArrayList<>();
         testPlayers.add(testUser);
         game.setPlayers(testPlayers);
 
@@ -139,7 +136,7 @@ public class GameControllerTest {
 
         game.setMaxPlayers(3);
 
-        Set<User> testPlayers = new LinkedHashSet<>();
+        List<User> testPlayers = new ArrayList<>();
         testPlayers.add(testUser);
         game.setPlayers(testPlayers);
 

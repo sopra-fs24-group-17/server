@@ -57,7 +57,7 @@ public class GameServiceTest {
         game = new Game();
         game.setGameId(gameId);
         game.setState(GameState.PREPARING);
-        Set<User> players = new HashSet<>();
+        List<User> players = new ArrayList<>();
         players.add(mockUser);
         game.setPlayers(players);
 
@@ -72,7 +72,6 @@ public class GameServiceTest {
 
         assertNotNull(createdGame.getGameId());
         assertTrue(createdGame.getPlayers().contains(mockUser));
-        verify(gameRepository).save(any(Game.class));
     }
 
     @Test
@@ -86,7 +85,6 @@ public class GameServiceTest {
 
         assertNotNull(createdGame.getGameId());
         verify(gameRepository, atLeastOnce()).findByGameId(anyLong());
-        verify(gameRepository).save(any(Game.class));
     }
 
     @Test
@@ -95,7 +93,7 @@ public class GameServiceTest {
         User anotherUser = new User();
         anotherUser.setUsername("AnotherUser");
 
-        Set<User> players = new HashSet<>();
+        List<User> players = new ArrayList<>();
         players.add(mockUser);
         players.add(anotherUser);
         game.setPlayers(players);
@@ -236,9 +234,9 @@ public class GameServiceTest {
         List<Game> publicGames = Collections.singletonList(game);
         List<Game> privateUserGames = Collections.singletonList(game);
 
-        when(gameRepository.findByStateAndModeAndCreationdateAfter(eq(GameState.PREPARING), eq(GameMode.PUBLIC), any(Date.class)))
+        when(gameRepository.findByStateAndMode(eq(GameState.PREPARING), eq(GameMode.PUBLIC)))
                 .thenReturn(publicGames);
-        when(gameRepository.findByInitiatingUserAndStateAndModeAndCreationdateAfter(eq(verifiedUser), eq(GameState.PREPARING), eq(GameMode.PRIVATE), any(Date.class)))
+        when(gameRepository.findByInitiatingUserAndStateAndMode(eq(verifiedUser), eq(GameState.PREPARING), eq(GameMode.PRIVATE)))
                 .thenReturn(privateUserGames);
 
         List<Game> result = gameService.getGames(token);

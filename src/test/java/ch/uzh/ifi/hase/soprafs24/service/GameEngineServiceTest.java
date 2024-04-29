@@ -82,7 +82,7 @@ public class GameEngineServiceTest {
 
         Game mockGame = new Game();
         mockGame.setState(GameState.PREPARING);
-        mockGame.setPlayers(new HashSet<>(Arrays.asList(user1, user2)));
+        mockGame.setPlayers(Arrays.asList(user1, user2));
         when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
 
         Game startedGame = gameEngineService.startGame(1L);
@@ -112,7 +112,7 @@ public class GameEngineServiceTest {
     @Test
     public void testTerminatingGame_InvalidTermination() {
         Game mockGame = new Game();
-        Set<User> players = new HashSet<>(Arrays.asList(new User(), new User()));
+        List<User> players = new ArrayList<>(Arrays.asList(new User(), new User()));
         mockGame.setPlayers(players);
 
         when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
@@ -155,7 +155,7 @@ public class GameEngineServiceTest {
 
         Game mockGame = new Game();
         mockGame.setState(GameState.ONGOING);
-        mockGame.setPlayers(new HashSet<>(Collections.singletonList(user1)));
+        mockGame.setPlayers(new ArrayList<>(Collections.singletonList(user1)));
 
         when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
 
@@ -173,7 +173,7 @@ public class GameEngineServiceTest {
         user.setUserStats(userStats);
 
         Game mockGame = new Game();
-        mockGame.setPlayers(new HashSet<>(Collections.singletonList(user)));
+        mockGame.setPlayers(new ArrayList<>(Collections.singletonList(user)));
 
         when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
 
@@ -203,7 +203,7 @@ public class GameEngineServiceTest {
         Game mockGame = new Game();
         mockGame.setState(GameState.ONGOING);
         mockGame.setCurrentTurn(user);
-        Set<User> players = new HashSet<>(Arrays.asList(user, user1));
+        List<User> players = new ArrayList<>(Arrays.asList(user, user1));
         mockGame.setPlayers(players);
 
         when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
