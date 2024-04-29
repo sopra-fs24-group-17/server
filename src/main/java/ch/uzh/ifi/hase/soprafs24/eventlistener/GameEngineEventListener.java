@@ -53,13 +53,13 @@ public class GameEngineEventListener {
     @EventListener
     public void yourTurn(YourTurnEvent event) {
         logger.info("Player {}: Your turn", event.getUserId());
-        webSocketService.sendMessageYourTurn(event.getUserId(), event.getGameId());
+        webSocketService.sendMessageYourTurn(event.getUserId(), event.getGameId(), event.getUserName());
     }
 
     @EventListener
     public void endTurn(EndTurnEvent event) {
         logger.info("Player {} terminated his turn", event.getUserName());
-        webSocketService.setSendMessageEndTurn(event.getGameId(), event.getUserName());
+        webSocketService.setSendMessageEndTurn(event.getUserId(), event.getGameId(), event.getUserName());
     }
 
     @EventListener
@@ -119,7 +119,7 @@ public class GameEngineEventListener {
     @EventListener
     public void provideGameStats(GameStateEvent event) {
         logger.info("Game Stats for {} dispatched", event.getGameId());
-        webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats());
+        webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats(), event.getNumberOfPlayers());
     }
 
     @EventListener

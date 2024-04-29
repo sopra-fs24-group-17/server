@@ -173,7 +173,7 @@ public class GameEngineService {
         }
 
         // Publish event whose turn it is
-        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId());
+        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId(), currentGame.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(yourTurnEvent);
 
         return currentGame;
@@ -197,7 +197,7 @@ public class GameEngineService {
         }
 
         // All players in the game channel are informed that the user terminated his move
-        EndTurnEvent endTurnEvent = new EndTurnEvent(this, terminatingUser.getUsername(), gameId);
+        EndTurnEvent endTurnEvent = new EndTurnEvent(this, terminatingUser.getUsername(), gameId, userId);
         eventPublisher.publishEvent(endTurnEvent);
 
         User nextPlayer = getNextPlayer(terminatingUser, currentGame.getPlayers());
@@ -229,7 +229,7 @@ public class GameEngineService {
         }
 
         // Publish event whose turn it is (user- and game-specific channel)
-        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId());
+        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId(), currentGame.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(yourTurnEvent);
     }
 
@@ -547,8 +547,11 @@ public class GameEngineService {
         } else {
             topCardPlayPile = topCardsPlayPile.get(topCardsPlayPile.size() - 1);
         }
+
+        Integer numberPlayers = game.getPlayers().size();
+
         // Publish Event
-        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts);
+        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts, numberPlayers);
         eventPublisher.publishEvent(gameStateEvent);
 
     }

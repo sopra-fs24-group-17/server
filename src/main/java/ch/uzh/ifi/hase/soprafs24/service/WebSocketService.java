@@ -119,17 +119,19 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
-    public void sendMessageYourTurn(Long userId, Long gameId) {
+    public void sendMessageYourTurn(Long userId, Long gameId, String userName) {
         Map<String, Object> params = Map.of(
                 "type", "startTurn",
-                "userId", userId
+                "userId", userId,
+                "userName", userName
         );
         sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
-    public void setSendMessageEndTurn(Long gameId, String userName) {
+    public void setSendMessageEndTurn(Long userId, Long gameId, String userName) {
         Map<String, Object> params = Map.of(
                 "type", "endTurn",
+                "userId", userId,
                 "terminatingUser", userName
         );
         sendWebSocketMessage("/game/" + gameId, params);
@@ -220,14 +222,15 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId, params);
     }
 
-    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats) {
+    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers) {
         JSONObject pilesJson = new JSONObject();
         remainingCardStats.forEach(pilesJson::put);
         Map<String, Object> params = Map.of(
                 "type", "gameState",
                 "topCardCode", topCard.getCode(),
                 "topCardInternalCode", topCard.getInternalCode(),
-                "piles", pilesJson
+                "piles", pilesJson,
+                "numberOfPlayers", numberOfPlayers
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }

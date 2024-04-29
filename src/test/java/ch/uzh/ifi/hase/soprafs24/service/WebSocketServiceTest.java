@@ -243,7 +243,8 @@ public class WebSocketServiceTest {
     public void sendMessageYourTurnTest() {
         Long userId = 1L;
         Long gameId = 100L;
-        webSocketService.sendMessageYourTurn(userId, gameId);
+        String userName = "test";
+        webSocketService.sendMessageYourTurn(userId, gameId, userName);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId + "/" + userId), any(String.class));
     }
 
@@ -251,7 +252,8 @@ public class WebSocketServiceTest {
     public void setSendMessageEndTurnTest() {
         Long gameId = 100L;
         String userName = "user";
-        webSocketService.setSendMessageEndTurn(gameId, userName);
+        Long userId = 1L;
+        webSocketService.setSendMessageEndTurn(userId, gameId, userName);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
@@ -300,7 +302,9 @@ public class WebSocketServiceTest {
 
         Map<String, Integer> remainingCardStats = Map.of("totalCards", 40, "explosiveCards", 5);
 
-        webSocketService.sendGameState(gameId, topCard, remainingCardStats);
+        Integer numberOfPlayers = 5;
+
+        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
