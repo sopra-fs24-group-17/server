@@ -245,5 +245,27 @@ public class GameServiceTest {
         assertEquals(1, result.size());
         assertTrue(result.contains(game));
     }
+
+    @Test
+    public void testUpdateGameStatus_ShouldAbortStaleGames() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR_OF_DAY, -2);
+        Date twoHoursAgo = calendar.getTime();
+
+        Game staleGame = new Game();
+        staleGame.setGameId(2L);
+        staleGame.setState(GameState.PREPARING);
+        staleGame.setCreationdate(twoHoursAgo);
+
+        List<Game> games = Arrays.asList(staleGame);
+
+        when(gameRepository.findGamesCreatedBefore(any(Date.class))).thenReturn(games);
+
+        gameService.updateGameStatus();
+
+        verify(gameRepository).findGamesCreatedBefore(any(Date.class));
+        verify(gameRepository).saveAndFlush(staleGame);
+        assertEquals(GameState.ABORTED, staleGame.getState(), "Game state should be updated to ABORTED");
+    }
 }
 
