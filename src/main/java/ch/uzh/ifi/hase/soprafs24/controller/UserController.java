@@ -227,6 +227,7 @@ public class UserController {
         List<FriendsGetDTO> friendsGetDTOS = new ArrayList<>();
         for (User friend: friends) {
             FriendsGetDTO friendDTO = new FriendsGetDTO();
+            friendDTO.setFriendId(friend.getId());
             friendDTO.setFriendName(friend.getUsername());
             friendDTO.setFriendAvatar(friend.getAvatar());
             friendDTO.setStatus(friend.getStatus());
