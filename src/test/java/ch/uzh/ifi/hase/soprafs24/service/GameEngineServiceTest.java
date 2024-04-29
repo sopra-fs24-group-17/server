@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.*;
+import ch.uzh.ifi.hase.soprafs24.event.GameStateEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
@@ -9,6 +10,7 @@ import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -261,5 +263,44 @@ public class GameEngineServiceTest {
         gameEngineService.handleShuffleCard(game, 1L);
 
         verify(gameDeckService, times(1)).shuffleCardsInDealerPile(deck);
+    }
+
+    @Test
+    public void testDispatchGameState() throws IOException, InterruptedException {
+        // Setup
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        Game mockGame = new Game();
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameDeck(mockDeck);
+
+        Card topCard = new Card();
+        topCard.setCode("AH");
+        topCard.setInternalCode("Ace of Hearts");
+
+        List<Card> topCards = Arrays.asList(topCard);
+
+        String jsonResponse = "{\"dealer\": {\"remaining\": 52}}";
+        Map<String, Integer> pileCardCounts = Map.of("dealer", 52);
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.getRemainingPileStats(mockDeck, userId)).thenReturn(jsonResponse);
+        when(gameDeckService.parsePileCardCounts(jsonResponse)).thenReturn(pileCardCounts);
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(topCards);
+
+        gameEngineService.dispatchGameState(gameId, userId);
+
+        verify(gameRepository).findByGameId(gameId);
+        verify(gameDeckService).getRemainingPileStats(mockDeck, userId);
+        verify(gameDeckService).parsePileCardCounts(jsonResponse);
+        verify(gameDeckService).exploreTopCardPlayPile(mockDeck);
+
+        ArgumentCaptor<GameStateEvent> eventCaptor = ArgumentCaptor.forClass(GameStateEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        GameStateEvent capturedEvent = eventCaptor.getValue();
+
+        assertNotNull(capturedEvent);
+        assertEquals(gameId, capturedEvent.getGameId());
     }
 }

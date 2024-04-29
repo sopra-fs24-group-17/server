@@ -91,4 +91,141 @@ class GameEngineControllerTest {
         verify(gameEngineService, times(1)).startGame(gameId);
     }
 
+    @Test
+    void testHandleCardMove_ShuffleCard() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        CardMoveRequest cardMoveRequest = new CardMoveRequest();
+        List<String> cardIds = List.of("AB");
+        cardMoveRequest.setCardIds(cardIds);
+        cardMoveRequest.setTargetUserId(1L);
+
+        Card card = new Card();
+        card.setInternalCode("shuffle");
+        card.setCode("AB");
+
+        List<Card> transformedCards = List.of(card);
+        Game game = new Game();
+
+        when(gameEngineService.transformCardsToInternalRepresentation(cardIds)).thenReturn(transformedCards);
+        when(gameEngineService.findGameById(gameId)).thenReturn(game);
+        doNothing().when(gameDeckService).removeCardsFromPlayerPile(any(Game.class), eq(userId), anyString());
+        doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
+        doNothing().when(gameEngineService).handleShuffleCard(any(Game.class), eq(userId));
+
+        gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
+
+        verify(gameEngineService).handleShuffleCard(game, userId);
+        verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
+        verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
+        verify(gameEngineService).dispatchGameState(gameId, userId);
+    }
+
+    @Test
+    void testHandleCardMove_FutureCard() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        CardMoveRequest cardMoveRequest = new CardMoveRequest();
+        List<String> cardIds = List.of("AB");
+        cardMoveRequest.setCardIds(cardIds);
+        cardMoveRequest.setTargetUserId(1L);
+
+        Card card = new Card();
+        card.setInternalCode("future");
+        card.setCode("AB");
+
+        List<Card> transformedCards = List.of(card);
+        Game game = new Game();
+
+        when(gameEngineService.transformCardsToInternalRepresentation(cardIds)).thenReturn(transformedCards);
+        when(gameEngineService.findGameById(gameId)).thenReturn(game);
+        doNothing().when(gameDeckService).removeCardsFromPlayerPile(any(Game.class), eq(userId), anyString());
+        doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
+        doNothing().when(gameEngineService).handleShuffleCard(any(Game.class), eq(userId));
+
+        gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
+
+        verify(gameEngineService).handleFutureCard(game, userId);
+        verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
+        verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
+        verify(gameEngineService).dispatchGameState(gameId, userId);
+    }
+
+    @Test
+    void testHandleCardMove_SkipCard() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        CardMoveRequest cardMoveRequest = new CardMoveRequest();
+        List<String> cardIds = List.of("AB");
+        cardMoveRequest.setCardIds(cardIds);
+        cardMoveRequest.setTargetUserId(1L);
+
+        Card card = new Card();
+        card.setInternalCode("skip");
+        card.setCode("AB");
+
+        List<Card> transformedCards = List.of(card);
+        Game game = new Game();
+
+        when(gameEngineService.transformCardsToInternalRepresentation(cardIds)).thenReturn(transformedCards);
+        when(gameEngineService.findGameById(gameId)).thenReturn(game);
+        doNothing().when(gameDeckService).removeCardsFromPlayerPile(any(Game.class), eq(userId), anyString());
+        doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
+        doNothing().when(gameEngineService).handleShuffleCard(any(Game.class), eq(userId));
+
+        gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
+
+        verify(gameEngineService).handleSkipCard(game, userId);
+        verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
+        verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
+        verify(gameEngineService).dispatchGameState(gameId, userId);
+
+    }
+
+
+    @Test
+    void testHandleCardMove_FavorCard() throws IOException, InterruptedException {
+
+    }
+
+
+    @Test
+    void testHandleCardMove_AttackCard() throws IOException, InterruptedException {
+
+    }
+
+    @Test
+    void testHandleCardMove_TwoTacocatCards() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        CardMoveRequest cardMoveRequest = new CardMoveRequest();
+        List<String> cardIds = List.of("AB", "CD");
+        cardMoveRequest.setCardIds(cardIds);
+        cardMoveRequest.setTargetUserId(1L);
+
+        Card card1 = new Card();
+        card1.setInternalCode("tacocat");
+        card1.setCode("AB");
+
+        Card card2 = new Card();
+        card2.setInternalCode("tacocat");
+        card2.setCode("CD");
+
+        List<Card> transformedCards = List.of(card1, card2);
+        Game game = new Game();
+
+        when(gameEngineService.transformCardsToInternalRepresentation(cardIds)).thenReturn(transformedCards);
+        when(gameEngineService.findGameById(gameId)).thenReturn(game);
+        doNothing().when(gameDeckService).removeCardsFromPlayerPile(any(Game.class), eq(userId), anyString());
+        doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
+        doNothing().when(gameEngineService).handleFutureCard(any(Game.class), eq(userId));
+
+        gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
+
+        verify(gameEngineService).handleFutureCard(game, userId);
+        verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB,CD");
+        verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB,CD");
+        verify(gameEngineService).dispatchGameState(gameId, userId);
+    }
+
 }
