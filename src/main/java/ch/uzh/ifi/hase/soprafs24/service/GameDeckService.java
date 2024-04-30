@@ -61,6 +61,7 @@ public class GameDeckService {
      */
     public GameDeck fetchDeck(Game game, boolean init) throws IOException, InterruptedException {
 
+        logger.info("invoked");
         String newDeckUri = "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true";
 
         HttpRequest newDeckRequest = HttpRequest.newBuilder()
@@ -79,6 +80,9 @@ public class GameDeckService {
         gameDeck.setRemainingCards(rootNode.get("remaining").asInt());
         gameDeck.setGame(game);
         gameDeck = gameDeckRepository.saveAndFlush(gameDeck);
+
+        logger.info(gameDeck.getDeckID());
+
         return gameDeck;
     }
 

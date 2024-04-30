@@ -5,6 +5,7 @@ import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
@@ -80,9 +81,6 @@ public class GameDeckServiceTest {
     private Game game;
 
     private Long gameId = 1L;
-
-    public GameDeckServiceTest() throws IOException, InterruptedException {
-    }
 
     @BeforeEach
     public void setup() {
@@ -172,6 +170,8 @@ public class GameDeckServiceTest {
 
         List<Card> drawnCards = gameDeckService.parseCards(drawCardsFromDeckResponse.body(), deck);
 
+        drawnCards = gameDeckService.saveCards(drawnCards);
+
         // assert
         //verify(gameDeckService).parseCards(any(String.class), any(GameDeck.class));
         assertNotNull(drawnCards);
@@ -179,7 +179,63 @@ public class GameDeckServiceTest {
     }
 
     @Test
-    public void drawCardsFromDealerPileTest_Success(){
-        
+    public void drawCardsFromDealerPileTest_Success() throws IOException, InterruptedException {
+        int N = 1;
+        List<Card> mockCards = new ArrayList<>(Collections.nCopies(N, new Card()));
+
+        when(gameDeckService.saveCards(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(gameDeckService.parseCardsDealer(any(String.class), any(GameDeck.class))).thenReturn(mockCards);
+        String jsonRes = "{\"success\":true}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+        when(gameDeckService.fetchDeck(any(Game.class), eq(false))).thenReturn(new GameDeck());
+
+        game.setCurrentTurn(mockUser);
+
+        // Create a new Deck
+        GameDeck deck = gameDeckService.fetchDeck(game, false);
+        deck.setRemainingCards(5);
+        deck.setRemainingCardsDealerStack(100);
+        deck.setDeckID("player1");
+        deck.setGame(game);
+        // draw cards
+        //List<Card> savedCards = gameDeckService.drawCardsFromDealerPile(deck, N);
+
+
+        if (N > deck.getRemainingCardsDealerStack()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
+        }
+
+        String drawCardsFromPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?count=%s", deck.getDeckID(), deck.getDealerPileId(), N);
+
+        HttpRequest drawCardsFromPileRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(drawCardsFromPileUri))
+                .build();
+
+        HttpResponse<String> drawCardsFromPileResponse = httpClient.send(drawCardsFromPileRequest, HttpResponse.BodyHandlers.ofString());
+
+        List<Card> cards = gameDeckService.parseCardsDealer(drawCardsFromPileResponse.body(), deck);
+
+        List<Card> savedCards = gameDeckService.saveCards(cards);
+
+        String playerName = deck.getGame().getCurrentTurn().getUsername();
+
+
+
+        // assert
+        //verify(gameDeckService).parseCards(any(String.class), any(GameDeck.class));
+        assertNotNull(savedCards);
+        assertEquals(savedCards.size(), N);
+        assertNotNull(playerName);
     }
+
+    /*
+    @Test
+    public void shuffleCardsInDealerPileTest_Success(){
+
+    }
+     */
 }
