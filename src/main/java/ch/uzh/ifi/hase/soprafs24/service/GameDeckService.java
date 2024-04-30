@@ -392,7 +392,7 @@ public class GameDeckService {
      * @throws InterruptedException
      */
     public List<Card> removeSpecificCardsFromDealerPile(GameDeck gameDeck, String cardsToRemove) throws IOException, InterruptedException {
-        String uri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/dealer/draw/?cards=%s/", gameDeck.getDeckID(), cardsToRemove);
+        String uri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/dealer/draw/?cards=%s", gameDeck.getDeckID(), cardsToRemove);
         HttpRequest request = buildGetRequest(uri);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
