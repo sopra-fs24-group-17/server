@@ -80,6 +80,21 @@ public class GameEngineService {
     }
 
     /**
+     * Helper method to get the next player whose turn it is
+     * @param currentUser, a user object of the user terminating his move
+     * @param players a linked hash set of the players that are participating in a game
+     * @return
+     */
+    private User getNextPlayer(User currentUser, List<User> players) {
+        if (players.isEmpty() || (players.size() == 1 && players.contains(currentUser))) {
+            return null;
+        }
+        int currentIndex = players.indexOf(currentUser);
+        int nextIndex = (currentIndex + 1) % players.size();
+        return players.get(nextIndex);
+    }
+
+    /**
      * Transform a game in preparing state to an ongoing game
      * @param gameId referencing a Game
      * @return Game object
@@ -234,21 +249,6 @@ public class GameEngineService {
     }
 
     /**
-     * Helper method to get the next player whose turn it is
-     * @param currentUser, a user object of the user terminating his move
-     * @param players a linked hash set of the players that are participating in a game
-     * @return
-     */
-    private User getNextPlayer(User currentUser, List<User> players) {
-        if (players.isEmpty() || (players.size() == 1 && players.contains(currentUser))) {
-            return null;
-        }
-        int currentIndex = players.indexOf(currentUser);
-        int nextIndex = (currentIndex + 1) % players.size();
-        return players.get(nextIndex);
-    }
-
-    /**
      * Remove a user from an ongoing game
      * @param gameId referencing a Game
      * @param userId referencing the user to be removed
@@ -300,7 +300,7 @@ public class GameEngineService {
         // Assert that just one player is left in the game
         List<User> players = gameToBeTerminated.getPlayers();
 
-        if (players.size() != 1) {
+        if (players.size() > 1) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Still more than one active player in the game session found");
         }
 
@@ -444,7 +444,6 @@ public class GameEngineService {
         eventPublisher.publishEvent(skipEvent);
 
         turnValidation(game.getGameId(), userId);
-
     }
 
     /**

@@ -16,8 +16,8 @@ public class ContentModerationService {
     private Gson gson = new Gson();
 
     private final String apiKey = "AIzaSyChH64OxzTiy4iWJBxGyMW5GG-gyBksGU8";
-    private final String apiUrl = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=" + apiKey;
 
+    private final String apiUrl = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=" + apiKey;
 
     Logger logger = LoggerFactory.getLogger(ContentModerationService.class);
 
