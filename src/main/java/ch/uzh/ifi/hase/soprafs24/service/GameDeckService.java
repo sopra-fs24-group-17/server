@@ -425,6 +425,9 @@ public class GameDeckService {
         HttpRequest request = buildGetRequest(uri);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+        logger.info("Drew Card from Player Pile");
+        logger.info(response.body());
+
         List<String> cardsPath = List.of("cards");
         List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, null);
         return cards.get(0);

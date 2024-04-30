@@ -1,3 +1,5 @@
+package ch.uzh.ifi.hase.soprafs24.service;
+
 import ch.uzh.ifi.hase.soprafs24.service.ContentModerationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
