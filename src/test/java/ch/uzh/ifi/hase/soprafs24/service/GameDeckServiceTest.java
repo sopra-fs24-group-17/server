@@ -1,9 +1,11 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
+import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
@@ -23,14 +25,14 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpResponse;
-import java.util.HashSet;
+import java.util.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,7 +47,8 @@ public class GameDeckServiceTest {
     @Mock
     private GameDeckRepository gameDeckRepository;
 
-    @Mock ObjectMapper objectMapper;
+    @Mock
+    private CardRepository cardRepository;
 
     @Mock
     private UserService userService;
@@ -63,7 +66,13 @@ public class GameDeckServiceTest {
     private GameDeckService gameDeckService;
 
     @Mock
+    private ObjectMapper objectMapper;
+
+    @Spy
     HttpClient httpClient;
+
+    @Mock
+    HttpResponse<InputStream> mockResponse;
 
     private User mockUser;
     private GamePostDTO gamePostDTO;
@@ -71,6 +80,9 @@ public class GameDeckServiceTest {
     private Game game;
 
     private Long gameId = 1L;
+
+    public GameDeckServiceTest() throws IOException, InterruptedException {
+    }
 
     @BeforeEach
     public void setup() {
@@ -89,68 +101,14 @@ public class GameDeckServiceTest {
     // fetch deck
     @Test
     public void testFetchDeck_success() throws IOException, InterruptedException {
-        /*
-        String url = "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true";
-        String expectedResponse = "{\"deckId\": 1123, \"remaining\": 54}";
-
-        HttpResponse<String> httpResponse = Mockito.mock(HttpResponse.class);
-        Mockito.when(httpResponse.body()).thenReturn(expectedResponse);
-
-        HttpClient httpClientMock = Mockito.mock(HttpClient.class);
-        try(MockedStatic<HttpClient> httpClientMockedStatic = Mockito.mockStatic(HttpClient.class)) {
-            httpClientMockedStatic.when(HttpClient::newHttpClient).thenReturn(httpClientMock);
-            Mockito.when(httpClientMock.send(Mockito.any(HttpRequest.class), ArgumentMatchers.<HttpResponse.BodyHandler<String>>any()))
-                    .thenReturn(httpResponse);
-
-            String actualResponse = MyClass.myMethod(url);
-
-            Assertions.assertEquals(expectedResponse, actualResponse);
-        }
-
-
-        String jsonResponse = "{\"deck_id\": \"test_deck_id\", \"remaining\": 52}";
-
-        // Mocking the HTTP client behavior
-        when(httpClient.send(any(HttpRequest.class)))
-                .thenReturn(mockResponse);
-
-         */
-
-        // Mocking the HTTP response
-        /*
-        String jsonResponse = "{\"deck_id\": \"test_deck_id\", \"remaining\": 54}";
-        HttpResponse<String> mockResponse = Mockito.mock(HttpResponse.class);
-        when(mockResponse.body()).thenReturn(jsonResponse);
-
-        // Mocking the HTTP client behavior
-        HttpClient httpClientMock = Mockito.mock(HttpClient.class);
-        when(httpClientMock.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-                .thenReturn(mockResponse);
-
-        when(gameDeckRepository.saveAndFlush(any(GameDeck.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // Create a Deck
-        GameDeck deck = gameDeckService.fetchDeck(game, false);
-        assertNotNull(deck);
-        assertEquals(54, deck.getRemainingCards());
-        assertNotNull(deck.getDeckID());
-        assertNotNull(deck.getGame());
-*/
-
-        String jsonResponse = "{\"deck_id\": \"test_deck_id\", \"remaining\": 54}";
-        HttpResponse<String> mockResponse = Mockito.mock(HttpResponse.class);
-        when(mockResponse.body()).thenReturn(jsonResponse);
-
+        ObjectMapper testMapper = new ObjectMapper();
+        String jsonRes = "{\"deck_id\":\"testId\", \"remaining\": 54}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
         when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-                .thenAnswer(invocation -> {
-                    HttpRequest request = invocation.getArgument(0);
-                    // If the request URI matches, return the mock response
-                    if (request.uri().toString().equals("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true")) {
-                        return mockResponse;
-                    }
-                    return mockResponse;
-                });
-
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+        when(objectMapper.readTree(any(String.class))).thenReturn(testMapper.readTree(jsonRes));
+        when(gameDeckRepository.saveAndFlush(any(GameDeck.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         String newDeckUri = "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true";
 
@@ -159,17 +117,69 @@ public class GameDeckServiceTest {
                 .uri(URI.create(newDeckUri))
                 .build();
 
-
         HttpResponse<String> newDeckResponse = httpClient.send(newDeckRequest, HttpResponse.BodyHandlers.ofString());
 
-        // Conversion of response to format suitable for extraction
-        //JsonNode rootNode = objectMapper.readTree(newDeckResponse.body());
-        GameDeck gameDeck = new GameDeck();
+        String test = (newDeckResponse.body());
+
+        JsonNode rootNode = objectMapper.readTree(newDeckResponse.body());
+        GameDeck deck = new GameDeck();
 
         // Extraction of necessary variables
-        //gameDeck.setDeckID(rootNode.get("deck_id").asText());
-        //gameDeck.setRemainingCards(rootNode.get("remaining").asInt());
-        gameDeck.setGame(game);
-        gameDeck = gameDeckRepository.saveAndFlush(gameDeck);
+        deck.setDeckID(rootNode.get("deck_id").asText());
+        deck.setRemainingCards(rootNode.get("remaining").asInt());
+        deck.setGame(game);
+        deck = gameDeckRepository.saveAndFlush(deck);
+
+        //GameDeck deck = gameDeckService.fetchDeck(game, false);
+        assertNotNull(deck);
+        assertEquals(54, deck.getRemainingCards());
+        assertNotNull(deck.getDeckID());
+        assertNotNull(deck.getGame());
+    }
+
+    @Test
+    public void drawCardsFromDeckTest_success() throws IOException, InterruptedException {
+        int N = 1;
+        List<Card> mockCards = new ArrayList<>(Collections.nCopies(N, new Card()));
+
+        when(gameDeckService.saveCards(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(gameDeckService.parseCards(any(String.class), any(GameDeck.class))).thenReturn(mockCards);
+        String jsonRes = "{\"success\":true}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+        when(gameDeckService.fetchDeck(any(Game.class), eq(false))).thenReturn(new GameDeck());
+
+        // Create a new Deck
+        GameDeck deck = gameDeckService.fetchDeck(game, false);
+        deck.setRemainingCards(5);
+        // draw cards
+        //List<Card> drawnCards = gameDeckService.drawCardsFromDeck(deck, N);
+
+        if (N > deck.getRemainingCards()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
+        }
+
+        String drawCardsFromDeckUri = String.format("https://deckofcardsapi.com/api/deck/%s/draw/?count=%s", deck.getDeckID(), deck);
+
+        HttpRequest drawCardsFromDeckRequest = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(drawCardsFromDeckUri))
+                .build();
+
+        HttpResponse<String> drawCardsFromDeckResponse = httpClient.send(drawCardsFromDeckRequest, HttpResponse.BodyHandlers.ofString());
+
+        List<Card> drawnCards = gameDeckService.parseCards(drawCardsFromDeckResponse.body(), deck);
+
+        // assert
+        //verify(gameDeckService).parseCards(any(String.class), any(GameDeck.class));
+        assertNotNull(drawnCards);
+        assertEquals(drawnCards.size(), N);
+    }
+
+    @Test
+    public void drawCardsFromDealerPileTest_Success(){
+        
     }
 }
