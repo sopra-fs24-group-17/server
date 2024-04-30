@@ -122,6 +122,12 @@ public class GameEngineController {
 
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
+        // Handle turnValidation (finding next player and communicating through websocket)
+        gameEngineService.turnValidation(gameId, userId);
+
+        // Dispatch gameState
+        gameEngineService.dispatchGameState(gameId, userId);
+
         // Handle termination of move draw
         String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId);
 
@@ -129,12 +135,6 @@ public class GameEngineController {
             // To DO -- handle explosion
             gameEngineService.handleExplosionCard(gameId, userId, explosionCard);
         }
-
-        // Handle turnValidation (finding next player and communicating through websocket)
-        gameEngineService.turnValidation(gameId, userId);
-
-        // Dispatch gameState
-        gameEngineService.dispatchGameState(gameId, userId);
     }
 
     /**
