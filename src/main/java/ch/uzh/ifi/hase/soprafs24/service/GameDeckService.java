@@ -139,6 +139,7 @@ public class GameDeckService {
      * @throws InterruptedException
      */
     public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
+        logger.info(String.format("Remaining cards: %s",gameDeck.getRemainingCardsDealerStack()));
         if (numberOfCards > gameDeck.getRemainingCardsDealerStack()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
         }
@@ -417,9 +418,9 @@ public class GameDeckService {
         String uri;
 
         if (cardId != null && !cardId.isEmpty()) {
-            uri = String.format(baseUri + "?cards=%s/", gameDeck.getDeckID(), userId, cardId);
+            uri = String.format(baseUri + "?cards=%s", gameDeck.getDeckID(), userId, cardId);
         } else {
-            uri = String.format(baseUri + "random/", gameDeck.getDeckID(), userId);
+            uri = String.format(baseUri + "random", gameDeck.getDeckID(), userId);
         }
         logger.info(cardId);
         logger.info(uri);
@@ -484,7 +485,7 @@ public class GameDeckService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public String getRemainingPileStats(GameDeck gameDeck, String pile) throws IOException, InterruptedException {
+    public String getRemainingDealerPileStats(GameDeck gameDeck, String pile) throws IOException, InterruptedException {
         String remainingCardStatsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), pile);
         HttpRequest remainingCardsStatsRequest = buildGetRequest(remainingCardStatsUri);
         HttpResponse<String> remainingCardsStatsResponse = httpClient.send(remainingCardsStatsRequest, HttpResponse.BodyHandlers.ofString());

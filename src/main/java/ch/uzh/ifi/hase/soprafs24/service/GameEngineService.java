@@ -495,9 +495,13 @@ public class GameEngineService {
 
             // Place explosion card back on deck at random location
             // To do -- allow user to select where exactly to place the explosion card
-            if(position >=0 ) {
+            if(position >= 0 ) {
 
-                List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(),position);
+                logger.info("Place in specific position");
+                List<Card> cards = new ArrayList<>();
+                if(position > 0)
+                    cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(),position);
+
                 gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
                 List<String> cardValues = new ArrayList<>();
 
@@ -507,10 +511,11 @@ public class GameEngineService {
                 gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", String.join(",", cardValues));
 
             }else{
+                logger.info("Place in random position");
                 gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
                 gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
             }
-            logger.info(gameDeckService.getRemainingPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
+            logger.info(gameDeckService.getRemainingDealerPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
 
             turnValidation(gameId, userId);
 
