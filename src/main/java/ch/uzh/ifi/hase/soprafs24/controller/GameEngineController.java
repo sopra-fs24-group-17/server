@@ -2,17 +2,21 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
+import ch.uzh.ifi.hase.soprafs24.websocket.dto.ExplosionCardRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -113,28 +117,53 @@ public class GameEngineController {
     /**
      * Routine executed once the user finished playing, including: draw end of move card, validate explosion, among others
      * @param gameId of the game that the user started
-     * @param userId of the user finishing a turn
+     //* @param userId of the user finishing a turn
      */
-    @MessageMapping("/terminateMove/{gameId}/{userId}")
-    public void handleTerminatingMove(
-            @DestinationVariable("gameId") Long gameId,
-            @DestinationVariable("userId") Long userId) throws IOException, InterruptedException{
+//    @MessageMapping("/terminateMove/{gameId}/{userId}")
+//    public void handleTerminatingMove(
+//            @DestinationVariable("gameId") Long gameId,
+//            @DestinationVariable("userId") Long userId,
+//            @Payload ExplosionCardRequest explosionCardRequest) throws IOException, InterruptedException{
+//
+//        logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
+//
+//        // Handle turnValidation (finding next player and communicating through websocket)
+//        gameEngineService.turnValidation(gameId, userId);
+//
+//        // Dispatch gameState
+//        gameEngineService.dispatchGameState(gameId, userId);
+//
+//        // Handle termination of move draw
+//        String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId);
+//
+//        if (explosionCard != null) {
+//            // To DO -- handle explosion
+//            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
+//        }
+//    }
+
+     //THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE
+    @GetMapping("/terminateMove/{gameId}/{userId}/{position}")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public void test_handleStartGame(
+            @PathVariable("gameId") Long gameId,
+            @PathVariable("userId") Long userId,
+            @PathVariable("position") Integer position) throws IOException, InterruptedException {
+
+        logger.info(String.format("Position: %s", position));
 
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
-        // Handle turnValidation (finding next player and communicating through websocket)
-        gameEngineService.turnValidation(gameId, userId);
-
-        // Dispatch gameState
-        gameEngineService.dispatchGameState(gameId, userId);
-
-        // Handle termination of move draw
-        String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId);
+        String explosionCard = "AS";
+        ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
+        explosionCardRequest.setPosition(position);
 
         if (explosionCard != null) {
             // To DO -- handle explosion
-            gameEngineService.handleExplosionCard(gameId, userId, explosionCard);
+            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
         }
+
     }
 
     /**
