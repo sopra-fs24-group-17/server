@@ -13,9 +13,15 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.FriendsGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import org.hibernate.service.spi.ServiceException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +32,8 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@Configuration
+@EnableScheduling
 public class GameService {
 
     private final GameRepository gameRepository;
@@ -34,10 +42,13 @@ public class GameService {
 
     private final GameDeckService gameDeckService;
 
+    Logger logger = LoggerFactory.getLogger(GameService.class);
+
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
-    public GameService(GameRepository gameRepository, UserService userService, GameDeckService gameDeckService, ApplicationEventPublisher eventPublisher) {
+    @Autowired
+    public GameService(@Qualifier("gameRepository") GameRepository gameRepository, UserService userService, GameDeckService gameDeckService, ApplicationEventPublisher eventPublisher) {
         this.gameRepository = gameRepository;
         this.userService = userService;
         this.gameDeckService = gameDeckService;
@@ -71,7 +82,8 @@ public class GameService {
             GameDeck gameDeck = gameDeckService.fetchDeck(game, true);
 
             game.setGameDeck(gameDeck);
-            Game updatedGame = gameRepository.saveAndFlush(game);
+            Game updatedGame = gameRepository.save(game);
+            gameRepository.flush();
             return savedGame;
         } catch (IOException | InterruptedException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to fetch a GameDeck");
@@ -102,7 +114,7 @@ public class GameService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't join a game that is beyond the preparation phase");
         }
 
-        Set<User> players = currentGame.getPlayers();
+        List<User> players = currentGame.getPlayers();
         if (players.contains(verifiedUser)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is already part of the session");
         }
@@ -143,7 +155,7 @@ public class GameService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't leave a game that is beyond the preparation phase");
         }
 
-        Set<User> players = currentGame.getPlayers();
+        List<User> players = currentGame.getPlayers();
         // Verify if the user requesting to leave a game is currently part of the Players
         if (players.contains(verifiedUser)) {
             players.remove(verifiedUser);
@@ -165,19 +177,20 @@ public class GameService {
     }
 
     /**
-     * Returns all games that are in the preparing state and have a public game mode.
+     * Returns all games that are in the preparing state and have a public game mode excluding games that were created more than 2hrs ago.
      * @param token of the user requesting to see all available public games.
      * @return
      */
     public List<Game> getGames(String token) {
         User verifiedUser = userService.verifyUserByToken(token);
         List<User> friends = userService.getUsersFriends(verifiedUser.getId());
-        List<Game> publicGames =  gameRepository.findByStateAndMode(GameState.PREPARING, GameMode.PUBLIC);
-// Fetch private games initiated by the verified user
+
+        List<Game> publicGames = gameRepository.findByStateAndMode(GameState.PREPARING, GameMode.PUBLIC);
         List<Game> privateUserGames = gameRepository.findByInitiatingUserAndStateAndMode(verifiedUser, GameState.PREPARING, GameMode.PRIVATE);
         Set<Game> combinedGames = new HashSet<>(publicGames);
-        combinedGames.addAll(privateUserGames); // Add the user's own private games
-        for (User friend: friends) {
+        combinedGames.addAll(privateUserGames);
+
+        for (User friend : friends) {
             List<Game> privateFriendGames = gameRepository.findByInitiatingUserAndStateAndMode(friend, GameState.PREPARING, GameMode.PRIVATE);
             combinedGames.addAll(privateFriendGames);
         }
@@ -195,5 +208,24 @@ public class GameService {
             gameId = 100000L + random.nextLong(900000L); // Generate random 6 digit number
         } while (gameRepository.findByGameId(gameId).isPresent()); //until unique
         return gameId;
+    }
+
+    /**
+     * This method gets automatically executed every 1hr, to set all games that were created
+     * longer than 1hr ago and never went beyond the preparation state to aborted.
+     */
+    @Scheduled(fixedRate = 3600000)
+    public void updateGameStatus() {
+        logger.info("Automatic Method Executed");
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR_OF_DAY, -1);
+        Date oneHourAgo = calendar.getTime();
+        List<Game> games = gameRepository.findGamesCreatedBefore(oneHourAgo);
+        for (Game game: games) {
+            if (game.getState().equals(GameState.PREPARING)) {
+                game.setState(GameState.ABORTED);
+                gameRepository.saveAndFlush(game);
+            }
+        }
     }
 }

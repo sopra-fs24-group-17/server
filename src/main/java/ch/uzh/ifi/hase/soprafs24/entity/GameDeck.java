@@ -17,9 +17,6 @@ public class GameDeck implements Serializable {
     @Id
     private String deckID;
 
-    @Column
-    private Integer remainingCards;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gameId", referencedColumnName = "gameId")
     private Game game;
@@ -29,5 +26,8 @@ public class GameDeck implements Serializable {
 
     @Column
     private Integer remainingCardsDealerStack;
+
+    @Column
+    private Integer remainingCardsDeck;
 
 }

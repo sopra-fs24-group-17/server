@@ -91,7 +91,7 @@ public class GameDeckServiceTest {
         game = new Game();
         game.setGameId(gameId);
         game.setState(GameState.ONGOING);
-        Set<User> players = new HashSet<>();
+        List<User> players = new ArrayList<>();
         players.add(mockUser);
         game.setPlayers(players);
     }
@@ -124,13 +124,13 @@ public class GameDeckServiceTest {
 
         // Extraction of necessary variables
         deck.setDeckID(rootNode.get("deck_id").asText());
-        deck.setRemainingCards(rootNode.get("remaining").asInt());
+        deck.setRemainingCardsDealerStack(rootNode.get("remaining").asInt());
         deck.setGame(game);
         deck = gameDeckRepository.saveAndFlush(deck);
 
         //GameDeck deck = gameDeckService.fetchDeck(game, false);
         assertNotNull(deck);
-        assertEquals(54, deck.getRemainingCards());
+        assertEquals(54, deck.getRemainingCardsDealerStack());
         assertNotNull(deck.getDeckID());
         assertNotNull(deck.getGame());
     }
@@ -141,7 +141,7 @@ public class GameDeckServiceTest {
         List<Card> mockCards = new ArrayList<>(Collections.nCopies(N, new Card()));
 
         when(gameDeckService.saveCards(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(gameDeckService.parseCards(any(String.class), any(GameDeck.class))).thenReturn(mockCards);
+        when(gameDeckService.parseCards(any(GameDeck.class), any(String.class), any(String.class), eq(Collections.emptyList()), eq(Collections.emptyList()))).thenReturn(mockCards);
         String jsonRes = "{\"success\":true}";
         HttpResponse<String> mockResponse = mock(HttpResponse.class);
         when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
@@ -151,11 +151,11 @@ public class GameDeckServiceTest {
 
         // Create a new Deck
         GameDeck deck = gameDeckService.fetchDeck(game, false);
-        deck.setRemainingCards(5);
+        deck.setRemainingCardsDealerStack(5);
         // draw cards
         //List<Card> drawnCards = gameDeckService.drawCardsFromDeck(deck, N);
 
-        if (N > deck.getRemainingCards()) {
+        if (N > deck.getRemainingCardsDealerStack()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
         }
 
@@ -168,7 +168,7 @@ public class GameDeckServiceTest {
 
         HttpResponse<String> drawCardsFromDeckResponse = httpClient.send(drawCardsFromDeckRequest, HttpResponse.BodyHandlers.ofString());
 
-        List<Card> drawnCards = gameDeckService.parseCards(drawCardsFromDeckResponse.body(), deck);
+        List<Card> drawnCards = gameDeckService.parseCards(deck, drawCardsFromDeckResponse.body(), "deckId", new ArrayList<>(), new ArrayList<>());
 
         drawnCards = gameDeckService.saveCards(drawnCards);
 
@@ -184,7 +184,7 @@ public class GameDeckServiceTest {
         List<Card> mockCards = new ArrayList<>(Collections.nCopies(N, new Card()));
 
         when(gameDeckService.saveCards(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(gameDeckService.parseCardsDealer(any(String.class), any(GameDeck.class))).thenReturn(mockCards);
+        when(gameDeckService.parseCards(any(GameDeck.class), any(String.class), any(String.class), eq(Collections.emptyList()), eq(Collections.emptyList()))).thenReturn(mockCards);
         String jsonRes = "{\"success\":true}";
         HttpResponse<String> mockResponse = mock(HttpResponse.class);
         when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
@@ -196,7 +196,7 @@ public class GameDeckServiceTest {
 
         // Create a new Deck
         GameDeck deck = gameDeckService.fetchDeck(game, false);
-        deck.setRemainingCards(5);
+        deck.setRemainingCardsDealerStack(5);
         deck.setRemainingCardsDealerStack(100);
         deck.setDeckID("player1");
         deck.setGame(game);
@@ -217,7 +217,7 @@ public class GameDeckServiceTest {
 
         HttpResponse<String> drawCardsFromPileResponse = httpClient.send(drawCardsFromPileRequest, HttpResponse.BodyHandlers.ofString());
 
-        List<Card> cards = gameDeckService.parseCardsDealer(drawCardsFromPileResponse.body(), deck);
+        List<Card> cards = gameDeckService.parseCards(deck, drawCardsFromPileResponse.body(), "deckId", new ArrayList<>(), new ArrayList<>());
 
         List<Card> savedCards = gameDeckService.saveCards(cards);
 

@@ -110,7 +110,6 @@ public class UserController {
       // verify that token and userId belong to the same user
       User verifiedUser = userService.verifyTokenAndId(token, userId);
       User userOffline = userService.setOffline(userService.verifyUserByToken(token).getUsername());
-      return;
     }
 
     /**

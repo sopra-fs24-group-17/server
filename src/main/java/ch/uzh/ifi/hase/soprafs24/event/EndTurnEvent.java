@@ -12,9 +12,12 @@ public class EndTurnEvent extends ApplicationEvent {
 
     private Long gameId;
 
-    public EndTurnEvent(Object source, String userName, Long gameId) {
+    private Long userId;
+
+    public EndTurnEvent(Object source, String userName, Long gameId, Long userId) {
         super(source);
         this.userName = userName;
         this.gameId = gameId;
+        this.userId = userId;
     }
 }

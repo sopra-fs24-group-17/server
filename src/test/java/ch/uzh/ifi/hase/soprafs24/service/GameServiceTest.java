@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
+import ch.uzh.ifi.hase.soprafs24.constant.GameMode;
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
@@ -17,9 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,7 +57,7 @@ public class GameServiceTest {
         game = new Game();
         game.setGameId(gameId);
         game.setState(GameState.PREPARING);
-        Set<User> players = new HashSet<>();
+        List<User> players = new ArrayList<>();
         players.add(mockUser);
         game.setPlayers(players);
 
@@ -73,7 +72,6 @@ public class GameServiceTest {
 
         assertNotNull(createdGame.getGameId());
         assertTrue(createdGame.getPlayers().contains(mockUser));
-        verify(gameRepository).save(any(Game.class));
     }
 
     @Test
@@ -87,7 +85,6 @@ public class GameServiceTest {
 
         assertNotNull(createdGame.getGameId());
         verify(gameRepository, atLeastOnce()).findByGameId(anyLong());
-        verify(gameRepository).save(any(Game.class));
     }
 
     @Test
@@ -96,7 +93,7 @@ public class GameServiceTest {
         User anotherUser = new User();
         anotherUser.setUsername("AnotherUser");
 
-        Set<User> players = new HashSet<>();
+        List<User> players = new ArrayList<>();
         players.add(mockUser);
         players.add(anotherUser);
         game.setPlayers(players);
@@ -211,6 +208,64 @@ public class GameServiceTest {
         when(userService.verifyUserByToken("invalidToken")).thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
         assertThrows(ResponseStatusException.class, () -> gameService.joinGame("invalidToken", gameId));
+    }
+
+    @Test
+    public void testGetGames() {
+
+        User verifiedUser = new User();
+        verifiedUser.setId(1L);
+        verifiedUser.setUsername("TestUser");
+
+        game = new Game();
+        game.setGameId(1L);
+        game.setState(GameState.PREPARING);
+        game.setMode(GameMode.PUBLIC);
+        game.setCreationdate(new Date());
+
+        String token = "validToken";
+        when(userService.verifyUserByToken(token)).thenReturn(verifiedUser);
+        when(userService.getUsersFriends(verifiedUser.getId())).thenReturn(Collections.singletonList(verifiedUser));
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.HOUR_OF_DAY, -2);
+        Date oneHourAgo = cal.getTime();
+
+        List<Game> publicGames = Collections.singletonList(game);
+        List<Game> privateUserGames = Collections.singletonList(game);
+
+        when(gameRepository.findByStateAndMode(eq(GameState.PREPARING), eq(GameMode.PUBLIC)))
+                .thenReturn(publicGames);
+        when(gameRepository.findByInitiatingUserAndStateAndMode(eq(verifiedUser), eq(GameState.PREPARING), eq(GameMode.PRIVATE)))
+                .thenReturn(privateUserGames);
+
+        List<Game> result = gameService.getGames(token);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.contains(game));
+    }
+
+    @Test
+    public void testUpdateGameStatus_ShouldAbortStaleGames() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR_OF_DAY, -2);
+        Date twoHoursAgo = calendar.getTime();
+
+        Game staleGame = new Game();
+        staleGame.setGameId(2L);
+        staleGame.setState(GameState.PREPARING);
+        staleGame.setCreationdate(twoHoursAgo);
+
+        List<Game> games = Arrays.asList(staleGame);
+
+        when(gameRepository.findGamesCreatedBefore(any(Date.class))).thenReturn(games);
+
+        gameService.updateGameStatus();
+
+        verify(gameRepository).findGamesCreatedBefore(any(Date.class));
+        verify(gameRepository).saveAndFlush(staleGame);
+        assertEquals(GameState.ABORTED, staleGame.getState(), "Game state should be updated to ABORTED");
     }
 }
 
