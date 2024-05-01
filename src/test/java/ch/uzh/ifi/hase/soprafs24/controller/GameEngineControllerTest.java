@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
@@ -84,6 +85,14 @@ class GameEngineControllerTest {
     void testHandleStartGame() throws Exception {
         Long gameId = 1L;
         Game game = new Game();
+
+        User startUser = new User();
+        startUser.setId(1L);
+        startUser.setUsername("startUser");
+        startUser.setEmail("start@user");
+
+        game.setCurrentTurn(startUser);
+
         when(gameEngineService.startGame(gameId)).thenReturn(game);
 
         gameEngineController.handleStartGame(gameId);
