@@ -2,17 +2,22 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
+import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
+import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
+import ch.uzh.ifi.hase.soprafs24.websocket.dto.ExplosionCardRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -118,7 +123,8 @@ public class GameEngineController {
     @MessageMapping("/terminateMove/{gameId}/{userId}")
     public void handleTerminatingMove(
             @DestinationVariable("gameId") Long gameId,
-            @DestinationVariable("userId") Long userId) throws IOException, InterruptedException{
+            @DestinationVariable("userId") Long userId,
+            @Payload ExplosionCardRequest explosionCardRequest) throws IOException, InterruptedException{
 
         logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
@@ -133,9 +139,33 @@ public class GameEngineController {
 
         if (explosionCard != null) {
             // To DO -- handle explosion
-            gameEngineService.handleExplosionCard(gameId, userId, explosionCard);
+            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
         }
     }
+
+     //THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE
+//    @GetMapping("/terminateMove/{gameId}/{userId}/{position}")
+//    @ResponseStatus(HttpStatus.OK)
+//    @ResponseBody
+//    public void test_handleStartGame(
+//            @PathVariable("gameId") Long gameId,
+//            @PathVariable("userId") Long userId,
+//            @PathVariable("position") Integer position) throws IOException, InterruptedException {
+//
+//        logger.info(String.format("Position: %s", position));
+//
+//        logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
+//
+//        String explosionCard = "AS";
+//        ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
+//        explosionCardRequest.setPosition(position);
+//
+//        if (explosionCard != null) {
+//            // To DO -- handle explosion
+//            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
+//        }
+//
+//    }
 
     /**
      * Removes a player that leaves before losing
