@@ -88,6 +88,7 @@ public class GameDeckService {
      */
     public GameDeck fetchDeck(Game game, boolean init) throws IOException, InterruptedException {
 
+        logger.info("invoked");
         String newDeckUri = "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true";
         HttpRequest newDeckRequest = buildGetRequest(newDeckUri);
 
@@ -102,6 +103,9 @@ public class GameDeckService {
         gameDeck.setRemainingCardsDeck(rootNode.get("remaining").asInt());
         gameDeck.setGame(game);
         gameDeck = gameDeckRepository.saveAndFlush(gameDeck);
+
+        logger.info(gameDeck.getDeckID());
+
         return gameDeck;
     }
 
@@ -139,6 +143,7 @@ public class GameDeckService {
      * @throws InterruptedException
      */
     public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
+        logger.info(String.format("Remaining cards: %s",gameDeck.getRemainingCardsDealerStack()));
         if (numberOfCards > gameDeck.getRemainingCardsDealerStack()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
         }
@@ -417,10 +422,12 @@ public class GameDeckService {
         String uri;
 
         if (cardId != null && !cardId.isEmpty()) {
-            uri = String.format(baseUri + "?cards=%s/", gameDeck.getDeckID(), userId, cardId);
+            uri = String.format(baseUri + "?cards=%s", gameDeck.getDeckID(), userId, cardId);
         } else {
-            uri = String.format(baseUri + "random/", gameDeck.getDeckID(), userId);
+            uri = String.format(baseUri + "random", gameDeck.getDeckID(), userId);
         }
+        logger.info(cardId);
+        logger.info(uri);
 
         HttpRequest request = buildGetRequest(uri);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -468,6 +475,22 @@ public class GameDeckService {
      */
     public String getRemainingPileStats(GameDeck gameDeck, Long userId) throws IOException, InterruptedException {
         String remainingCardStatsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), userId);
+        HttpRequest remainingCardsStatsRequest = buildGetRequest(remainingCardStatsUri);
+        HttpResponse<String> remainingCardsStatsResponse = httpClient.send(remainingCardsStatsRequest, HttpResponse.BodyHandlers.ofString());
+
+        return remainingCardsStatsResponse.body();
+    }
+
+    /**
+     * Helper method to obtain statistics about the dealer pile
+     * @param gameDeck indicating the playing deck
+     * @param pile indicating the user the pile belongs to
+     * @return Response body of api request
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public String getRemainingDealerPileStats(GameDeck gameDeck, String pile) throws IOException, InterruptedException {
+        String remainingCardStatsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), pile);
         HttpRequest remainingCardsStatsRequest = buildGetRequest(remainingCardStatsUri);
         HttpResponse<String> remainingCardsStatsResponse = httpClient.send(remainingCardsStatsRequest, HttpResponse.BodyHandlers.ofString());
 
