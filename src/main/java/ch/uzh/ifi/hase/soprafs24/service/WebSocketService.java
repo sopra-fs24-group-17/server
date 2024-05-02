@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
+import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.event.GameStartEvent;
 import ch.uzh.ifi.hase.soprafs24.eventlistener.GameCreationEventListener;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardGetDTO;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional

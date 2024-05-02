@@ -18,6 +18,11 @@ public interface GameDTOMapper {
         return game.getMaxPlayers() - game.getPlayers().size();
     }
 
+    default Integer calculateCurrentPlayers(Game game) {
+        return game.getPlayers().size(); // This assumes players are eagerly fetched
+    }
+
+
     // Mapping for Game to GameGetDTO
     @Mapping(source = "gameId", target = "gameId")
     @Mapping(source = "mode", target = "mode")
@@ -26,6 +31,7 @@ public interface GameDTOMapper {
     @Mapping(source = "state", target = "state")
     @Mapping(target = "availableSlots", expression = "java(calculateAvailableSlots(game))")
     @Mapping(target = "deckId", ignore = true)
+    @Mapping(target = "currentPlayers", expression = "java(calculateCurrentPlayers(game))")
     GameGetDTO convertEntityToGameGetDTO(Game game);
 
     // Conversion of GamePostDTO to Game Entity
