@@ -121,6 +121,7 @@ public class GameEngineController {
      * @param gameId of the game that the user started
      * @param userId of the user finishing a turn
      */
+
     @MessageMapping("/terminateMove/{gameId}/{userId}")
     public void handleTerminatingMove(
             @DestinationVariable("gameId") Long gameId,
@@ -144,29 +145,35 @@ public class GameEngineController {
         }
     }
 
+
      //THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE
-//    @GetMapping("/terminateMove/{gameId}/{userId}/{position}")
-//    @ResponseStatus(HttpStatus.OK)
-//    @ResponseBody
-//    public void test_handleStartGame(
-//            @PathVariable("gameId") Long gameId,
-//            @PathVariable("userId") Long userId,
-//            @PathVariable("position") Integer position) throws IOException, InterruptedException {
-//
-//        logger.info(String.format("Position: %s", position));
-//
-//        logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
-//
-//        String explosionCard = "AS";
-//        ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
-//        explosionCardRequest.setPosition(position);
-//
-//        if (explosionCard != null) {
-//            // To DO -- handle explosion
-//            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
-//        }
-//
-//    }
+    /*
+    @GetMapping("/terminateMove/{gameId}/{userId}")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public void test_handleStartGame(
+            @PathVariable("gameId") Long gameId,
+            @PathVariable("userId") Long userId) throws IOException, InterruptedException {
+
+        logger.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
+
+        // Handle turnValidation (finding next player and communicating through websocket)
+        gameEngineService.turnValidation(gameId, userId);
+
+        // Dispatch gameState
+        gameEngineService.dispatchGameState(gameId, userId);
+
+        // Handle termination of move draw
+        String explosionCard = "AS";
+
+        if (explosionCard != null) {
+            // To DO -- handle explosion
+            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, null);
+        }
+
+    }
+
+     */
 
     /**
      * Removes a player that leaves before losing
