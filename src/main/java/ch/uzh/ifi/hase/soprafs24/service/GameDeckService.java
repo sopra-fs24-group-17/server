@@ -8,6 +8,7 @@ import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import javax.annotation.Nullable;
 
 @Service
 @Transactional
+@Slf4j
 public class GameDeckService {
 
     private final HttpClient httpClient;
@@ -43,8 +45,6 @@ public class GameDeckService {
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
-
-    Logger logger = LoggerFactory.getLogger(GameDeckService.class);
 
     @Autowired
     public GameDeckService(GameDeckRepository gameDeckRepository, CardRepository cardRepository, UserService userService ,ApplicationEventPublisher eventPublisher, HttpClient httpClient) {
@@ -90,7 +90,7 @@ public class GameDeckService {
      */
     public GameDeck fetchDeck(Game game, boolean init) throws IOException, InterruptedException {
 
-        logger.info("invoked");
+        log.info("invoked");
         String newDeckUri = "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true";
         HttpRequest newDeckRequest = buildGetRequest(newDeckUri);
 
@@ -106,7 +106,7 @@ public class GameDeckService {
         gameDeck.setGame(game);
         gameDeck = gameDeckRepository.saveAndFlush(gameDeck);
 
-        logger.info(gameDeck.getDeckID());
+        log.info(gameDeck.getDeckID());
 
         return gameDeck;
     }
@@ -145,7 +145,7 @@ public class GameDeckService {
      * @throws InterruptedException
      */
     public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
-        logger.info(String.format("Remaining cards: %s",gameDeck.getRemainingCardsDealerStack()));
+        log.info(String.format("Remaining cards: %s",gameDeck.getRemainingCardsDealerStack()));
         if (numberOfCards > gameDeck.getRemainingCardsDealerStack()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
         }
@@ -428,14 +428,14 @@ public class GameDeckService {
         } else {
             uri = String.format(baseUri + "random", gameDeck.getDeckID(), userId);
         }
-        logger.info(cardId);
-        logger.info(uri);
+        log.info(cardId);
+        log.info(uri);
 
         HttpRequest request = buildGetRequest(uri);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        logger.info("Drew Card from Player Pile");
-        logger.info(response.body());
+        log.info("Drew Card from Player Pile");
+        log.info(response.body());
 
         List<String> cardsPath = List.of("cards");
         List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, null);

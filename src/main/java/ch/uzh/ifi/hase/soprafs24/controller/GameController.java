@@ -4,12 +4,14 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.GameGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RestController
 public class GameController {
 
@@ -25,7 +27,8 @@ public class GameController {
     @PostMapping("/dashboard/games/new")
     @ResponseStatus(HttpStatus.CREATED)
     @ResponseBody
-    public GameGetDTO createNewGame(@RequestHeader("token") String token, @RequestBody GamePostDTO gamePostDTO) {
+    public GameGetDTO createNewGame(@RequestHeader("token") String token,
+                                    @RequestBody GamePostDTO gamePostDTO) {
         Game game = gameService.createNewGame(token, gamePostDTO);
         return GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(game);
     }
@@ -38,7 +41,8 @@ public class GameController {
     @PutMapping("/dashboard/games/join/{gameId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public GameGetDTO joinGame(@RequestHeader("token") String token, @PathVariable Long gameId) {
+    public GameGetDTO joinGame(@RequestHeader("token") String token,
+                               @PathVariable Long gameId) {
         Game updatedGame = gameService.joinGame(token, gameId);
         return GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(updatedGame);
     }
@@ -52,7 +56,8 @@ public class GameController {
     @PutMapping("/dashboard/games/leave/{gameId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public GameGetDTO leaveGame(@RequestHeader("token") String token, @PathVariable Long gameId) {
+    public GameGetDTO leaveGame(@RequestHeader("token") String token,
+                                @PathVariable Long gameId) {
         Game updatedGame = gameService.leaveGame(token, gameId);
         return GameDTOMapper.INSTANCE.convertEntityToGameGetDTO(updatedGame);
     }

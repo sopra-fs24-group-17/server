@@ -10,6 +10,7 @@ import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@Slf4j
 @Transactional
 public class GameEngineService {
 
@@ -44,8 +46,6 @@ public class GameEngineService {
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
-
-    Logger logger = LoggerFactory.getLogger(GameDeckService.class);
 
     @Autowired
     public GameEngineService(@Qualifier("gameRepository") GameRepository gameRepository,
@@ -483,10 +483,10 @@ public class GameEngineService {
 
         // If he has a defuse card, request him to play the defuse card
         if (defuseCard != null) {
-            logger.info(defuseCard);
+            log.info(defuseCard);
             // Draw the card from the user pile and place it on top of the play pile
             Card drawnCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
-            logger.info("Succesfully drawnCard");
+            log.info("Succesfully drawnCard");
             List<Card> drawnCards = new ArrayList<>();
             drawnCards.add(drawnCard);
             gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
@@ -499,7 +499,7 @@ public class GameEngineService {
             // To do -- allow user to select where exactly to place the explosion card
             if(position >= 0 ) {
 
-                logger.info("Place in specific position");
+                log.info("Place in specific position");
                 List<Card> cards = new ArrayList<>();
                 if(position > 0)
                     cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(),position);
@@ -513,11 +513,11 @@ public class GameEngineService {
                 gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", String.join(",", cardValues));
 
             }else{
-                logger.info("Place in random position");
+                log.info("Place in random position");
                 gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
                 gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
             }
-            logger.info(gameDeckService.getRemainingDealerPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
+            log.info(gameDeckService.getRemainingDealerPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
 
             turnValidation(gameId, userId);
 

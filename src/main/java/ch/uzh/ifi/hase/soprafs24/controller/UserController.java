@@ -5,6 +5,7 @@ import ch.uzh.ifi.hase.soprafs24.entity.UserFriendsRequests;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.*;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.UserDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RestController
 public class UserController {
   private final UserService userService;
@@ -54,7 +56,8 @@ public class UserController {
   @GetMapping("/dashboard/{userId}/profile")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public UserGetDTO getProfileUser(@PathVariable Long userId, @RequestHeader("token") String token) {
+  public UserGetDTO getProfileUser(@PathVariable Long userId,
+                                   @RequestHeader("token") String token) {
       User verifiedUser = userService.verifyUserByToken(token);
       User profileUser = userService.getProfileUser(userId, verifiedUser);
       return UserDTOMapper.INSTANCE.convertEntityToProfileUserGetDTO(profileUser);
@@ -68,7 +71,8 @@ public class UserController {
   @PostMapping("/users/register")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
-  public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO, HttpServletResponse response) {
+  public UserGetDTO createUser(@RequestBody UserPostDTO userPostDTO,
+                               HttpServletResponse response) {
     // convert API user to internal representation
     User userInput = UserDTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
     // create user
@@ -88,7 +92,8 @@ public class UserController {
   @PostMapping("/users/login")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
-  public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO, HttpServletResponse response) {
+  public UserGetDTO loginUser(@RequestBody UserPostDTO userPostDTO,
+                              HttpServletResponse response) {
       // authenticate user
       User authenticatedUser = userService.authenticateUser(userPostDTO.getUsername(), userPostDTO.getPassword());
       User userOnline = userService.setOnline(authenticatedUser.getUsername());
@@ -106,7 +111,8 @@ public class UserController {
   @PostMapping("dashboard/{userId}/logout")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public void logout(@PathVariable Long userId, @RequestHeader("token") String token) {
+  public void logout(@PathVariable Long userId,
+                     @RequestHeader("token") String token) {
       // verify that token and userId belong to the same user
       User verifiedUser = userService.verifyTokenAndId(token, userId);
       User userOffline = userService.setOffline(userService.verifyUserByToken(token).getUsername());
@@ -133,7 +139,9 @@ public class UserController {
     @PutMapping("dashboard/{userId}/profile")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ResponseBody
-    public UserGetDTO editProfile(@RequestBody UserPutDTO userPutDTO, @PathVariable Long userId, @RequestHeader("token") String token) {
+    public UserGetDTO editProfile(@RequestBody UserPutDTO userPutDTO,
+                                  @PathVariable Long userId,
+                                  @RequestHeader("token") String token) {
         // verify that token and userId belong to the same user
         User verifiedUser = userService.verifyTokenAndId(token, userId);
         // cast updates
@@ -149,7 +157,8 @@ public class UserController {
     @GetMapping("/dashboard/{userId}/profile/stats")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public List<UserStatsGetDTO> getAllUsersStats(@PathVariable Long userId, @RequestHeader("token") String token) {
+    public List<UserStatsGetDTO> getAllUsersStats(@PathVariable Long userId,
+                                                  @RequestHeader("token") String token) {
       // verify user by token
       User verifiedUser =  userService.verifyUserByToken(token);
       // fetch users along with their statistics
@@ -169,7 +178,8 @@ public class UserController {
     @PutMapping("/dashboard/{userId}/friends/requests")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ResponseBody
-    public void friendRequest(@PathVariable Long userId, @RequestHeader("token") String token){
+    public void friendRequest(@PathVariable Long userId,
+                              @RequestHeader("token") String token){
         userService.addFriends(userId, token);
     }
 
@@ -182,7 +192,10 @@ public class UserController {
     @PutMapping("/dashboard/{userId}/friends/requests/{requestId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ResponseBody
-    public void processFriendRequest(@PathVariable Long userId, @PathVariable Long requestId, @RequestHeader("token") String token, @RequestBody UserFriendsRequestPutDTO requestDto) {
+    public void processFriendRequest(@PathVariable Long userId,
+                                     @PathVariable Long requestId,
+                                     @RequestHeader("token") String token,
+                                     @RequestBody UserFriendsRequestPutDTO requestDto) {
         // verify that token and userId belong to the same user
         User verifiedUser = userService.verifyTokenAndId(token, userId);
         userService.editFriends(userId, requestId, requestDto.getStatus());
@@ -197,7 +210,8 @@ public class UserController {
     @GetMapping("/dashboard/{userId}/friends/requests")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public List<UserFriendsRequestGetDTO> getPendingFriendshipRequests(@PathVariable Long userId, @RequestHeader("token") String token) {
+    public List<UserFriendsRequestGetDTO> getPendingFriendshipRequests(@PathVariable Long userId,
+                                                                       @RequestHeader("token") String token) {
         // verify that token and userId belong to the same user
         User verifiedUser = userService.verifyTokenAndId(token, userId);
 
@@ -218,7 +232,8 @@ public class UserController {
     @GetMapping("/dashboard/{userId}/friends")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public List <FriendsGetDTO> getUserFriends(@PathVariable Long userId, @RequestHeader("token") String token) {
+    public List <FriendsGetDTO> getUserFriends(@PathVariable Long userId,
+                                               @RequestHeader("token") String token) {
         // verify that token and userId belong to the same user
         User verifiedUser = userService.verifyTokenAndId(token, userId);
 

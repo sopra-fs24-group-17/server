@@ -12,6 +12,7 @@ import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.FriendsGetDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @Transactional
 @Configuration
 @EnableScheduling
@@ -41,8 +43,6 @@ public class GameService {
     private final UserService userService;
 
     private final GameDeckService gameDeckService;
-
-    Logger logger = LoggerFactory.getLogger(GameService.class);
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -216,7 +216,7 @@ public class GameService {
      */
     @Scheduled(fixedRate = 3600000)
     public void updateGameStatus() {
-        logger.info("Automatic Method Executed");
+        log.info("Automatic Method Executed");
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR_OF_DAY, -1);
         Date oneHourAgo = calendar.getTime();
