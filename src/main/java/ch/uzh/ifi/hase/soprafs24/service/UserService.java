@@ -9,6 +9,7 @@ import ch.uzh.ifi.hase.soprafs24.event.LoginEvent;
 import ch.uzh.ifi.hase.soprafs24.event.LogoutEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.UserPostDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +26,9 @@ import java.util.UUID;
 import java.util.Date;
 
 @Service
+@Slf4j
 @Transactional
 public class UserService {
-  private final Logger log = LoggerFactory.getLogger(UserService.class);
   private final UserRepository userRepository;
   private final PasswordService passwordService;
   private final EmailSenderService emailSenderService;

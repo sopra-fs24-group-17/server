@@ -40,7 +40,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean serverContainer = new ServletServerContainerFactoryBean();
-        serverContainer.setMaxSessionIdleTimeout(-1L); // Avoids closure of websocket due to inactivity -> To be adjusted later
+        serverContainer.setMaxSessionIdleTimeout(-1L);
         return serverContainer;
     }
 

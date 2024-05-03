@@ -1,8 +1,6 @@
 package ch.uzh.ifi.hase.soprafs24.chat;
-
 import ch.uzh.ifi.hase.soprafs24.constant.MessageType;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 

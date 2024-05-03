@@ -627,6 +627,63 @@ public class UserControllerTest {
         verify(userService).getUsersFriends(userId);
     }
 
+    @Test
+    public void whenGetPendingFriendshipRequestsIsEmpty_thenReturnEmptyList() throws Exception {
+        Long userId = 1L;
+        String token = "valid-token";
+        User user = new User();
+        user.setId(userId);
+        when(userService.verifyTokenAndId(token, userId)).thenReturn(user);
+        when(userService.getPendingFriendshipRequests(userId)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/dashboard/{userId}/friends/requests", userId)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+    }
+
+    @Test
+    public void whenGetPendingFriendshipRequestsHasSingleItem_thenReturnSingleDTO() throws Exception {
+        Long userId = 1L;
+        String token = "valid-token";
+        User user = new User();
+        user.setId(userId);
+        UserFriendsRequests request = new UserFriendsRequests();
+        request.setId(2L);  // Sample properties
+        request.setStatus(FriendRequestStatus.PENDING);
+
+        when(userService.verifyTokenAndId(token, userId)).thenReturn(user);
+        when(userService.getPendingFriendshipRequests(userId)).thenReturn(Collections.singletonList(request));
+
+        mockMvc.perform(get("/dashboard/{userId}/friends/requests", userId)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    public void whenGetPendingFriendshipRequestsHasMultipleItems_thenReturnMultipleDTOs() throws Exception {
+        Long userId = 1L;
+        String token = "valid-token";
+        User user = new User();
+        user.setId(userId);
+        UserFriendsRequests request1 = new UserFriendsRequests();
+        request1.setId(2L);
+        request1.setStatus(FriendRequestStatus.PENDING);
+        UserFriendsRequests request2 = new UserFriendsRequests();
+        request2.setId(3L);
+        request2.setStatus(FriendRequestStatus.PENDING);
+
+        when(userService.verifyTokenAndId(token, userId)).thenReturn(user);
+        when(userService.getPendingFriendshipRequests(userId)).thenReturn(Arrays.asList(request1, request2));
+
+        mockMvc.perform(get("/dashboard/{userId}/friends/requests", userId)
+                        .header("token", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+
   /**
    * Helper Method to convert userPostDTO into a JSON string such that the input
    * can be processed
