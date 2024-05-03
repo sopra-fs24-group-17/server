@@ -254,7 +254,7 @@ public class WebSocketServiceTest {
         String userName = "user";
         Long userId = 1L;
         webSocketService.setSendMessageEndTurn(userId, gameId, userName);
-        verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
+        verify(messagingTemplate).convertAndSend(eq("/game/" + gameId + "/" + userId), any(String.class));
     }
 
     @Test

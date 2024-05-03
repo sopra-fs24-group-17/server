@@ -134,7 +134,7 @@ public class WebSocketService {
                 "userId", userId,
                 "terminatingUser", userName
         );
-        sendWebSocketMessage("/game/" + gameId, params);
+        sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
     public void sendMessageEndGame(Long gameId, String userName) {
