@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 @Transactional
 public class GameDeckService {
 
-    final HttpClient httpClient;
+    private final HttpClient httpClient;
 
     ObjectMapper objectMapper;
 
@@ -46,13 +46,15 @@ public class GameDeckService {
 
     Logger logger = LoggerFactory.getLogger(GameDeckService.class);
 
-    public GameDeckService(GameDeckRepository gameDeckRepository, CardRepository cardRepository, UserService userService ,ApplicationEventPublisher eventPublisher) {
-        this.httpClient = HttpClient.newHttpClient();
+    @Autowired
+    public GameDeckService(GameDeckRepository gameDeckRepository, CardRepository cardRepository, UserService userService ,ApplicationEventPublisher eventPublisher, HttpClient httpClient) {
+        //this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.gameDeckRepository = gameDeckRepository;
         this.cardRepository = cardRepository;
         this.userService = userService;
         this.eventPublisher = eventPublisher;
+        this.httpClient = httpClient;
     }
 
     /**
@@ -60,7 +62,7 @@ public class GameDeckService {
      * @param url
      * @return
      */
-    private HttpRequest buildGetRequest(String url) {
+    public HttpRequest buildGetRequest(String url) {
         return HttpRequest.newBuilder().GET().uri(URI.create(url)).build();
     }
 

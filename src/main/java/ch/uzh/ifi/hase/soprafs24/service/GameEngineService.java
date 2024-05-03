@@ -465,6 +465,8 @@ public class GameEngineService {
      * @throws InterruptedException
      */
     public void handleExplosionCard(Long gameId, Long userId, String explosionId, Integer position) throws IOException, InterruptedException {
+        if(position==null)
+            position=-1;
 
         Game game = findGameById(gameId);
 
