@@ -69,7 +69,7 @@ public class Card implements Serializable {
                 case "9D":
                 case "9C":
                 case "9H":
-                    internalCode = "nope";
+                    internalCode = "future"; // To be replaced to Nope
                     break;
                 case "8S":
                 case "8D":

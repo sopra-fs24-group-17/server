@@ -132,4 +132,5 @@ public class GameEngineController {
         // Handle user leaving an ongoing game session
         gameEngineService.removeUserFromGame(gameId, userId);
     }
+
 }

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.json.JSONObject;
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
@@ -14,7 +15,9 @@ import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+@ActiveProfiles("dev")
 public class WebSocketServiceTest {
 
     @Mock
@@ -196,6 +199,218 @@ public class WebSocketServiceTest {
         message.put("gameId", gameId);
         webSocketService.sendMessageGameStarted(gameId, userId);
         verify(messagingTemplate).convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    @Test
+    public void testSendMessageYourTurn() {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        JSONObject message = new JSONObject();
+        message.put("type", "startTurn");
+        message.put("userId", userId);
+
+        webSocketService.sendMessageYourTurn(userId, gameId);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    @Test
+    public void testSetSendMessageEndTurn() {
+        Long gameId = 1L;
+        String userName = "user";
+
+        JSONObject message = new JSONObject();
+        message.put("type", "endTurn");
+        message.put("terminatingUser", userName);
+
+        webSocketService.setSendMessageEndTurn(gameId, userName);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    @Test
+    public void testSendMessageEndGame() {
+        Long gameId = 1L;
+        String userName = "winner";
+
+        JSONObject message = new JSONObject();
+        message.put("type", "endGame");
+        message.put("winningUser", userName);
+
+        webSocketService.sendMessageEndGame(gameId, userName);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    @Test
+    public void testSendMessagePlayerCards() {
+        Long gameId = 1L;
+        Long userId = 2L;
+        List<Card> playerCards = new ArrayList<>();
+
+        Card card1 = new Card();
+        card1.setInternalCode("explosion");
+        card1.setCode("AH");
+
+        Card card2 = new Card();
+        card2.setInternalCode("defuse");
+        card2.setCode("KH");
+
+        playerCards.add(card1);
+        playerCards.add(card2);
+
+        JSONArray cardsArray = new JSONArray();
+        for (Card card : playerCards) {
+            JSONObject cardJson = new JSONObject();
+            cardJson.put("code", card.getCode());
+            cardJson.put("internalCode", card.getInternalCode());
+            cardsArray.put(cardJson);
+        }
+
+        JSONObject message = new JSONObject();
+        message.put("type", "cards");
+        message.put("cards", cardsArray);
+
+        webSocketService.sendMessagePlayerCards(gameId, userId, playerCards);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    @Test
+    public void testSendMessageCardPlayed() {
+        Long gameId = 1L;
+        String userName = "user";
+        String internalCode = "explosion";
+
+        JSONObject message = new JSONObject();
+        message.put("type", "cardPlayed");
+        message.put("userName", userName);
+        message.put("cardPlayed", internalCode);
+
+        webSocketService.sendMessageCardPlayed(gameId, userName, internalCode);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    @Test
+    public void testSendMessageStolenCard() {
+        Long gameId = 1L;
+        Long userId = 2L;
+        List<Card> stolenCards = new ArrayList<>();
+
+        Card card1 = new Card();
+        card1.setInternalCode("explosion");
+        card1.setCode("AH");
+
+        Card card2 = new Card();
+        card2.setInternalCode("defuse");
+        card2.setCode("KH");
+
+        stolenCards.add(card1);
+        stolenCards.add(card2);
+
+        JSONArray cardsArray = new JSONArray();
+        for (Card card : stolenCards) {
+            JSONObject cardJson = new JSONObject();
+            cardJson.put("code", card.getCode());
+            cardJson.put("internalCode", card.getInternalCode());
+            cardsArray.put(cardJson);
+        }
+
+        JSONObject message = new JSONObject();
+        message.put("type", "cardStolen");
+        message.put("cards", cardsArray);
+
+        webSocketService.sendMessageStolenCard(gameId, userId, stolenCards);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+    @Test
+    public void testSendMessageDefuseCardPlayed() {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        List<Card> defuseCards = new ArrayList<>();
+
+        Card card1 = new Card();
+        card1.setInternalCode("explosion");
+        card1.setCode("AH");
+
+        Card card2 = new Card();
+        card2.setInternalCode("defuse");
+        card2.setCode("KH");
+
+        defuseCards.add(card1);
+        defuseCards.add(card2);
+
+        JSONArray cardsArray = new JSONArray();
+        for (Card card : defuseCards) {
+            JSONObject cardJson = new JSONObject();
+            cardJson.put("code", card.getCode());
+            cardJson.put("internalCode", card.getInternalCode());
+            cardsArray.put(cardJson);
+        }
+
+        JSONObject message = new JSONObject();
+        message.put("type", "defuseCard");
+        message.put("cards", cardsArray);
+
+        webSocketService.sendMessageDefuseCardPlayed(gameId, userId, defuseCards);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    @Test
+    public void testSendMessageExplosion() {
+        Long gameId = 1L;
+        String userName = "user";
+
+        JSONObject message = new JSONObject();
+        message.put("type", "explosion");
+        message.put("terminatingUser", userName);
+
+        webSocketService.sendMessageExplosion(gameId, userName);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    @Test
+    public void testSendMessageExplosionIndividual() {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        JSONObject message = new JSONObject();
+        message.put("type", "explosion");
+
+        webSocketService.sendMessageExplosionIndividual(gameId, userId);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId + "/" + userId, message.toString());
+    }
+
+    @Test
+    public void testLossEvent() {
+        Long gameId = 1L;
+        String userName = "user";
+
+        JSONObject message = new JSONObject();
+        message.put("type", "loss");
+        message.put("looserUser", userName);
+
+        webSocketService.lossEvent(gameId, userName);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, message.toString());
+    }
+
+    @Test
+    public void testSendGameState() {
+        Long gameId = 1L;
+        Card topCard = new Card();
+        topCard.setCode("AH");
+        topCard.setInternalCode("defuse");
+        Map<String, Integer> remainingCardStats = Map.of("1", 5, "Play", 2);
+
+        JSONObject message = new JSONObject();
+        message.put("type", "gameState");
+        message.put("topCardCode", topCard.getCode());
+        message.put("topCardInternalCode", topCard.getInternalCode());
+
+        JSONObject pilesJson = new JSONObject();
+        remainingCardStats.forEach(pilesJson::put);
+        message.put("piles", pilesJson);
+
+        webSocketService.sendGameState(gameId, topCard, remainingCardStats);
+        verify(messagingTemplate).convertAndSend("/game/" + gameId, message.toString());
     }
 
 }
