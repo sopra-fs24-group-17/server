@@ -123,5 +123,7 @@
 | 6    | 307     | Make chat game-specific (backend)                                                                                                                                                                                               | https://github.com/sopra-fs24-group-17/server/issues/307 | 4         | Kevin Bründler                      | &#9745;  |
 | 6    | 288     | Implementation of Nope Card                                                                                                                                                                                                     | https://github.com/sopra-fs24-group-17/server/issues/288 | 4         | Jorge Ortiz                         | &#9745;  |
 | 6    | 104     | Password validation                                                                                                                                                                                                             | https://github.com/sopra-fs24-group-17/client/issues/104 | 4         | Jorge Ortiz                         | &#9745;  |
+| 6    | 129     | Display game hints in lobby (randomised and alternating)                                                                                                                                                                                                             | https://github.com/sopra-fs24-group-17/client/issues/129 | 4         | Liam Kane                         | &#9745;  |
+
 
 
