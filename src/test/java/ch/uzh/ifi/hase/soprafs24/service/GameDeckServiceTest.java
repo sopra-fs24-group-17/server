@@ -87,6 +87,7 @@ public class GameDeckServiceTest {
     public void setup() {
         mockUser = new User();
         mockUser.setUsername("TestUser");
+        mockUser.setId(1L);
         gamePostDTO = new GamePostDTO();
 
         game = new Game();
@@ -99,6 +100,8 @@ public class GameDeckServiceTest {
         testDeck = new GameDeck();
         testDeck.setDeckID("testId");
 
+        game.setGameDeck(testDeck);
+        testDeck.setGame(game);
 
         // Create an instance of GameDeckService with mocked dependencies
         gameDeckService = new GameDeckService(gameDeckRepository, cardRepository, userService, eventPublisher, httpClient);
@@ -120,6 +123,23 @@ public class GameDeckServiceTest {
         assertNotNull(deck.getDeckID());
         assertNotNull(deck.getGame());
     }
+
+    @Test
+    public void testSaveCards_success(){
+        List<Card> mockCards = new ArrayList<>();
+        Card card1 = new Card();
+        mockCards.add(card1);
+
+        // Mocks
+        when(cardRepository.saveAll(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<Card> savedCards = gameDeckService.saveCards(mockCards);
+
+        assertNotNull(savedCards);
+        assertEquals(mockCards.size(), savedCards.size());
+    }
+
+    // TODO: Solve issue when mocking save cards
     /*
     @Test
     public void drawCardsFromDeckTest_success() throws IOException, InterruptedException {
@@ -199,11 +219,242 @@ public class GameDeckServiceTest {
         assertEquals(savedCards.size(), N);
         assertNotNull(playerName);
     }
-
+    */
 
     @Test
-    public void shuffleCardsInDealerPileTest_Success(){
+    public void testShuffleCardsInDealerPileTest_Success() throws IOException, InterruptedException {
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+
+        testDeck.setRemainingCardsDealerStack(20);
+        game.setCurrentTurn(mockUser);
+        testDeck.setGame(game);
+
+        gameDeckService.shuffleCardsInDealerPile(testDeck);
+
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+    }
+
+    @Test
+    public void testCreatePlayerPile_success() throws IOException, InterruptedException {
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+
+        gameDeckService.createPlayerPile(testDeck, mockUser.getId(), "AS");
+
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+    }
+/*
+    @Test
+    public void testCreateDealerPile_success() throws IOException, InterruptedException {
+        List<Card> mockCards = new ArrayList<>();
+        Card card1 = new Card();
+        card1.setCode("AS");
+        mockCards.add(card1);
+
+        String jsonRes = "{\"deck_id\":\"testId\", \"remaining\": 54}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+        when(gameDeckRepository.saveAndFlush(any(GameDeck.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(gameDeckService.drawCardsFromDeck(any(GameDeck.class))).thenReturn(mockCards);
+
+        game.setGameDeck(testDeck);
+        testDeck.setGame(game);
+        //String deckId = testDeck.getDeckID();
+
+        assertNotNull(game.getGameDeck());
+
+
+        gameDeckService.createDealerPile(game);
+
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+    }
+
+ */
+/*
+    @Test
+    public void testPeekIntoDealerPile_success() throws IOException, InterruptedException {
+        List<Card> mockCards = new ArrayList<>();
+        Card card1 = new Card();
+        card1.setCode("AS");
+        mockCards.add(card1);
+        Card card2 = new Card();
+        card2.setCode("AC");
+        mockCards.add(card2);
+        Card card3 = new Card();
+        card3.setCode("AD");
+        mockCards.add(card3);
+        Game mockGame = mock(Game.class);
+        GameDeck mockDeck = new GameDeck();
+        mockDeck.setDeckID("mockId");
+
+        String jsonRes = "{\"deck_id\":\"testId\", \"remaining\": 54}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+        when(gameDeckRepository.saveAndFlush(any(GameDeck.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mockGame.getGameDeck()).thenReturn(mockDeck);
+        when(gameDeckService.drawCardsFromDealerPile(any(GameDeck.class), eq(3))).thenReturn(mockCards);
+
+
+        gameDeckService.drawCardsFromDealerPile(mockGame.getGameDeck(), 3);
+
+        //List<Card> topCards = gameDeckService.peekIntoDealerPile(game);
+        //assertNotNull(testDeck);
+        //List<Card> topThreeCards = gameDeckService.drawCardsFromDealerPile(testDeck, 3);
+
+        //assertNotNull(topThreeCards);
+        //assertEquals(topCards.size(), 3);
+    }
+
+ */
+
+    @Test
+    public void testReturnCardsToPile_success() throws IOException, InterruptedException {
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+
+        gameDeckService.returnCardsToPile(testDeck, mockUser.getUsername(), "AS");
+
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+    }
+    @Test
+    public void testRemoveCardsFromPlayerPile_success() throws IOException, InterruptedException {
+        String jsonRes = "{\"success\":\"true\", \"deck_id\":\"testId\", \"remaining\": 54}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+
+        gameDeckService.removeCardsFromPlayerPile(game, mockUser.getId(), "AS");
+
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+    }
+
+    @Test
+    public void testPlaceCardsToPlayPile_success() throws IOException, InterruptedException {
+        List<Card> mockCards = new ArrayList<>();
+        Card card1 = new Card();
+        card1.setCode("AS");
+        mockCards.add(card1);
+        Card card2 = new Card();
+        card2.setCode("AC");
+        mockCards.add(card2);
+        Card card3 = new Card();
+        card3.setCode("AD");
+        mockCards.add(card3);
+
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(userService.getUserById(any(Long.class))).thenReturn(mockUser);
+
+        gameDeckService.placeCardsToPlayPile(game, mockUser.getId(), mockCards, "AS,AC,AD");
+
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+        verify(userService).getUserById(any(Long.class));
+    }
+
+    /*
+    @Test
+    public void testRemoveSpecificCardsFromDealerPile_success() throws IOException, InterruptedException {
+        List<Card> mockCards = new ArrayList<>();
+        Card card1 = new Card();
+        card1.setCode("AS");
+        mockCards.add(card1);
+        Card card2 = new Card();
+        card2.setCode("AC");
+        mockCards.add(card2);
+        Card card3 = new Card();
+        card3.setCode("AD");
+        mockCards.add(card3);
+
+        String jsonRes = "{\"deck_id\":\"testId\", \"remaining\": 54}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+        when(userService.getUserById(any(Long.class))).thenReturn(mockUser);
+        when(gameDeckService.parseCards(any(GameDeck.class), any(String.class), any(String.class), any(List.class), any(List.class))).thenReturn(mockCards);
+
+        gameDeckService.removeSpecificCardsFromDealerPile(testDeck, "AS");
 
     }
+
+     */
+
+    @Test
+    public void testGetRemainingPileStats_success() throws IOException, InterruptedException {
+        String jsonRes = "{\"deck_id\":\"testId\", \"remaining\": 54}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+
+        String response = gameDeckService.getRemainingPileStats(testDeck, mockUser.getId());
+
+        assertNotNull(response);
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+    }
+
+    @Test
+    public void testGetRemainingDealerPileStats_success() throws IOException, InterruptedException {
+        String jsonRes = "{\"deck_id\":\"testId\", \"remaining\": 54}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+
+        String response = gameDeckService.getRemainingDealerPileStats(testDeck, mockUser.getUsername());
+
+        assertNotNull(response);
+        verify(httpClient).send(any(HttpRequest.class),any(HttpResponse.BodyHandler.class));
+    }
+
+    @Test
+    public void testParsePileCardCounts_success() throws IOException {
+        String jsonRes = "{\"success\":\"true\", \"deck_id\":\"testId\", \"remaining\": 54, \"piles\": {\"discard\":{\"remaining\":2}}}";
+
+        Map<String, Integer> response = gameDeckService.parsePileCardCounts(jsonRes);
+
+        assertNotNull(response);
+    }
+    /*
+    @Test
+    public void testParseCards_success() throws IOException {
+        List<Card> mockCards = new ArrayList<>();
+        Card card1 = new Card();
+        card1.setCode("AS");
+        card1.setSuit("S");
+        card1.setImage("test");
+        mockCards.add(card1);
+        Card card2 = new Card();
+        card2.setCode("AC");
+        card2.setSuit("C");
+        card2.setImage("test");
+        mockCards.add(card2);
+        Card card3 = new Card();
+        card3.setCode("AD");
+        card3.setSuit("D");
+        card3.setImage("test");
+        mockCards.add(card3);
+
+        when(gameDeckRepository.saveAndFlush(any(GameDeck.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(gameDeckService.saveCards(any(List.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        String jsonRes = "{\"success\":\"true\", \"deck_id\":\"testId\", \"remaining\": 54, \"piles\": {\"discard\":{\"remaining\":2}}}";
+        List<String> cardsPath = Arrays.asList("piles", "play", "cards");
+
+        List<Card> response = gameDeckService.parseCards(testDeck, jsonRes, testDeck.getDeckID(), cardsPath, null);
+
+        assertNotNull(response);
+    }
+    
      */
 }
