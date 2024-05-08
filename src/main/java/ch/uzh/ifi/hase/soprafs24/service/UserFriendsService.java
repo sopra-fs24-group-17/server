@@ -114,7 +114,6 @@ public class UserFriendsService {
                     userFriendsRequests.getRequestedUser().getUsername(),
                     userFriendsRequests.getRequestingUser().getId());
             eventPublisher.publishEvent(friendshipRequestAcceptanceEventBidirectional);
-
         }
     }
 

@@ -13,6 +13,7 @@ import ch.uzh.ifi.hase.soprafs24.repository.UserFriendsRequestRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserFriendsRepository;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -178,5 +179,42 @@ public class UserFriendsServiceTest {
 
         boolean areFriends = userFriendsService.areUsersFriends(userA, profileUser);
         assertFalse(areFriends, "Users should not be friends");
+    }
+
+    @Test
+    public void processFriendshipRequest_Failure_RequestDoesNotExistOrNotPending_ThrowsException() {
+        Long requestedUserId = 2L;
+        Long requestId = 1L;
+
+        when(userFriendsRequestRepository.findUserFriendsRequestsById(requestId)).thenReturn(null);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userFriendsService.processFriendshipRequest(requestedUserId, requestId, FriendRequestStatus.ACCEPTED)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("friendship request does not exist", exception.getReason());
+
+        User requestingUser = new User();
+        requestingUser.setId(1L);
+        User requestedUser = new User();
+        requestedUser.setId(requestedUserId);
+
+        UserFriendsRequests existingRequest = new UserFriendsRequests();
+        existingRequest.setId(requestId);
+        existingRequest.setRequestingUser(requestingUser);
+        existingRequest.setRequestedUser(requestedUser);
+        existingRequest.setStatus(FriendRequestStatus.ACCEPTED);
+
+        when(userFriendsRequestRepository.findUserFriendsRequestsById(requestId)).thenReturn(existingRequest);
+
+        exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userFriendsService.processFriendshipRequest(requestedUserId, requestId, FriendRequestStatus.ACCEPTED)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("friendship request does not exist", exception.getReason());
     }
 }
