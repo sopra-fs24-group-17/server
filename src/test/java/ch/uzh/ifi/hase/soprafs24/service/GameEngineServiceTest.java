@@ -2,7 +2,10 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.*;
+import ch.uzh.ifi.hase.soprafs24.event.AttackEvent;
 import ch.uzh.ifi.hase.soprafs24.event.GameStateEvent;
+import ch.uzh.ifi.hase.soprafs24.event.PlayerCardEvent;
+import ch.uzh.ifi.hase.soprafs24.event.SkipEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
@@ -10,12 +13,10 @@ import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,6 +25,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.postgresql.hostchooser.HostRequirement.any;
 
 @ActiveProfiles("dev")
 @ExtendWith(MockitoExtension.class)
@@ -303,4 +305,264 @@ public class GameEngineServiceTest {
         assertNotNull(capturedEvent);
         assertEquals(gameId, capturedEvent.getGameId());
     }
+
+    @Test
+    public void testHandleFutureCard() throws IOException, InterruptedException {
+        Game game = mock(Game.class);
+        Long userId = 1L;
+
+        gameEngineService.handleFutureCard(game, userId);
+        verify(gameDeckService, times(1)).peekIntoDealerPile(game);
+    }
+
+    @Test
+    public void testHandleAttackCard_Success() throws IOException, InterruptedException {
+        User currentUser = new User();
+        currentUser.setId(1L);
+        currentUser.setUsername("currentUser");
+
+        User nextUser = new User();
+        nextUser.setId(2L);
+        nextUser.setUsername("nextUser");
+
+        List<User> players = Arrays.asList(currentUser, nextUser);
+        Game mockGame = new Game();
+        mockGame.setGameId(1L);
+        mockGame.setPlayers(players);
+        mockGame.setCurrentTurn(currentUser);
+        mockGame.setAttacked(false);
+
+        when(userRepository.findUserById(1L)).thenReturn(currentUser);
+        when(userService.getUserById(1L)).thenReturn(currentUser);
+        when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
+        when(gameRepository.saveAndFlush(Mockito.any())).thenReturn(mockGame);
+
+        gameEngineService.handleAttackCard(mockGame, 1L);
+
+        assertTrue(mockGame.isRepeatTurn());
+    }
+
+    @Test
+    public void testHandleSkipCard_PublishesSkipEventAndCallsTurnValidation() throws IOException, InterruptedException {
+        User currentUser = new User();
+        currentUser.setId(1L);
+        currentUser.setUsername("currentUser");
+
+        User nextUser = new User();
+        nextUser.setId(2L);
+        nextUser.setUsername("nextUser");
+
+        List<User> players = Arrays.asList(currentUser, nextUser);
+        Game mockGame = new Game();
+        mockGame.setGameId(1L);
+        mockGame.setPlayers(players);
+        mockGame.setCurrentTurn(currentUser);
+
+        when(userService.getUserById(1L)).thenReturn(currentUser);
+        when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
+        when(gameRepository.saveAndFlush(Mockito.any())).thenReturn(mockGame);
+
+        gameEngineService.handleSkipCard(mockGame, 1L);
+
+        verify(eventPublisher, times(1)).publishEvent(any(SkipEvent.class));
+    }
+
+    @Test
+    public void testDrawCardMoveTermination_PublishesPlayerCardEvent() throws IOException, InterruptedException {
+        Game mockGame = new Game();
+        mockGame.setGameId(1L);
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameDeck(mockDeck);
+
+        User user = new User();
+        user.setId(1L);
+
+        Card drawnCard = new Card();
+        drawnCard.setCode("example_card");
+        drawnCard.setInternalCode("normal_card");
+
+        when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.drawCardsFromDealerPile(mockDeck, 1)).thenReturn(Collections.singletonList(drawnCard));
+
+        ArgumentCaptor<PlayerCardEvent> eventCaptor = ArgumentCaptor.forClass(PlayerCardEvent.class);
+        doNothing().when(eventPublisher).publishEvent(eventCaptor.capture());
+
+        String result = gameEngineService.drawCardMoveTermination(1L, 1L);
+
+        verify(eventPublisher, times(1)).publishEvent(any(PlayerCardEvent.class));
+        PlayerCardEvent capturedEvent = eventCaptor.getValue();
+        assertEquals(1L, capturedEvent.getGameId(), "Event should have the correct game ID.");
+        assertEquals(1L, capturedEvent.getUserId(), "Event should have the correct user ID.");
+        assertEquals(Collections.singletonList(drawnCard), capturedEvent.getPlayerCards(), "Event should contain the correct drawn cards.");
+
+        assertNull(result, "No explosion should have been detected.");
+    }
+
+    @Test
+    public void testDispatchGameState_PublishesGameStateEvent() throws IOException, InterruptedException {
+        // Setup mock game and deck
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        Game mockGame = new Game();
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameId(gameId);
+        mockGame.setGameDeck(mockDeck);
+
+        Card topCard = new Card();
+        topCard.setCode("AH");
+        topCard.setInternalCode("Ace of Hearts");
+        List<Card> topCards = Arrays.asList(topCard);
+
+        String jsonResponse = "{\"dealer\": {\"remaining\": 52}}";
+        Map<String, Integer> pileCardCounts = Map.of("dealer", 52);
+
+        User player1 = new User();
+        player1.setId(1L);
+        player1.setUsername("player1");
+        User player2 = new User();
+        player2.setId(2L);
+        player2.setUsername("player2");
+        List<User> players = Arrays.asList(player1, player2);
+        mockGame.setPlayers(players);
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.getRemainingPileStats(mockDeck, userId)).thenReturn(jsonResponse);
+        when(gameDeckService.parsePileCardCounts(jsonResponse)).thenReturn(pileCardCounts);
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(topCards);
+
+        ArgumentCaptor<GameStateEvent> eventCaptor = ArgumentCaptor.forClass(GameStateEvent.class);
+        doNothing().when(eventPublisher).publishEvent(eventCaptor.capture());
+
+        gameEngineService.dispatchGameState(gameId, userId);
+
+        verify(eventPublisher, times(1)).publishEvent(any(GameStateEvent.class));
+        GameStateEvent capturedEvent = eventCaptor.getValue();
+        assertEquals(gameId, capturedEvent.getGameId(), "Event should have the correct game ID.");
+        assertEquals(topCard, capturedEvent.getTopMostCardPlayPile(), "Event should contain the correct top card from the play pile.");
+    }
+
+    @Test
+    public void testDispatchGameState_TopCardIsNull() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        Game mockGame = new Game();
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameId(gameId);
+        mockGame.setGameDeck(mockDeck);
+
+        String jsonResponse = "{\"dealer\": {\"remaining\": 52}}";
+        Map<String, Integer> pileCardCounts = Map.of("dealer", 52);
+
+        User player1 = new User();
+        player1.setId(1L);
+        player1.setUsername("player1");
+        User player2 = new User();
+        player2.setId(2L);
+        player2.setUsername("player2");
+        List<User> players = Arrays.asList(player1, player2);
+        mockGame.setPlayers(players);
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.getRemainingPileStats(mockDeck, userId)).thenReturn(jsonResponse);
+        when(gameDeckService.parsePileCardCounts(jsonResponse)).thenReturn(pileCardCounts);
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(null);  // Mock to return `null`
+
+        ArgumentCaptor<GameStateEvent> eventCaptor = ArgumentCaptor.forClass(GameStateEvent.class);
+        doNothing().when(eventPublisher).publishEvent(eventCaptor.capture());
+
+        gameEngineService.dispatchGameState(gameId, userId);
+
+        verify(eventPublisher, times(1)).publishEvent(any(GameStateEvent.class));
+        GameStateEvent capturedEvent = eventCaptor.getValue();
+        assertEquals(gameId, capturedEvent.getGameId(), "Event should have the correct game ID.");
+        assertEquals("", capturedEvent.getTopMostCardPlayPile().getCode(), "Top card should have an empty code when no top card is found.");
+        assertEquals("", capturedEvent.getTopMostCardPlayPile().getInternalCode(), "Top card should have an empty internal code when no top card is found.");
+    }
+
+    @Test
+    public void testTurnValidation_RepeatTurn() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        User terminatingUser = new User();
+        terminatingUser.setId(userId);
+        terminatingUser.setUsername("terminatingUser");
+
+        Game mockGame = new Game();
+        mockGame.setGameId(gameId);
+        mockGame.setCurrentTurn(terminatingUser);
+        mockGame.setRepeatTurn(true);
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(userService.getUserById(userId)).thenReturn(terminatingUser);
+
+        GameEngineService spyGameEngineService = Mockito.spy(gameEngineService);
+        doReturn("example_card").when(spyGameEngineService).drawCardMoveTermination(gameId, userId);
+
+        spyGameEngineService.turnValidation(gameId, userId);
+
+        verify(spyGameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+
+        assertFalse(mockGame.isRepeatTurn(), "Repeat turn should be reset to false after turnValidation.");
+        assertEquals(terminatingUser, mockGame.getCurrentTurn(), "The current turn should still belong to the terminating user during a repeat turn.");
+    }
+
+    @Test
+    public void testRemoveUserFromGame_UserNotPartOfGame() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userIdNotInGame = 99L;
+        Long existingUserId = 1L;
+
+        User terminatingUser = new User();
+        terminatingUser.setId(userIdNotInGame);
+        terminatingUser.setUsername("notInGameUser");
+
+        User existingUser = new User();
+        existingUser.setId(existingUserId);
+        existingUser.setUsername("existingUser");
+
+        Game mockGame = new Game();
+        mockGame.setGameId(gameId);
+        mockGame.setState(GameState.ONGOING);
+        List<User> players = Collections.singletonList(existingUser);
+        mockGame.setPlayers(players);
+
+        when(userService.getUserById(userIdNotInGame)).thenReturn(terminatingUser);
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameEngineService.removeUserFromGame(gameId, userIdNotInGame);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("User is not part of the game", exception.getReason());
+    }
+
+    @Test
+    public void testTurnValidation_InitiatesGameTermination() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 1L;
+
+        User terminatingUser = new User();
+        terminatingUser.setId(userId);
+        terminatingUser.setUsername("terminatingUser");
+
+        Game mockGame = new Game();
+        mockGame.setGameId(gameId);
+        mockGame.setCurrentTurn(terminatingUser);
+        mockGame.setPlayers(Collections.singletonList(terminatingUser));
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(userService.getUserById(userId)).thenReturn(terminatingUser);
+
+        GameEngineService spyGameEngineService = Mockito.spy(gameEngineService);
+        doNothing().when(spyGameEngineService).terminatingGame(gameId);
+
+        spyGameEngineService.turnValidation(gameId, userId);
+
+        verify(spyGameEngineService, times(1)).terminatingGame(gameId);
+    }
+
 }
