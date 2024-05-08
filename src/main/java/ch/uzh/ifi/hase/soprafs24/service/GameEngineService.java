@@ -445,7 +445,30 @@ public class GameEngineService {
     }
 
 
+    public void lookForDefuse(Long gameId, Long userId, String explosionId) throws IOException, InterruptedException {
+        Game game = findGameById(gameId);
 
+        User explodedUser = userRepository.findUserById(userId);
+
+        // Browse Pile of the Exploding User
+        String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
+
+        if (defuseCard != null) {
+            // Notify the client so we can get the position
+            ArbitraryPlacementEvent arbitraryPlacementEvent = new ArbitraryPlacementEvent(this, gameId, explodedUser.getUsername());
+            eventPublisher.publishEvent(arbitraryPlacementEvent);
+
+        }else{
+            ExplosionEvent explosionEvent = new ExplosionEvent(this, gameId, explodedUser.getUsername());
+            eventPublisher.publishEvent(explosionEvent);
+
+            ExplosionEventIndividual explosionEventIndividual = new ExplosionEventIndividual(this, gameId, explodedUser.getId());
+            eventPublisher.publishEvent(explosionEventIndividual);
+
+            removeUserFromGame(game.getGameId(), userId);
+        }
+
+    }
 
 
     /**
@@ -513,9 +536,6 @@ public class GameEngineService {
 
             turnValidation(gameId, userId);
 
-        } else {
-            // If he has no defuse card, put the user out of the game
-            removeUserFromGame(game.getGameId(), userId);
         }
     }
 

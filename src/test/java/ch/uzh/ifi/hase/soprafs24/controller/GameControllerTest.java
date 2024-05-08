@@ -153,13 +153,11 @@ public class GameControllerTest {
     void testHandleTerminatingMove_NoExplosion() throws Exception {
         Long gameId = 1L;
         Long userId = 2L;
-        ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
-        explosionCardRequest.setPosition(null);
 
         // Mock behavior: No explosion card is drawn
         when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(null);
 
-        gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
+        gameEngineController.handleTerminatingMove(gameId, userId);
 
         // Verify that drawCardMoveTermination was called
         verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
@@ -176,14 +174,12 @@ public class GameControllerTest {
         Long gameId = 1L;
         Long userId = 2L;
         String explosionCard = "explosion";
-        ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
-        explosionCardRequest.setPosition(null);
 
         when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(explosionCard);
-        gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
+        gameEngineController.handleTerminatingMove(gameId, userId);
 
         verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
-        verify(gameEngineService, times(1)).handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
+        verify(gameEngineService, times(1)).lookForDefuse(gameId, userId, explosionCard);
         verify(gameEngineService, times(1)).turnValidation(gameId, userId);
         verify(gameEngineService, times(1)).dispatchGameState(gameId, userId);
     }

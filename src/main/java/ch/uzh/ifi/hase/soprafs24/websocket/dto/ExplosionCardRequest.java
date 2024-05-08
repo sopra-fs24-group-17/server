@@ -9,4 +9,5 @@ import java.util.List;
 @Getter
 public class ExplosionCardRequest {
     private Integer position;
+    private List<String> cardIds;
 }

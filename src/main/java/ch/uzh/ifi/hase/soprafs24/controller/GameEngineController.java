@@ -247,8 +247,7 @@ public class GameEngineController {
     @MessageMapping("/terminateMove/{gameId}/{userId}")
     public void handleTerminatingMove(
             @DestinationVariable("gameId") Long gameId,
-            @DestinationVariable("userId") Long userId,
-            @Payload ExplosionCardRequest explosionCardRequest) throws IOException, InterruptedException{
+            @DestinationVariable("userId") Long userId) throws IOException, InterruptedException{
 
         log.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
@@ -259,8 +258,25 @@ public class GameEngineController {
         String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId);
 
         if (explosionCard != null) {
+            // Check for defuse card
+            gameEngineService.lookForDefuse(gameId, userId, explosionCard);
+        }
+
+        // Dispatch gameState
+        gameEngineService.dispatchGameState(gameId, userId);
+    }
+
+    @MessageMapping("/placeExplosion/{gameId}/{userId}")
+    public void handleExplosionPlacing(
+            @DestinationVariable("gameId") Long gameId,
+            @DestinationVariable("userId") Long userId,
+            @Payload ExplosionCardRequest explosionCardRequest) throws IOException, InterruptedException{
+
+        Card explosionCard = gameEngineService.transformCardsToInternalRepresentation(explosionCardRequest.getCardIds()).get(0);
+
+        if (Objects.equals(explosionCard.getInternalCode(), "explosion")) {
             // To DO -- handle explosion
-            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
+            gameEngineService.handleExplosionCard(gameId, userId, explosionCard.getCode(), explosionCardRequest.getPosition());
 
         }
 
