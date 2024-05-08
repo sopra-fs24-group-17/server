@@ -721,4 +721,122 @@ public class UserServiceTest {
         verify(userRepository).saveAndFlush(existingUser);
     }
 
+    @Test
+    public void getUsersWithStats_ReturnsListOfUsersWithStats() {
+        User user1 = new User();
+        user1.setUsername("user1");
+        User user2 = new User();
+        user2.setUsername("user2");
+
+        List<User> mockUsers = Arrays.asList(user1, user2);
+        when(userRepository.findAllWithStatistics()).thenReturn(mockUsers);
+
+        List<User> users = userService.getUsersWithStats();
+
+        assertNotNull(users);
+        assertEquals(2, users.size());
+        assertEquals(mockUsers, users);
+        verify(userRepository, Mockito.times(1)).findAllWithStatistics();
+    }
+
+    @Test
+    public void createUser_UsernameToxicityScoreTooHigh_ThrowsException() {
+        User offensiveUser = new User();
+        offensiveUser.setUsername("OffensiveUsername");
+        offensiveUser.setEmail("test@example.com");
+        offensiveUser.setPassword("password");
+
+        when(contentModerationService.checkToxicity(offensiveUser.getUsername())).thenReturn(0.85);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userService.createUser(offensiveUser)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("offensive username is not permitted", exception.getReason());
+    }
+
+    @Test
+    public void getProfileUser_NullUser_ThrowsException() {
+        Long userId = 999L;
+        User invokingUser = new User();
+        invokingUser.setId(1L);
+
+        when(userRepository.findUserById(userId)).thenReturn(null);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userService.getProfileUser(userId, invokingUser)
+        );
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
+        assertEquals("user profile not found", exception.getReason());
+    }
+
+    @Test
+    public void createUser_EmailToxicityScoreTooHigh_ThrowsException() {
+        // Arrange
+        User offensiveUser = new User();
+        offensiveUser.setUsername("testUser");
+        offensiveUser.setEmail("offensive@example.com");
+        offensiveUser.setPassword("password");
+
+        when(contentModerationService.checkToxicity(offensiveUser.getEmail())).thenReturn(0.85);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userService.createUser(offensiveUser)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("offensive email is not permitted", exception.getReason());
+    }
+
+    @Test
+    public void verifyTokenAndId_Unauthorized_ThrowsException() {
+        User testUser = new User();
+        testUser.setId(1L);
+        testUser.setToken("123");
+
+        when(userRepository.findUserByToken("123")).thenReturn(testUser);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userService.verifyTokenAndId("123", 2L)
+        );
+        assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
+        assertEquals("Unauthorized", exception.getReason());
+    }
+
+    @Test
+    public void editUser_UpdateAvatar_Success() {
+        User modifiedUser = new User();
+        modifiedUser.setAvatar("newAvatarUrl");
+        User existingUser = setupTestUser();
+
+        when(userRepository.findUserById(1L)).thenReturn(existingUser);
+        when(userRepository.saveAndFlush(any(User.class))).thenReturn(existingUser);
+
+        User updatedUser = userService.editUser(1L, modifiedUser);
+
+        assertEquals("newAvatarUrl", updatedUser.getAvatar());
+        verify(userRepository).saveAndFlush(existingUser);
+    }
+
+    @Test
+    public void editUser_UpdateAvatar_UserNotFound_ThrowsException() {
+        Long nonExistentUserId = 999L;
+        User modifiedUser = new User();
+        modifiedUser.setAvatar("newAvatarUrl");
+
+        when(userRepository.findUserById(nonExistentUserId)).thenReturn(null);
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> userService.editUser(nonExistentUserId, modifiedUser)
+        );
+
+        assertEquals("user does not exist in DB", exception.getReason());
+    }
+
 }

@@ -267,5 +267,55 @@ public class GameServiceTest {
         verify(gameRepository).saveAndFlush(staleGame);
         assertEquals(GameState.ABORTED, staleGame.getState(), "Game state should be updated to ABORTED");
     }
+
+    @Test
+    public void createNewGame_IOExceptionOrInterruptedException_ThrowsResponseStatusException() throws IOException, InterruptedException {
+        when(userService.verifyUserByToken(anyString())).thenReturn(mockUser);
+        when(gameRepository.save(any(Game.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(gameDeckService.fetchDeck(any(Game.class), eq(true))).thenThrow(new IOException());
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> gameService.createNewGame("validToken", gamePostDTO)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Unable to fetch a GameDeck", exception.getReason());
+
+        when(gameDeckService.fetchDeck(any(Game.class), eq(true))).thenThrow(new InterruptedException());
+
+        exception = assertThrows(
+                ResponseStatusException.class,
+                () -> gameService.createNewGame("validToken", gamePostDTO)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Unable to fetch a GameDeck", exception.getReason());
+    }
+
+    @Test
+    public void joinGame_GameSessionFull_ThrowsResponseStatusException() {
+        game.setMaxPlayers(2);
+        User anotherUser = new User();
+        anotherUser.setUsername("AnotherUser");
+        game.getPlayers().add(mockUser);
+        game.getPlayers().add(anotherUser);
+
+        User leftOutUser = new User();
+        leftOutUser.setUsername("leftOutUser");
+
+        when(userService.verifyUserByToken(anyString())).thenReturn(leftOutUser);
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(game));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> gameService.joinGame("validToken", gameId)
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Game session full", exception.getReason());
+    }
+
 }
 
