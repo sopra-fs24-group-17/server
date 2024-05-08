@@ -119,7 +119,7 @@ public class GameEngineEventListener {
     @EventListener
     public void provideGameStats(GameStateEvent event) {
         log.info("Game Stats for {} dispatched", event.getGameId());
-        webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats(), event.getNumberOfPlayers());
+        webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats(), event.getNumberOfPlayers(), event.getPlayerNames());
     }
 
     @EventListener

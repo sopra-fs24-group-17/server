@@ -304,7 +304,14 @@ public class WebSocketServiceTest {
 
         Integer numberOfPlayers = 5;
 
-        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers);
+        List<String> playerNames = new ArrayList<>();
+        playerNames.add("karl");
+        playerNames.add("heinz");
+        playerNames.add("peter");
+        playerNames.add("heidi");
+        playerNames.add("thomas");
+
+        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers, playerNames);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 

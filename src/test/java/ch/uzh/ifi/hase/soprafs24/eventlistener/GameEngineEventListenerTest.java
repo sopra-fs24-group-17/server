@@ -223,9 +223,13 @@ public class GameEngineEventListenerTest {
         remainingCardStats.put("discard", 5);
         Integer numberOfPlayers = 5;
 
-        GameStateEvent event = new GameStateEvent(this, gameId, topCard, remainingCardStats, numberOfPlayers);
+        List<String> usernames = new ArrayList<>();
+        usernames.add("user1");
+        usernames.add("user2");
+
+        GameStateEvent event = new GameStateEvent(this, gameId, topCard, remainingCardStats, numberOfPlayers, usernames);
         listener.provideGameStats(event);
-        verify(webSocketService).sendGameState(eq(gameId), eq(topCard), eq(remainingCardStats), eq(numberOfPlayers));
+        verify(webSocketService).sendGameState(eq(gameId), eq(topCard), eq(remainingCardStats), eq(numberOfPlayers), eq(usernames));
     }
 
     @Test

@@ -543,8 +543,10 @@ public class GameEngineService {
 
         Integer numberPlayers = game.getPlayers().size();
 
+        List<String> usernames = game.getPlayers().stream().map(User::getUsername).toList();
+
         // Publish Event
-        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts, numberPlayers);
+        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts, numberPlayers, usernames);
         eventPublisher.publishEvent(gameStateEvent);
     }
 }
