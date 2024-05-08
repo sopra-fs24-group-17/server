@@ -135,3 +135,4 @@
 | 6    | 126     | Wrong alert is shown when not your turn | https://github.com/sopra-fs24-group-17/client/issues/126 | 4         | Liam Tessendorf                      | &#9745;  |                | 
 | 6    | 125     |  Certain random chickens not both are taken away when playing a palindrome card | https://github.com/sopra-fs24-group-17/client/issues/125 | 4         | Liam Tessendorf                      | &#9745;  |                | 
 | 6    | 123     |  Game Chat in the Lobby | https://github.com/sopra-fs24-group-17/client/issues/123 | 4         | Panagiotis Patsias                      | &#9745;  |                |
+| 6    | 146     |  Add card images to hints in lobby | https://github.com/sopra-fs24-group-17/client/issues/146 | 4         | Liam Kane                      | &#9745;  |                |
