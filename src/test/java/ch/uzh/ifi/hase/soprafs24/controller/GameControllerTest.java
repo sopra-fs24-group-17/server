@@ -7,6 +7,8 @@ import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.rest.mapper.GameDTOMapper;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.GameService;
+import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
+import ch.uzh.ifi.hase.soprafs24.websocket.dto.ExplosionCardRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,10 +28,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -81,7 +80,7 @@ public class GameControllerTest {
         Game game = new Game();
         game.setMaxPlayers(3);
 
-        Set<User> testPlayers = new LinkedHashSet<>();
+        List<User> testPlayers = new ArrayList<>();
         testPlayers.add(testUser);
 
         game.setPlayers(testPlayers);
@@ -111,7 +110,7 @@ public class GameControllerTest {
 
         game.setMaxPlayers(3);
 
-        Set<User> testPlayers = new LinkedHashSet<>();
+        List<User> testPlayers = new ArrayList<>();
         testPlayers.add(testUser);
         game.setPlayers(testPlayers);
 
@@ -139,7 +138,7 @@ public class GameControllerTest {
 
         game.setMaxPlayers(3);
 
-        Set<User> testPlayers = new LinkedHashSet<>();
+        List<User> testPlayers = new ArrayList<>();
         testPlayers.add(testUser);
         game.setPlayers(testPlayers);
 
@@ -154,16 +153,18 @@ public class GameControllerTest {
     void testHandleTerminatingMove_NoExplosion() throws Exception {
         Long gameId = 1L;
         Long userId = 2L;
+        ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
+        explosionCardRequest.setPosition(null);
 
         // Mock behavior: No explosion card is drawn
         when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(null);
 
-        gameEngineController.handleTerminatingMove(gameId, userId);
+        gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
 
         // Verify that drawCardMoveTermination was called
         verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
         // Ensure handleExplosionCard was not called
-        verify(gameEngineService, never()).handleExplosionCard(anyLong(), anyLong(), anyString());
+        verify(gameEngineService, never()).handleExplosionCard(anyLong(), anyLong(), anyString(), anyInt());
         // Verify that turnValidation and dispatchGameState were called
         verify(gameEngineService, times(1)).turnValidation(gameId, userId);
         verify(gameEngineService, times(1)).dispatchGameState(gameId, userId);
@@ -175,12 +176,14 @@ public class GameControllerTest {
         Long gameId = 1L;
         Long userId = 2L;
         String explosionCard = "explosion";
+        ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
+        explosionCardRequest.setPosition(null);
 
         when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(explosionCard);
-        gameEngineController.handleTerminatingMove(gameId, userId);
+        gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
 
         verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
-        verify(gameEngineService, times(1)).handleExplosionCard(gameId, userId, explosionCard);
+        verify(gameEngineService, times(1)).handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
         verify(gameEngineService, times(1)).turnValidation(gameId, userId);
         verify(gameEngineService, times(1)).dispatchGameState(gameId, userId);
     }

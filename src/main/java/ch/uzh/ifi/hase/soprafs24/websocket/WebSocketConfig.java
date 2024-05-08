@@ -19,12 +19,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("*")
+                .setAllowedOrigins("http://localhost:3000/", "https://sopra-fs24-group-17-client.oa.r.appspot.com/")
                 .setHandshakeHandler(new DefaultHandshakeHandler())
                 .addInterceptors(new HttpSessionHandshakeInterceptor());
 
         registry.addEndpoint("/wss")
-                .setAllowedOrigins("*")
+                .setAllowedOrigins("http://localhost:3000/", "https://sopra-fs24-group-17-client.oa.r.appspot.com/")
                 .setHandshakeHandler(new DefaultHandshakeHandler())
                 .addInterceptors(new HttpSessionHandshakeInterceptor());
     }
@@ -40,7 +40,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean serverContainer = new ServletServerContainerFactoryBean();
-        serverContainer.setMaxSessionIdleTimeout(-1L); // Avoids closure of websocket due to inactivity -> To be adjusted later
+        serverContainer.setMaxSessionIdleTimeout(-1L);
         return serverContainer;
     }
 

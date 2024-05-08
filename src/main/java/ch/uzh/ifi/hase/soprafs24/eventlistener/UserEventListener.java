@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.eventlistener;
 
 import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +10,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class UserEventListener {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserEventListener.class);
 
     private final WebSocketService webSocketService;
 
@@ -22,13 +22,13 @@ public class UserEventListener {
 
     @EventListener
     public void onLoginOfFriend(LoginEvent event) {
-        logger.info("LoginEvent triggered for user: {}", event.getUserName());
+        log.info("LoginEvent triggered for user: {}", event.getUserName());
         webSocketService.sendMessageFriendLogin(event.getUserName(), event.getUserId());
     }
 
     @EventListener
     public void onLogoutOfFriend(LogoutEvent event) {
-        logger.info("LogoutEvent triggered for user: {}", event.getUserName());
+        log.info("LogoutEvent triggered for user: {}", event.getUserName());
         webSocketService.sendMessageFriendLogout(event.getUserName(), event.getUserId());
     }
 

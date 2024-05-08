@@ -24,4 +24,6 @@ public class GameGetDTO {
 
     private Integer availableSlots;
 
+    private Integer currentPlayers;
+
 }

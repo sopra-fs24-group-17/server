@@ -45,6 +45,9 @@ public class UserServiceTest {
   private UserFriendsService userFriendsService;
 
   @Mock
+  private ContentModerationService contentModerationService;
+
+  @Mock
   private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks

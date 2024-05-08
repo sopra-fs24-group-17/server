@@ -2,10 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.entity;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameMode;
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
@@ -16,7 +13,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-@Table(name = "game_stats")
+@Table(name = "game")
 public class Game implements Serializable {
 
     @Id
@@ -39,7 +36,7 @@ public class Game implements Serializable {
             joinColumns = @JoinColumn(name = "gameId"),
             inverseJoinColumns = @JoinColumn(name = "id")
     )
-    private Set<User> players = new LinkedHashSet<>();
+    private List<User> players = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "currentTurn", referencedColumnName = "id")
@@ -65,10 +62,12 @@ public class Game implements Serializable {
     @OneToOne(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private GameDeck gameDeck;
 
+    @Column(nullable = false)
+    private Date creationdate = new Date();
+
     private boolean skipDraw = false;
 
     private  boolean attacked = false;
 
     private boolean repeatTurn = false;
-
 }

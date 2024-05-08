@@ -81,16 +81,12 @@ public class Card implements Serializable {
                 case "7D":
                 case "7C":
                 case "7H":
-                case "QC":
-                case "QH":
                     internalCode = "shuffle";
                     break;
                 case "6S":
                 case "6D":
                 case "6C":
                 case "6H":
-                case "QS":
-                case "QD":
                     internalCode = "future";
                     break;
                 case "5S":
@@ -116,6 +112,12 @@ public class Card implements Serializable {
                 case "2C":
                 case "2H":
                     internalCode = "beardcat";
+                    break;
+                case "QS":
+                case "QD":
+                case "QC":
+                case "QH":
+                    internalCode = "nope";
                     break;
                 default:
                     internalCode = "unknown";
