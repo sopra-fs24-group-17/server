@@ -222,15 +222,17 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId, params);
     }
 
-    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers) {
+    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames) {
         JSONObject pilesJson = new JSONObject();
+        JSONArray playerNamesJson = new JSONArray(playerNames);
         remainingCardStats.forEach(pilesJson::put);
         Map<String, Object> params = Map.of(
                 "type", "gameState",
                 "topCardCode", topCard.getCode(),
                 "topCardInternalCode", topCard.getInternalCode(),
                 "piles", pilesJson,
-                "numberOfPlayers", numberOfPlayers
+                "numberOfPlayers", numberOfPlayers,
+                "playerNames", playerNamesJson
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }
