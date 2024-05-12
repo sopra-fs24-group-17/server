@@ -424,9 +424,9 @@ public class GameDeckService {
         String uri;
 
         if (cardId != null && !cardId.isEmpty()) {
-            uri = String.format(baseUri + "?cards=%s", gameDeck.getDeckID(), userId, cardId);
+            uri = String.format(baseUri + "?cards=%s/", gameDeck.getDeckID(), userId, cardId);
         } else {
-            uri = String.format(baseUri + "random", gameDeck.getDeckID(), userId);
+            uri = String.format(baseUri + "random/", gameDeck.getDeckID(), userId);
         }
         log.info(cardId);
         log.info(uri);
@@ -435,6 +435,30 @@ public class GameDeckService {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         log.info("Drew Card from Player Pile");
+        log.info(response.body());
+
+        List<String> cardsPath = List.of("cards");
+        List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, null);
+        return cards.get(0);
+    }
+
+    /**
+     * Helper method that draws a random card from the dealer pile
+     * @param gameDeck indicating the playing deck
+     * @return Card object.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public Card drawRandomCardDealerPile(GameDeck gameDeck) throws IOException, InterruptedException {
+        String baseUri = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random/";
+        String uri = String.format(baseUri, gameDeck.getDeckID(), gameDeck.getDealerPileId());
+
+        log.info(uri);
+
+        HttpRequest request = buildGetRequest(uri);
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        log.info("Drew Random Card from Dealer Pile");
         log.info(response.body());
 
         List<String> cardsPath = List.of("cards");

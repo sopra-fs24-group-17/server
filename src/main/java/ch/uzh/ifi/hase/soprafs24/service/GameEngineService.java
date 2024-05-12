@@ -356,6 +356,23 @@ public class GameEngineService {
     }
 
     /**
+     * Handler of the get lucky card
+     * @param game currently active game
+     * @param userId referencing the user that triggered the action
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void handleLuckyCard(Game game, Long userId) throws IOException, InterruptedException {
+        // Draw a random card
+        Card randomCard = gameDeckService.drawRandomCardDealerPile(game.getGameDeck());
+        // Give that card to triggering user
+        gameDeckService.returnCardsToPile(game.getGameDeck(), userId.toString(), randomCard.getCode());
+        // Launch a get lucky event
+        LuckyEvent luckyEvent = new LuckyEvent(this, userId, game.getGameId(), randomCard);
+        eventPublisher.publishEvent(luckyEvent);
+    }
+
+    /**
      * Handler of the look to the future card
      * @param game currently active game
      * @param userId referencing the user that triggered the action

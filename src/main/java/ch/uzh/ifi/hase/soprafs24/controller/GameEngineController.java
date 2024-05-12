@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.IntStream;
 
+import static com.sun.activation.registries.LogSupport.log;
+
 @Slf4j
 @RestController
 public class GameEngineController {
@@ -50,8 +52,8 @@ public class GameEngineController {
             @Payload CardMoveRequest cardMoveRequest) throws IOException, InterruptedException {
 
         Long targetUserId = cardMoveRequest.getTargetUserId();
-        log.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
-        log.info(targetUserId.toString());
+        GameEngineController.log.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
+        GameEngineController.log.info(targetUserId.toString());
 
         // Transformation to internal representation
         List<Card> transformedCards = gameEngineService.transformCardsToInternalRepresentation(cardMoveRequest.getCardIds());
@@ -59,6 +61,8 @@ public class GameEngineController {
         Game game = gameEngineService.findGameById(gameId);
 
         // Remove from the player pile (verifies that the moves are valid, and that the user actually possessed the cards he played)
+        // Nope implementation paused at the moment due to higher complexity
+        /*
         if(cardMoveRequest.getNegationUsers() != null){
             Set<String> negationUsers = new HashSet<String>(cardMoveRequest.getNegationUsers());
             List<String> negationUsersList = cardMoveRequest.getNegationUsers();
@@ -79,12 +83,15 @@ public class GameEngineController {
             // Update cardMoveRequest so we only have the cards played by active user and we can remove them from his hand.
             cardMoveRequest.setCardIds(allPlayedCards.subList(0, difference));
         }
+         */
         gameDeckService.removeCardsFromPlayerPile(game, userId, String.join(",", cardMoveRequest.getCardIds()));
 
         // Add cards to the play pile (i.e. game stack)
         gameDeckService.placeCardsToPlayPile(game, userId ,transformedCards, String.join(",", cardMoveRequest.getCardIds()));
 
         // Check for potential chain of nope cards before handling logic
+        // Nope implementation paused at the moment due to higher complexity
+        /*
         if (Objects.equals(transformedCards.get(transformedCards.size() - 1).getInternalCode(), "nope")){
             while (transformedCards.size() > 2){
                 Card lastCard = transformedCards.get(transformedCards.size() - 1);
@@ -97,6 +104,7 @@ public class GameEngineController {
                 }
             }
         }
+         */
 
         // Game Logic
         if(transformedCards.size() == 1) {
@@ -115,6 +123,9 @@ public class GameEngineController {
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), "attack")) {
                 gameEngineService.handleAttackCard(game, userId);
             }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), "lucky")) {
+                gameEngineService.handleLuckyCard(game, userId);
+            }
         }
         else if(transformedCards.size()==2) {
             if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "tacocat"))) {
@@ -130,9 +141,12 @@ public class GameEngineController {
                 gameEngineService.handleShuffleCard(game, userId);
             }
             // Nope card
+            // Nope implementation paused at the moment due to higher complexity
+            /*
             else if (Objects.equals(transformedCards.get(transformedCards.size() - 1).getInternalCode(), "nope")){
                 gameEngineService.handleNopeCard(game);
             }
+             */
         }
 
         // Dispatch Stats
@@ -141,87 +155,26 @@ public class GameEngineController {
 
     //THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE
     /*
-    @GetMapping("/nope/{gameId}/{userId}")
+    @GetMapping("/lucky/{gameId}/{userId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public void test_nopeCard(
             @PathVariable("gameId") Long gameId,
             @PathVariable("userId") Long userId) throws IOException, InterruptedException {
 
-        CardMoveRequest cardMoveRequest = new CardMoveRequest();
-        cardMoveRequest.setGameId(gameId);
-        cardMoveRequest.setUserId(userId);
-        List<String> cardsIds = new ArrayList<>();
-        cardsIds.add("5S");
-        cardsIds.add("QS");
-        cardsIds.add("QC");
-        cardMoveRequest.setCardIds(cardsIds);
-        List<String> mockNegationUsers = new ArrayList<>();
-        mockNegationUsers.add("1");
-        mockNegationUsers.add("2");
-        cardMoveRequest.setNegationUsers(mockNegationUsers);
-        //cardMoveRequest.setUserId(2L);
+        Game game = gameEngineService.findGameById(gameId);
 
-        // Transformation to internal representation
-        List<Card> transformedCards = gameEngineService.transformCardsToInternalRepresentation(cardMoveRequest.getCardIds());
-
-        //Game game = gameEngineService.findGameById(gameId);
-
-        if(cardMoveRequest.getNegationUsers() != null){
-            Set<String> negationUsers = new HashSet<String>(cardMoveRequest.getNegationUsers());
-            List<String> negationUsersList = cardMoveRequest.getNegationUsers();
-            List<String> allPlayedCards = cardMoveRequest.getCardIds();
-            int difference = allPlayedCards.size() - negationUsersList.size(); // Amount of cards that are not negations. Placed in the bottom of the stack.
-            for(String user : negationUsers){
-                List<String> cardsIdsNegationUser = new ArrayList<>();
-                // Find all the negations played by the same player
-                for (int i = 0; i < negationUsersList.size(); i++) {
-                    if (Objects.equals(negationUsersList.get(i), user)){
-                        cardsIdsNegationUser.add(allPlayedCards.get(difference+i));
-                        //allPlayedCards.remove(difference + i);
-                    }
-                }
-                // Remove cards from current user
-                // gameDeckService.removeCardsFromPlayerPile(game, Long.valueOf(user), String.join(",", cardsIdsNegationUser));
-                log.info(String.format("Remove %s cards from user %s", String.join(",", cardsIdsNegationUser), user));
-            }
-            // Update cardMoveRequest so we only have the cards played by active user and we can remove them from his hand.
-            cardMoveRequest.setCardIds(allPlayedCards.subList(0, difference));
-        }
-
-        // Remove from the player pile (verifies that the moves are valid, and that the user actually possessed the cards he played)
-        //gameDeckService.removeCardsFromPlayerPile(game, userId, String.join(",", cardMoveRequest.getCardIds()));
-        log.info(String.format("Remove %s cards from user %s", String.join(",", cardMoveRequest.getCardIds()), cardMoveRequest.getUserId()));
-
-        // Add cards to the play pile (i.e. game stack)
-        //gameDeckService.placeCardsToPlayPile(game, userId ,transformedCards, String.join(",", cardMoveRequest.getCardIds()));
-
-        // Check for potential chain of nope cards before handling logic
-        log.info(String.format("%s", transformedCards.size()));
-        log.info(String.format("%s", transformedCards.get(2).getInternalCode()));
-        if (Objects.equals(transformedCards.get(transformedCards.size() - 1).getInternalCode(), "nope")){
-            while (transformedCards.size() > 2){
-                Card lastCard = transformedCards.get(transformedCards.size() - 1);
-                Card preLastCard = transformedCards.get(transformedCards.size() - 2);
-                // Remove top cards if both are negation
-                if(Objects.equals(lastCard.getInternalCode(), preLastCard.getInternalCode())){
-                    transformedCards.remove(transformedCards.size() - 1);
-                    transformedCards.remove(transformedCards.size() - 1);
-                    log.info("Consecutive nope cards removed");
-                }
-            }
-        }
-
-        else if(transformedCards.size()==2) {
-            if (Objects.equals(transformedCards.get(transformedCards.size() - 1).getInternalCode(), "nope")){
-                //gameEngineService.handleNopeCard(game);
-                log.info("Nope handler exceuted");
-            }
-        }
+        Card card = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId, null);
+        log(card.getCode());
+        // Draw a random card
+        //Card randomCard = gameDeckService.drawRandomCardDealerPile(game.getGameDeck());
+        //log(randomCard.getCode());
+        // Give that card to triggering user
+        //gameDeckService.returnCardsToPile(game.getGameDeck(), userId.toString(), randomCard.getCode());
 
     }
+    */
 
-     */
 
     // No -> block another users action -> wait on client side for couple of seconds after card play to see if a user interferes
 
@@ -233,7 +186,7 @@ public class GameEngineController {
     public void handleStartGame(
             @DestinationVariable("gameId") Long gameId) throws IOException, InterruptedException {
 
-        log.info(String.format("Game: %s, started" , gameId));
+        GameEngineController.log.info(String.format("Game: %s, started" , gameId));
         Game initializedGame = gameEngineService.startGame(gameId);
         gameEngineService.dispatchGameState(gameId, initializedGame.getCurrentTurn().getId());
     }
@@ -250,7 +203,7 @@ public class GameEngineController {
             @DestinationVariable("userId") Long userId,
             @Payload ExplosionCardRequest explosionCardRequest) throws IOException, InterruptedException{
 
-        log.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
+        GameEngineController.log.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
         // Handle turnValidation (finding next player and communicating through websocket)
         gameEngineService.turnValidation(gameId, userId);
@@ -308,7 +261,7 @@ public class GameEngineController {
             @DestinationVariable("gameId") Long gameId,
             @DestinationVariable("userId") Long userId) throws IOException, InterruptedException {
 
-        log.info(String.format("User %s left game %s" , userId, gameId));
+        GameEngineController.log.info(String.format("User %s left game %s" , userId, gameId));
 
         // Handle user leaving an ongoing game session
         gameEngineService.removeUserFromGame(gameId, userId);
