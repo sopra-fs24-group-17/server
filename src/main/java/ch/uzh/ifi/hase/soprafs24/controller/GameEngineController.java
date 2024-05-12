@@ -6,9 +6,11 @@ import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
+import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.ExplosionCardRequest;
+import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,13 @@ public class GameEngineController {
     @Autowired
     private WebSocketService webSocketService;
 
+    //@Autowired
+    //private UserService userService;
+
+    private final UserRepository userRepository;
+
+    GameEngineController(UserRepository userRepository){this.userRepository = userRepository;}
+
     /**
      * Handles the request of an user to play a card
      * @param gameId of the game the user is currently playing
@@ -51,7 +60,9 @@ public class GameEngineController {
             @DestinationVariable Long userId,
             @Payload CardMoveRequest cardMoveRequest) throws IOException, InterruptedException {
 
-        Long targetUserId = cardMoveRequest.getTargetUserId();
+        String targetUsername = cardMoveRequest.getTargetUsername();
+        //Long targetUserId = userService.getUserByUsername(targetUsername).getId();
+        Long targetUserId = userRepository.findByUsername(targetUsername).getId();
         GameEngineController.log.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
         GameEngineController.log.info(targetUserId.toString());
 

@@ -381,5 +381,7 @@ public class UserService {
         return userFriendsService.getFriends(userId);
     }
 
-
+    public User getUserByUsername(String username){
+        return userRepository.findByUsername(username);
+    }
 }
