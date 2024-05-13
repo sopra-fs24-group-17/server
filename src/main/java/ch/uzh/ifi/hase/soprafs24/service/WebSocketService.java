@@ -238,4 +238,12 @@ public class WebSocketService {
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);
     }
+
+    public void sendPositionRequest(Long gameId,  String username){
+        Map<String, Object> params = Map.of(
+                "type", "positionRequest",
+                "placingUser", username
+        );
+        sendWebSocketMessage("/game/" + gameId, params);
+    }
 }
