@@ -75,6 +75,7 @@ public class GameEngineService {
 
         // Ensure that the gameId is valid
         if (!optionalGame.isPresent()) {
+            log.info("Invalid GameId provided");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
         }
         return optionalGame.get();
@@ -109,6 +110,7 @@ public class GameEngineService {
 
         // Verify that the game can actually be started
         if (!state.equals(GameState.PREPARING)) {
+            log.info("Can't start a game that is beyond the preparation phase");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't start a game that is beyond the preparation phase");
         }
 
@@ -198,6 +200,7 @@ public class GameEngineService {
         Game currentGame = findGameById(gameId);
 
         if (!userId.equals(currentGame.getCurrentTurn().getId())) {
+            log.info("It's not your turn");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "It's not your turn");
         }
 
@@ -271,12 +274,14 @@ public class GameEngineService {
         Game currentGame = findGameById(gameId);
 
         if (!currentGame.getState().equals(GameState.ONGOING)) {
+            log.info("User can only leave ongoing games");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User can only leave ongoing games");
         }
 
         List<User> players = currentGame.getPlayers();
 
         if (!players.contains(terminatingUser)) {
+            log.info("User is not part of the game");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not part of the game");
         }
 
@@ -310,6 +315,7 @@ public class GameEngineService {
         List<User> players = gameToBeTerminated.getPlayers();
 
         if (players.size() > 1) {
+            log.info("Still more than one active player in the game session found");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Still more than one active player in the game session found");
         }
 
@@ -419,6 +425,7 @@ public class GameEngineService {
 
         // Assert that the targetUser is still part of the game
         if(!playerIds.contains(targetUserId)) {
+            log.info("Targeted User is not part of the game");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted User is not part of the game");
         }
 

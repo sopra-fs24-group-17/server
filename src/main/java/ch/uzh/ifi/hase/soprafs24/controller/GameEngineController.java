@@ -14,11 +14,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
@@ -36,6 +38,15 @@ public class GameEngineController {
 
     @Autowired
     private WebSocketService webSocketService;
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Object> handleResponseStatusException(ResponseStatusException e) {
+        log.info("Error occurred: {}", e.getMessage());
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", e.getStatus());
+        response.put("message", e.getReason());
+        return new ResponseEntity<>(response, e.getStatus());
+    }
 
     /**
      * Handles the request of an user to play a card
