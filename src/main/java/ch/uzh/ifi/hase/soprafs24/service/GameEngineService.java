@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.sun.activation.registries.LogSupport.log;
+
 @Service
 @Slf4j
 @Transactional
@@ -246,6 +248,8 @@ public class GameEngineService {
         List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(), 1);
         gameDeckService.returnCardsToPile(game.getGameDeck(), userId.toString(), cards.get(0).getCode());
 
+        log.info(String.format("Player %s draw card %s", userId, cards.get(0).getInternalCode()));
+
         if (Objects.equals(cards.get(0).getInternalCode(), "explosion")) {
             return cards.get(0).getCode();
         }
@@ -450,6 +454,12 @@ public class GameEngineService {
 
         User explodedUser = userRepository.findUserById(userId);
 
+        ExplosionEvent explosionEvent = new ExplosionEvent(this, gameId, explodedUser.getUsername());
+        eventPublisher.publishEvent(explosionEvent);
+
+        ExplosionEventIndividual explosionEventIndividual = new ExplosionEventIndividual(this, gameId, explodedUser.getId());
+        eventPublisher.publishEvent(explosionEventIndividual);
+
         // Browse Pile of the Exploding User
         String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
 
@@ -459,12 +469,6 @@ public class GameEngineService {
             eventPublisher.publishEvent(arbitraryPlacementEvent);
 
         }else{
-            ExplosionEvent explosionEvent = new ExplosionEvent(this, gameId, explodedUser.getUsername());
-            eventPublisher.publishEvent(explosionEvent);
-
-            ExplosionEventIndividual explosionEventIndividual = new ExplosionEventIndividual(this, gameId, explodedUser.getId());
-            eventPublisher.publishEvent(explosionEventIndividual);
-
             removeUserFromGame(game.getGameId(), userId);
         }
 
@@ -485,23 +489,15 @@ public class GameEngineService {
 
         Game game = findGameById(gameId);
 
-        User explodedUser = userRepository.findUserById(userId);
-
-        ExplosionEvent explosionEvent = new ExplosionEvent(this, gameId, explodedUser.getUsername());
-        eventPublisher.publishEvent(explosionEvent);
-
-        ExplosionEventIndividual explosionEventIndividual = new ExplosionEventIndividual(this, gameId, explodedUser.getId());
-        eventPublisher.publishEvent(explosionEventIndividual);
-
         // Browse Pile of the Exploding User
         String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
 
         // If he has a defuse card, request him to play the defuse card
         if (defuseCard != null) {
-            log.info(defuseCard);
+            GameEngineService.log.info(defuseCard);
             // Draw the card from the user pile and place it on top of the play pile
             Card drawnCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
-            log.info("Succesfully drawnCard");
+            GameEngineService.log.info("Succesfully drawnCard");
             List<Card> drawnCards = new ArrayList<>();
             drawnCards.add(drawnCard);
             gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
@@ -514,7 +510,7 @@ public class GameEngineService {
             // To do -- allow user to select where exactly to place the explosion card
             if(position >= 0 ) {
 
-                log.info("Place in specific position");
+                GameEngineService.log.info("Place in specific position");
                 List<Card> cards = new ArrayList<>();
                 if(position > 0)
                     cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(),position);
@@ -528,11 +524,11 @@ public class GameEngineService {
                 gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", String.join(",", cardValues));
 
             }else{
-                log.info("Place in random position");
+                GameEngineService.log.info("Place in random position");
                 gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
                 gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
             }
-            log.info(gameDeckService.getRemainingDealerPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
+            GameEngineService.log.info(gameDeckService.getRemainingDealerPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
 
             turnValidation(gameId, userId);
 
