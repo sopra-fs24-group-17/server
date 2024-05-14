@@ -466,10 +466,7 @@ public class GameEngineService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void handleExplosionCard(Long gameId, Long userId, String explosionId, Integer position) throws IOException, InterruptedException {
-        if(position==null)
-            position=-1;
-
+    public void handleExplosionCard(Long gameId, Long userId, String explosionId) throws IOException, InterruptedException {
         Game game = findGameById(gameId);
 
         User explodedUser = userRepository.findUserById(userId);
@@ -485,44 +482,7 @@ public class GameEngineService {
 
         // If he has a defuse card, request him to play the defuse card
         if (defuseCard != null) {
-            log.info(defuseCard);
-            // Draw the card from the user pile and place it on top of the play pile
-            Card drawnCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
-            log.info("Succesfully drawnCard");
-            List<Card> drawnCards = new ArrayList<>();
-            drawnCards.add(drawnCard);
-            gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
-
-            // Send message to respective user that his defuse card was taken
-            DefuseEvent defuseEvent = new DefuseEvent(this, userId, game.getGameId(), drawnCards);
-            eventPublisher.publishEvent(defuseEvent);
-
-            // Place explosion card back on deck at random location
-            // To do -- allow user to select where exactly to place the explosion card
-            if(position >= 0 ) {
-
-                log.info("Place in specific position");
-                List<Card> cards = new ArrayList<>();
-                if(position > 0)
-                    cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(),position);
-
-                gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
-                List<String> cardValues = new ArrayList<>();
-
-                for (Card card : cards) {
-                    cardValues.add(card.getCode());
-                }
-                gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", String.join(",", cardValues));
-
-            }else{
-                log.info("Place in random position");
-                gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
-                gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
-            }
-            log.info(gameDeckService.getRemainingDealerPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
-
-            turnValidation(gameId, userId);
-
+            // send placementRequestEvent to client
         } else {
             // If he has no defuse card, put the user out of the game
             removeUserFromGame(game.getGameId(), userId);

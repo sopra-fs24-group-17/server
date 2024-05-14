@@ -238,7 +238,7 @@ public class GameEngineController {
 
         if (explosionCard != null) {
             // To DO -- handle explosion
-            gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
+            gameEngineService.handleExplosionCard(gameId, userId, explosionCard);
 
         } else {
             // Handle turnValidation (finding next player and communicating through websocket)
@@ -249,7 +249,13 @@ public class GameEngineController {
         }
     }
 
-    //@MessageMapping
+//    @MessageMapping("/handleExplosion/{gameId}/{userId}/{placePosition}")
+//    public void handleExplosionPlacement(
+//            @DestinationVariable("gameId") Long gameId,
+//            @DestinationVariable("userId") Long userId,
+//            @DestinationVariable("placementPosition") Integer placementPosition
+//            @Payload
+//    )
 
 
      //THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE
