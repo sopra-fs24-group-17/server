@@ -395,4 +395,17 @@ class GameEngineControllerTest {
         verify(gameEngineService).dispatchGameState(gameId, userId);
     }
 
+    @Test
+    void testHandleExplosionPlacement() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        String placementPosition = "1";
+
+        doNothing().when(gameEngineService).handleExplosionPlacement(gameId, userId, Integer.parseInt(placementPosition));
+
+        gameEngineController.handleExplosionPlacement(gameId, userId, placementPosition);
+
+        verify(gameEngineService, times(1)).handleExplosionPlacement(gameId, userId, Integer.parseInt(placementPosition));
+    }
+
 }

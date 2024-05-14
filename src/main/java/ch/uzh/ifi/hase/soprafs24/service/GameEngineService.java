@@ -448,12 +448,6 @@ public class GameEngineService {
         eventPublisher.publishEvent(playerCardEvent);
     }
 
-    public void handleNopeCard(Game game) {
-        // Let know the client that the first action doesn't have an effect
-        NopeEvent nopeEvent = new NopeEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
-        eventPublisher.publishEvent(nopeEvent);
-    }
-
     public void handleExplosionPlacement(Long gameId, Long userId, Integer placementPosition) throws IOException, InterruptedException {
         Game game = findGameById(gameId);
 
