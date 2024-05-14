@@ -471,11 +471,18 @@ public class GameDeckService {
         List<String> cardsPath = Arrays.asList("piles", userId.toString(), "cards");
         List<Card> cards = parseCards(gameDeck,drawCardFromPlayerResponse.body(), "deck_id", cardsPath, null);
 
+        List<String> cardValues = new ArrayList<>();
+
         for (Card card: cards) {
             if (Objects.equals(card.getInternalCode(), "defuse")) {
-                return card.getCode();
+                cardValues.add(card.getCode());
             }
         }
+
+        if (!cardValues.isEmpty()) {
+           return cardValues.get(0);
+        }
+
         return null;
     }
 

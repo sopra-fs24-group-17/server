@@ -453,12 +453,11 @@ public class GameEngineService {
 
         // take top card from playPile
         List<Card> topCard = gameDeckService.exploreTopCardPlayPile(game.getGameDeck());
-        if (!Objects.equals(topCard.get(0).getInternalCode(), "explosion")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Top card must be an explosion");
-        }
+        log.info(topCard.get(0).getCode());
+        log.info(topCard.get(topCard.size()-1).getCode());
 
         List<String> cardValues = new ArrayList<>();
-        cardValues.add(topCard.get(0).getCode());
+        cardValues.add(topCard.get(topCard.size() - 1).getCode());
 
         List<Card> explosionCard = gameDeckService.removeSpecifcCardFromPlayPile(game.getGameDeck(), String.join(",", cardValues));
 
@@ -475,7 +474,7 @@ public class GameEngineService {
         gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
 
         // return explosion card according to user request
-        gameDeckService.returnExplosionCardToDealerPile(game, placementPosition, topCard.get(0));
+        gameDeckService.returnExplosionCardToDealerPile(game, placementPosition, explosionCard.get(0));
         dispatchGameState(gameId, userId);
         turnValidation(gameId, userId);
     }
