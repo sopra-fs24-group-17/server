@@ -240,16 +240,16 @@ public class GameEngineController {
             // To DO -- handle explosion
             gameEngineService.handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
 
+        } else {
+            // Handle turnValidation (finding next player and communicating through websocket)
+            gameEngineService.turnValidation(gameId, userId);
+
+            // Dispatch gameState
+            gameEngineService.dispatchGameState(gameId, userId);
         }
-        // Dispatch gameState
-        gameEngineService.dispatchGameState(gameId, userId);
-
-        // Handle turnValidation (finding next player and communicating through websocket)
-        gameEngineService.turnValidation(gameId, userId);
-
-        // Dispatch gameState
-        gameEngineService.dispatchGameState(gameId, userId);
     }
+
+    //@MessageMapping
 
 
      //THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE
