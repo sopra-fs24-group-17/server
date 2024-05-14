@@ -249,14 +249,14 @@ public class GameEngineController {
         }
     }
 
-    @MessageMapping("/handleExplosion/{gameId}/{userId}/{placePosition}")
+    @MessageMapping("/handleExplosion/{gameId}/{userId}/{placementPosition}")
     public void handleExplosionPlacement(
             @DestinationVariable("gameId") Long gameId,
             @DestinationVariable("userId") Long userId,
-            @DestinationVariable("placementPosition") Integer placementPosition
+            @DestinationVariable("placementPosition") String placementPosition
     ) throws IOException, InterruptedException {
         log.info(String.format("Game: %s, user: %s returned explosion card", gameId, userId));
-        gameEngineService.handleExplosionPlacement(gameId, userId, placementPosition);
+        gameEngineService.handleExplosionPlacement(gameId, userId, Integer.parseInt(placementPosition));
     }
 
      //THIS IS JUST A TEST ENDPOINT WHILE I FIX THE WEBSOCKET ISSUE

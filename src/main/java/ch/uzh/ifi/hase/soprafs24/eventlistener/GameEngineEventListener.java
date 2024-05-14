@@ -129,7 +129,7 @@ public class GameEngineEventListener {
 
     @EventListener
     public void placementRequest(PlacementEvent event) {
-        webSocketService.sendPlacementRequest(event.getGameId(), event.getGameId());
+        log.info("Placement Request sent for game {}", event.getGameId());
+        webSocketService.sendPlacementRequest(event.getGameId(), event.getUserId());
     }
-
 }

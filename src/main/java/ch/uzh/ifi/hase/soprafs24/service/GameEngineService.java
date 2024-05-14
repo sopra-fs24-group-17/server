@@ -482,6 +482,8 @@ public class GameEngineService {
 
         // return explosion card according to user request
         gameDeckService.returnExplosionCardToDealerPile(game, placementPosition, topCard.get(0));
+        dispatchGameState(gameId, userId);
+        turnValidation(gameId, userId);
     }
 
     /**
