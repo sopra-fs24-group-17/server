@@ -3,9 +3,12 @@ package ch.uzh.ifi.hase.soprafs24.controller;
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
+import ch.uzh.ifi.hase.soprafs24.entity.User;
+import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
+import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.ExplosionCardRequest;
@@ -39,6 +42,15 @@ public class GameEngineController {
     @Autowired
     private WebSocketService webSocketService;
 
+    @Autowired
+    private UserService userService;
+
+    private final UserRepository userRepository;
+
+    GameEngineController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Object> handleResponseStatusException(ResponseStatusException e) {
         log.info("Error occurred: {}", e.getMessage());
@@ -60,54 +72,14 @@ public class GameEngineController {
             @DestinationVariable Long userId,
             @Payload CardMoveRequest cardMoveRequest) throws IOException, InterruptedException {
 
-        Long targetUserId = cardMoveRequest.getTargetUserId();
+        String targetUsername = cardMoveRequest.getTargetUsername();
         log.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
-        log.info(targetUserId.toString());
+        log.info(targetUsername);
 
         // Transformation to internal representation
         List<Card> transformedCards = gameEngineService.transformCardsToInternalRepresentation(cardMoveRequest.getCardIds());
 
         Game game = gameEngineService.findGameById(gameId);
-
-        // Remove from the player pile (verifies that the moves are valid, and that the user actually possessed the cards he played)
-        if(cardMoveRequest.getNegationUsers() != null){
-            Set<String> negationUsers = new HashSet<String>(cardMoveRequest.getNegationUsers());
-            List<String> negationUsersList = cardMoveRequest.getNegationUsers();
-            List<String> cardsIdsNegationUser = new ArrayList<>();
-            List<String> allPlayedCards = cardMoveRequest.getCardIds();
-            Integer difference = allPlayedCards.size() - negationUsersList.size(); // Amount of cards that are not negations. Placed in the bottom of the stack.
-            for(String user : negationUsers){
-                // Find all the negations played by the same player
-                for (int i = 0; i < negationUsersList.size(); i++) {
-                    if (Objects.equals(negationUsersList.get(i), user)){
-                        cardsIdsNegationUser.add(allPlayedCards.get(difference+i));
-                        //allPlayedCards.remove(difference + i);
-                    }
-                }
-                // Remove cards from current user
-                gameDeckService.removeCardsFromPlayerPile(game, Long.valueOf(user), String.join(",", cardsIdsNegationUser));
-            }
-            // Update cardMoveRequest so we only have the cards played by active user and we can remove them from his hand.
-            cardMoveRequest.setCardIds(allPlayedCards.subList(0, difference));
-        }
-        gameDeckService.removeCardsFromPlayerPile(game, userId, String.join(",", cardMoveRequest.getCardIds()));
-
-        // Add cards to the play pile (i.e. game stack)
-        gameDeckService.placeCardsToPlayPile(game, userId ,transformedCards, String.join(",", cardMoveRequest.getCardIds()));
-
-        // Check for potential chain of nope cards before handling logic
-        if (Objects.equals(transformedCards.get(transformedCards.size() - 1).getInternalCode(), "nope")){
-            while (transformedCards.size() > 2){
-                Card lastCard = transformedCards.get(transformedCards.size() - 1);
-                Card preLastCard = transformedCards.get(transformedCards.size() - 2);
-                // Remove top cards if both are negation
-                if(Objects.equals(lastCard.getInternalCode(), preLastCard.getInternalCode())){
-                    transformedCards.remove(transformedCards.size() - 1);
-                    transformedCards.remove(transformedCards.size() - 1);
-                    log.info("Consecutive nope cards removed");
-                }
-            }
-        }
 
         // Game Logic
         if(transformedCards.size() == 1) {
@@ -121,6 +93,11 @@ public class GameEngineController {
                 gameEngineService.handleSkipCard(game, userId);
             }
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), "favor")) {
+                User targetUser = userRepository.findByUsername(targetUsername);
+                if (targetUser == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found");
+                }
+                Long targetUserId = targetUser.getId();
                 gameEngineService.handleFavorCard(game, userId, targetUserId);
             }
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), "attack")) {
