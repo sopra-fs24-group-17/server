@@ -426,7 +426,7 @@ public class GameDeckService {
         if (cardId != null && !cardId.isEmpty()) {
             uri = String.format(baseUri + "?cards=%s", gameDeck.getDeckID(), userId, cardId);
         } else {
-            uri = String.format(baseUri + "random", gameDeck.getDeckID(), userId);
+            uri = String.format(baseUri + "random/", gameDeck.getDeckID(), userId);
         }
         log.info(cardId);
         log.info(uri);
