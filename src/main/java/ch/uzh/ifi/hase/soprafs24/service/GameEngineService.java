@@ -419,7 +419,10 @@ public class GameEngineService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void handleFavorCard(Game game, Long userId, Long targetUserId) throws IOException, InterruptedException {
+    public void handleFavorCard(Game game, Long userId, String targetUserName) throws IOException, InterruptedException {
+
+        User targetUser = userRepository.findByUsername(targetUserName);
+        Long targetUserId = targetUser.getId();
 
         List<Long> playerIds = game.getPlayers().stream().map(User::getId).toList();
 

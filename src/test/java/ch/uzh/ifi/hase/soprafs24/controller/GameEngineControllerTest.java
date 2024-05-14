@@ -199,7 +199,11 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
+
+        User targetUser = new User();
+        targetUser.setId(1L);
+        targetUser.setUsername("targetUser");
 
         Card card = new Card();
         card.setInternalCode("favor");
@@ -210,13 +214,14 @@ class GameEngineControllerTest {
 
         when(gameEngineService.transformCardsToInternalRepresentation(cardIds)).thenReturn(transformedCards);
         when(gameEngineService.findGameById(gameId)).thenReturn(game);
+        /* Mock user repo: when(userRepository.findByUsername(anyString())).thenReturn(targetUser); */
         doNothing().when(gameDeckService).removeCardsFromPlayerPile(any(Game.class), eq(userId), anyString());
         doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
         doNothing().when(gameEngineService).handleShuffleCard(any(Game.class), eq(userId));
 
         gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
 
-        verify(gameEngineService).handleFavorCard(game, userId, cardMoveRequest.getTargetUserId());
+        verify(gameEngineService).handleFavorCard(game, userId, cardMoveRequest.getTargetUsername());
         verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
         verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
         verify(gameEngineService).dispatchGameState(gameId, userId);

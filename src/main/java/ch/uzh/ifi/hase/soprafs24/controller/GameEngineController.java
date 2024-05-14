@@ -45,12 +45,6 @@ public class GameEngineController {
     @Autowired
     private UserService userService;
 
-    private final UserRepository userRepository;
-
-    GameEngineController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Object> handleResponseStatusException(ResponseStatusException e) {
         log.info("Error occurred: {}", e.getMessage());
@@ -78,8 +72,12 @@ public class GameEngineController {
 
         // Transformation to internal representation
         List<Card> transformedCards = gameEngineService.transformCardsToInternalRepresentation(cardMoveRequest.getCardIds());
-
         Game game = gameEngineService.findGameById(gameId);
+
+        gameDeckService.removeCardsFromPlayerPile(game, userId, String.join(",", cardMoveRequest.getCardIds()));
+
+        // Add cards to the play pile (i.e. game stack)
+        gameDeckService.placeCardsToPlayPile(game, userId ,transformedCards, String.join(",", cardMoveRequest.getCardIds()));
 
         // Game Logic
         if(transformedCards.size() == 1) {
@@ -93,12 +91,7 @@ public class GameEngineController {
                 gameEngineService.handleSkipCard(game, userId);
             }
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), "favor")) {
-                User targetUser = userRepository.findByUsername(targetUsername);
-                if (targetUser == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found");
-                }
-                Long targetUserId = targetUser.getId();
-                gameEngineService.handleFavorCard(game, userId, targetUserId);
+                gameEngineService.handleFavorCard(game, userId, targetUsername);
             }
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), "attack")) {
                 gameEngineService.handleAttackCard(game, userId);
