@@ -410,6 +410,18 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    public List<Card> removeSpecifcCardFromPlayPile(GameDeck gameDeck, String cardsToRemove) throws IOException, InterruptedException {
+        String uri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/play/draw/?cards=%s", gameDeck.getDeckID(), cardsToRemove);
+        HttpRequest request = buildGetRequest(uri);
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        List<String> cardsPath = List.of("cards");
+        List<String> additionalInfo = Arrays.asList("piles", "dealer");
+        List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, additionalInfo);
+
+        return saveCards(cards);
+    }
+
     /**
      * Helper method that draws a card from the player pile, either randomly or a specific card.
      * @param gameDeck indicating the playing deck
@@ -440,6 +452,10 @@ public class GameDeckService {
         List<String> cardsPath = List.of("cards");
         List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, null);
         return cards.get(0);
+    }
+
+    public Card drawCardFromPlayPile(GameDeck gameDeck, String cardId) {
+
     }
 
     /**

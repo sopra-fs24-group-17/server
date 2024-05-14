@@ -454,9 +454,35 @@ public class GameEngineService {
         eventPublisher.publishEvent(nopeEvent);
     }
 
+    public void handleExplosionPlacement(Long gameId, Long userId, Integer placementPosition) throws IOException, InterruptedException {
+        Game game = findGameById(gameId);
 
+        // take top card from playPile
+        List<Card> topCard = gameDeckService.exploreTopCardPlayPile(game.getGameDeck());
+        if (!Objects.equals(topCard.get(0).getInternalCode(), "explosion")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Top card must be an explosion");
+        }
 
+        List<String> cardValues = new ArrayList<>();
+        cardValues.add(topCard.get(0).getCode());
 
+        List<Card> explosionCard = gameDeckService.removeSpecifcCardFromPlayPile(game.getGameDeck(), String.join(",", cardValues));
+
+        // take defuseCard from player and put to playPile
+        String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
+
+        if (defuseCard == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User doesn't hold any defuse card");
+        }
+
+        Card drawnCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
+        List<Card> drawnCards = new ArrayList<>();
+        drawnCards.add(drawnCard);
+        gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
+
+        // return explosion card according to user request
+        gameDeckService.returnExplosionCardToDealerPile(game, placementPosition, topCard.get(0));
+    }
 
     /**
      * Handler of the bomb card
@@ -483,6 +509,24 @@ public class GameEngineService {
         // If he has a defuse card, request him to play the defuse card
         if (defuseCard != null) {
             // send placementRequestEvent to client
+
+            // put explosion card to playPile
+            Card explosionCard = new Card();
+            explosionCard.setCode(explosionId);
+            explosionCard.setInternalCode("explosion");
+
+            List<Card> playedCards = new ArrayList<>();
+            playedCards.add(explosionCard);
+
+            gameDeckService.placeCardsToPlayPile(game, userId, playedCards, explosionId);
+
+            // dispatch GameState
+            dispatchGameState(gameId, userId);
+
+            // send placementRequest
+            PlacementEvent placementEvent = new PlacementEvent(this, gameId, userId);
+            eventPublisher.publishEvent(placementEvent);
+
         } else {
             // If he has no defuse card, put the user out of the game
             removeUserFromGame(game.getGameId(), userId);

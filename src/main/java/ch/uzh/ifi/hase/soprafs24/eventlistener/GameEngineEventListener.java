@@ -126,4 +126,10 @@ public class GameEngineEventListener {
     public void explosionIndividual(ExplosionEventIndividual event) {
         webSocketService.sendMessageExplosionIndividual(event.getGameId(), event.getUserId());
     }
+
+    @EventListener
+    public void placementRequest(PlacementEvent event) {
+        webSocketService.sendPlacementRequest(event.getGameId(), event.getGameId());
+    }
+
 }
