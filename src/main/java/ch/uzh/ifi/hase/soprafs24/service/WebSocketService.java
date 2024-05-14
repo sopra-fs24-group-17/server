@@ -237,6 +237,15 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId, params);
     }
 
+    public void sendPlacementRequest(Long gameId, Long userId) {
+        Map<String, Object> params = Map.of(
+                "type", "placementRequest",
+                "userId", userId
+        );
+        sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
+    }
+
+
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);
     }
