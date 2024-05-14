@@ -454,10 +454,6 @@ public class GameDeckService {
         return cards.get(0);
     }
 
-    public Card drawCardFromPlayPile(GameDeck gameDeck, String cardId) {
-
-    }
-
     /**
      * Helper method that validates if the player is in posesion of a defuse card
      * @param gameDeck indicating the playing deck
