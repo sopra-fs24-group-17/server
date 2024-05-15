@@ -142,8 +142,12 @@ public class GameDeckService {
      * @throws InterruptedException
      */
     public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
-        log.info(String.format("Remaining cards: %s",gameDeck.getRemainingCardsDealerStack()));
-        if (numberOfCards > gameDeck.getRemainingCardsDealerStack()) {
+
+        String jsonResponse = getRemainingPileStats(gameDeck, 1L);
+        Map<String, Integer> parsedPileCardCounts = parsePileCardCounts(jsonResponse);
+        Integer dealerCount = parsedPileCardCounts.get("dealer");
+
+        if (numberOfCards > dealerCount) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
         }
 
@@ -356,6 +360,11 @@ public class GameDeckService {
      */
     public void returnExplosionCardToDealerPile(Game game, Integer location, Card cardToBeReturned) throws IOException, InterruptedException {
 
+        String jsonResponse = getRemainingPileStats(game.getGameDeck(), 1L);
+        Map<String, Integer> parsedPileCardCounts = parsePileCardCounts(jsonResponse);
+
+        Integer dealerCount = parsedPileCardCounts.get("dealer");
+
         // Random placement in the pile
         if (location == 69 || location < -1) {
             returnCardsToPile(game.getGameDeck(), "dealer", cardToBeReturned.getCode());
@@ -366,12 +375,12 @@ public class GameDeckService {
             returnCardsToPile(game.getGameDeck(), "dealer", cardToBeReturned.getCode());
         }
         // Return to Bottom of Stack
-        else if (location == -1 || game.getGameDeck().getRemainingCardsDealerStack() <= location) {
-            List<Card> drawnDeck = drawCardsFromDealerPile(game.getGameDeck(), game.getGameDeck().getRemainingCardsDealerStack());
+        else if (location == -1 || dealerCount <= location) {
+            List<Card> drawnDeck = drawCardsFromDealerPile(game.getGameDeck(), dealerCount);
             Collections.reverse(drawnDeck);
             List<String> cardsToBePlacedBackOnDealerPile = drawnDeck.stream().map(Card::getCode).collect(Collectors.toList());
 
-            String returnCards = cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
+            String returnCards =  cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
             returnCardsToPile(game.getGameDeck(), "dealer", returnCards);
         }
         else {
@@ -379,7 +388,7 @@ public class GameDeckService {
             Collections.reverse(drawnCards);
             List<String> cardsToBePlacedBackOnDealerPile = drawnCards.stream().map(Card::getCode).collect(Collectors.toList());
 
-            String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + "," + cardToBeReturned.getCode();
+            String returnCards = cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
             returnCardsToPile(game.getGameDeck(),"dealer", returnCards);
         }
 

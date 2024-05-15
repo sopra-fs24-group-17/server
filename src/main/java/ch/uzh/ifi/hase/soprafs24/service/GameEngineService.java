@@ -537,6 +537,10 @@ public class GameEngineService {
         String jsonResponse = gameDeckService.getRemainingPileStats(game.getGameDeck(), userId);
         Map<String, Integer> parsedPileCardCounts = gameDeckService.parsePileCardCounts(jsonResponse);
 
+        Integer dealerCount = parsedPileCardCounts.get("dealer");
+        game.getGameDeck().setRemainingCardsDealerStack(dealerCount);
+        gameDeckRepository.saveAndFlush(game.getGameDeck());
+
         List<Card> topCardsPlayPile = gameDeckService.exploreTopCardPlayPile(game.getGameDeck());
         Card topCardPlayPile;
         if (topCardsPlayPile == null) {
