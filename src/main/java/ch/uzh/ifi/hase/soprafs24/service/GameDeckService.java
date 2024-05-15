@@ -261,8 +261,6 @@ public class GameDeckService {
             cardsToBePlacedBackOnDealerPile.add(card.getCode());
         }
 
-        Collections.reverse(cardsToBePlacedBackOnDealerPile);
-
         // Place cards back to the dealer pile
         String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile);
         returnCardsToPile(game.getGameDeck(), "dealer", returnCards);
