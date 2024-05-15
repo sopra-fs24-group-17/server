@@ -20,6 +20,7 @@ import java.net.http.HttpResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.server.ResponseStatusException;
@@ -348,8 +349,6 @@ public class GameDeckService {
      */
     public void returnExplosionCardToDealerPile(Game game, Integer location, Card cardToBeReturned) throws IOException, InterruptedException {
 
-        log.info(cardToBeReturned.getCode());
-
         // Random placement in the pile
         if (location == 69 || location < -1) {
             returnCardsToPile(game.getGameDeck(), "dealer", cardToBeReturned.getCode());
@@ -362,24 +361,20 @@ public class GameDeckService {
         // Return to Bottom of Stack
         else if (location == -1 || game.getGameDeck().getRemainingCardsDealerStack() <= location) {
             List<Card> drawnDeck = drawCardsFromDealerPile(game.getGameDeck(), game.getGameDeck().getRemainingCardsDealerStack());
-            List<String> cardsToBePlacedBackOnDealerPile = new ArrayList<>();
+            Collections.reverse(drawnDeck);
+            List<String> cardsToBePlacedBackOnDealerPile = drawnDeck.stream().map(Card::getCode).collect(Collectors.toList());
 
-            for (Card card : drawnDeck) {
-                cardsToBePlacedBackOnDealerPile.add(card.getCode());
-            }
-
-            String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + cardToBeReturned.getCode();
+            String returnCards = cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
             returnCardsToPile(game.getGameDeck(), "dealer", returnCards);
         }
         else {
             List<Card> drawnCards = drawCardsFromDealerPile(game.getGameDeck(), location);
-            List<String> cardsToBePlacedBackOnDealerPile = new ArrayList<>();
+            Collections.reverse(drawnCards);
+            List<String> cardsToBePlacedBackOnDealerPile = drawnCards.stream().map(Card::getCode).collect(Collectors.toList());
 
-            for (Card card : drawnCards) {
-                cardsToBePlacedBackOnDealerPile.add(card.getCode());
-            }
+            log.info(String.join(",", cardsToBePlacedBackOnDealerPile));
 
-            String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + cardToBeReturned.getCode();
+            String returnCards = cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
             returnCardsToPile(game.getGameDeck(),"dealer", returnCards);
         }
 
@@ -388,37 +383,27 @@ public class GameDeckService {
         eventPublisher.publishEvent(explosionReturnedToDeckEvent);
     }
 
+
     /**
-     * Helper method that removes specified cards from the dealer pile.
+     * Helper method that removes specified cards from the specified pile.
      * @param gameDeck indicating the playing deck
      * @param cardsToRemove a comma-separated string of the cards to be removed, e.g., "AS,AH,AC,AD" or "KS,KH,KC,KD,X1,X2"
      * @return List of cards objects.
      * @throws IOException
      * @throws InterruptedException
      */
-    public List<Card> removeSpecificCardsFromDealerPile(GameDeck gameDeck, String cardsToRemove) throws IOException, InterruptedException {
-        String uri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/dealer/draw/?cards=%s", gameDeck.getDeckID(), cardsToRemove);
+    public List<Card> removeSpecificCardsFromPile(GameDeck gameDeck, String cardsToRemove, String pileType) throws IOException, InterruptedException {
+        String uri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/%s/draw/?cards=%s", gameDeck.getDeckID(), pileType, cardsToRemove);
         HttpRequest request = buildGetRequest(uri);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         List<String> cardsPath = List.of("cards");
-        List<String> additionalInfo = Arrays.asList("piles", "dealer");
+        List<String> additionalInfo = Arrays.asList("piles", pileType);
         List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, additionalInfo);
 
         return saveCards(cards);
     }
 
-    public List<Card> removeSpecificCardFromPlayPile(GameDeck gameDeck, String cardsToRemove) throws IOException, InterruptedException {
-        String uri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/play/draw/?cards=%s", gameDeck.getDeckID(), cardsToRemove);
-        HttpRequest request = buildGetRequest(uri);
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        List<String> cardsPath = List.of("cards");
-        List<String> additionalInfo = Arrays.asList("piles", "dealer");
-        List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, additionalInfo);
-
-        return saveCards(cards);
-    }
 
     /**
      * Helper method that draws a card from the player pile, either randomly or a specific card.
@@ -447,6 +432,7 @@ public class GameDeckService {
         return cards.get(0);
     }
 
+
     /**
      * Helper method that validates if the player is in posesion of a defuse card
      * @param gameDeck indicating the playing deck
@@ -473,6 +459,7 @@ public class GameDeckService {
         return null;
     }
 
+
     /**
      * Helper method to obtain statistics about a pile
      * @param gameDeck indicating the playing deck
@@ -489,21 +476,6 @@ public class GameDeckService {
         return remainingCardsStatsResponse.body();
     }
 
-    /**
-     * Helper method to obtain statistics about the dealer pile
-     * @param gameDeck indicating the playing deck
-     * @param pile indicating the user the pile belongs to
-     * @return Response body of api request
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public String getRemainingDealerPileStats(GameDeck gameDeck, String pile) throws IOException, InterruptedException {
-        String remainingCardStatsUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), pile);
-        HttpRequest remainingCardsStatsRequest = buildGetRequest(remainingCardStatsUri);
-        HttpResponse<String> remainingCardsStatsResponse = httpClient.send(remainingCardsStatsRequest, HttpResponse.BodyHandlers.ofString());
-
-        return remainingCardsStatsResponse.body();
-    }
 
     /**
      * Returns top card in the played cards pile
@@ -525,6 +497,7 @@ public class GameDeckService {
         }
         return saveCards(cards);
     }
+
 
     /**
      * Helper method to obtain remaining cards of a pile
@@ -552,6 +525,7 @@ public class GameDeckService {
 
         return pileCardCounts;
     }
+
 
     /**
      * General method to parse card data from different types of JSON responses.

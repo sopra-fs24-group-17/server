@@ -118,8 +118,8 @@ public class GameEngineService {
         this.gameDeckService.createDealerPile(currentGame);
 
         // Remove Explosions and Defusions from Deck
-        List<Card> explosions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "AS,AH,AC,AD");
-        List<Card> defusions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "KS,KH,KC,KD,X1,X2");
+        List<Card> explosions = gameDeckService.removeSpecificCardsFromPile(currentGame.getGameDeck(), "AS,AH,AC,AD", "dealer");
+        List<Card> defusions = gameDeckService.removeSpecificCardsFromPile(currentGame.getGameDeck(), "KS,KH,KC,KD,X1,X2", "dealer");
 
         // Fetch all active players
         List<User> players = currentGame.getPlayers();
@@ -456,7 +456,7 @@ public class GameEngineService {
         List<String> cardValues = new ArrayList<>();
         cardValues.add(topCard.get(topCard.size() - 1).getCode());
 
-        List<Card> explosionCard = gameDeckService.removeSpecificCardFromPlayPile(game.getGameDeck(), String.join(",", cardValues));
+        List<Card> explosionCard = gameDeckService.removeSpecificCardsFromPile(game.getGameDeck(),String.join(",", cardValues), "play");
 
         // take defuseCard from player and put to playPile
         String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);

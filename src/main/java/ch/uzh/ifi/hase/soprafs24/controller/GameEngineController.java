@@ -159,6 +159,14 @@ public class GameEngineController {
         }
     }
 
+    /**
+     * TO BE COMPLETED
+     * @param gameId
+     * @param userId
+     * @param placementPosition
+     * @throws IOException
+     * @throws InterruptedException
+     */
     @MessageMapping("/handleExplosion/{gameId}/{userId}/{placementPosition}")
     public void handleExplosionPlacement(
             @DestinationVariable("gameId") Long gameId,
