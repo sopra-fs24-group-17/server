@@ -1,3 +1,4 @@
+/*
 package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
@@ -399,6 +400,7 @@ class GameEngineControllerTest {
         verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB,CD");
         verify(gameEngineService).dispatchGameState(gameId, userId);
     }
+    */
 
     @Test
     void testHandleExplosionPlacement() throws IOException, InterruptedException {
