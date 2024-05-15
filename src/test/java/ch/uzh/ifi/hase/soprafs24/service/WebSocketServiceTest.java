@@ -216,8 +216,9 @@ public class WebSocketServiceTest {
         Long gameId = 1L;
         String userName = "user";
         String internalCode = "KH";
+        String externalCode = "AH";
 
-        webSocketService.sendMessageCardPlayed(gameId, userName, internalCode);
+        webSocketService.sendMessageCardPlayed(gameId, userName, internalCode, externalCode);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
