@@ -337,7 +337,7 @@ public class GameDeckService {
 
         // Publish event(s)
         for (Card card: cards) {
-            CardPlayedEvent cardPlayedEvent = new CardPlayedEvent(this, card.getInternalCode(), game.getGameId(), player.getUsername());
+            CardPlayedEvent cardPlayedEvent = new CardPlayedEvent(this, card.getInternalCode(), game.getGameId(), player.getUsername(), card.getCode());
             eventPublisher.publishEvent(cardPlayedEvent);
         }
     }
@@ -379,9 +379,7 @@ public class GameDeckService {
             Collections.reverse(drawnCards);
             List<String> cardsToBePlacedBackOnDealerPile = drawnCards.stream().map(Card::getCode).collect(Collectors.toList());
 
-            log.info(String.join(",", cardsToBePlacedBackOnDealerPile));
-
-            String returnCards = cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
+            String returnCards = String.join(",", cardsToBePlacedBackOnDealerPile) + "," + cardToBeReturned.getCode();
             returnCardsToPile(game.getGameDeck(),"dealer", returnCards);
         }
 
