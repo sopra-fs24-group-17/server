@@ -167,7 +167,7 @@ public class GameEngineService {
         gameDeckService.returnCardsToPile(currentGame.getGameDeck(), "dealer", String.join(",", cardValues));
 
         // Shuffle Dealer Pile
-        gameDeckService.shuffleCardsInDealerPile(currentGame.getGameDeck());
+        //gameDeckService.shuffleCardsInDealerPile(currentGame.getGameDeck());
 
         // Assign active player
         if (!players.isEmpty()) {
