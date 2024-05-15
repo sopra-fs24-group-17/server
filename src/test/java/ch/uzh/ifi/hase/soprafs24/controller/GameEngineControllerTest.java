@@ -251,12 +251,12 @@ class GameEngineControllerTest {
         doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
         doNothing().when(gameEngineService).handleShuffleCard(any(Game.class), eq(userId));
 
-         gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
+        gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
 
-         verify(gameEngineService).handleAttackCard(game, userId);
-         verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
-         verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
-         verify(gameEngineService).dispatchGameState(gameId, userId);
+        verify(gameEngineService).handleAttackCard(game, userId);
+        verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
+        verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
+        verify(gameEngineService).dispatchGameState(gameId, userId);
     }
 
     @Test

@@ -12,6 +12,7 @@ import ch.uzh.ifi.hase.soprafs24.service.UserService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.CardMoveRequest;
 import ch.uzh.ifi.hase.soprafs24.websocket.dto.ExplosionCardRequest;
+import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.IntStream;
 
+import static com.sun.activation.registries.LogSupport.log;
+
 @Slf4j
 @RestController
 public class GameEngineController {
@@ -42,8 +45,10 @@ public class GameEngineController {
     @Autowired
     private WebSocketService webSocketService;
 
+
     @Autowired
     private UserService userService;
+
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Object> handleResponseStatusException(ResponseStatusException e) {
@@ -67,6 +72,7 @@ public class GameEngineController {
             @Payload CardMoveRequest cardMoveRequest) throws IOException, InterruptedException {
 
         String targetUsername = cardMoveRequest.getTargetUsername();
+
         log.info(String.format("Move for game %s by user %s: card(s) played (%s)" , gameId, userId, cardMoveRequest.getCardIds()));
         log.info(targetUsername);
 
@@ -96,6 +102,9 @@ public class GameEngineController {
             else if (Objects.equals(transformedCards.get(0).getInternalCode(), "attack")) {
                 gameEngineService.handleAttackCard(game, userId);
             }
+            else if (Objects.equals(transformedCards.get(0).getInternalCode(), "lucky")) {
+                gameEngineService.handleLuckyCard(game, userId);
+            }
         }
         else if(transformedCards.size()==2) {
             if (Objects.equals(transformedCards.get(0).getInternalCode(), (transformedCards.get(1).getInternalCode())) && (Objects.equals(transformedCards.get(0).getInternalCode(), "tacocat"))) {
@@ -124,7 +133,7 @@ public class GameEngineController {
     public void handleStartGame(
             @DestinationVariable("gameId") Long gameId) throws IOException, InterruptedException {
 
-        log.info(String.format("Game: %s, started" , gameId));
+        GameEngineController.log.info(String.format("Game: %s, started" , gameId));
         Game initializedGame = gameEngineService.startGame(gameId);
         gameEngineService.dispatchGameState(gameId, initializedGame.getCurrentTurn().getId());
     }
@@ -141,7 +150,7 @@ public class GameEngineController {
             @DestinationVariable("userId") Long userId,
             @Payload ExplosionCardRequest explosionCardRequest) throws IOException, InterruptedException{
 
-        log.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
+        GameEngineController.log.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
         // Handle termination of move draw
         String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId);
@@ -188,7 +197,7 @@ public class GameEngineController {
             @DestinationVariable("gameId") Long gameId,
             @DestinationVariable("userId") Long userId) throws IOException, InterruptedException {
 
-        log.info(String.format("User %s left game %s" , userId, gameId));
+        GameEngineController.log.info(String.format("User %s left game %s" , userId, gameId));
 
         // Handle user leaving an ongoing game session
         gameEngineService.removeUserFromGame(gameId, userId);
