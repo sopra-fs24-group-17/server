@@ -132,4 +132,10 @@ public class GameEngineEventListener {
         log.info("Placement Request sent for game {}", event.getGameId());
         webSocketService.sendPlacementRequest(event.getGameId(), event.getUserId());
     }
+
+    @EventListener
+    public void getLucky(LuckyEvent event) {
+        log.info("Player {} play Lucky card for game {}", event.getUserId(),event.getGameId());
+        webSocketService.sendMessageGetLucky(event.getGameId(), event.getUserId(), event.getRandomCard());
+    }
 }

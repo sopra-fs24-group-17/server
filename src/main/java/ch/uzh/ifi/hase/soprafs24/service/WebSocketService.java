@@ -245,6 +245,21 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
+    public void sendMessageGetLucky(Long gameId, Long userId, Card randomCard) {
+        JSONObject cardJson = new JSONObject();
+        cardJson.put("code", randomCard.getCode());
+        cardJson.put("internalCode", randomCard.getInternalCode());
+
+        Map<String, Object> params = Map.of(
+                "type", "peekIntoDeck",
+                "gameId", gameId,
+                "user", userId,
+                "cards", cardJson
+        );
+        sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
+    }
+
+
 
     public void sendMessageGameCreated(Long gameId) {
         this.sendMessage.convertAndSend("/game/new", gameId);
