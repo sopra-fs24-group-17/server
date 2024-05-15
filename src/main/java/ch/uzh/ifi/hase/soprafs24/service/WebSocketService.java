@@ -251,7 +251,7 @@ public class WebSocketService {
         cardJson.put("internalCode", randomCard.getInternalCode());
 
         Map<String, Object> params = Map.of(
-                "type", "peekIntoDeck",
+                "type", "cards",
                 "gameId", gameId,
                 "user", userId,
                 "cards", cardJson
