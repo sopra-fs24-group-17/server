@@ -165,6 +165,7 @@ public class GameEngineController {
             @DestinationVariable("userId") Long userId,
             @DestinationVariable("placementPosition") String placementPosition
     ) throws IOException, InterruptedException {
+        log.info("Placement Request for Explosion Card received");
         log.info(String.format("Game: %s, user: %s returned explosion card", gameId, userId));
         gameEngineService.handleExplosionPlacement(gameId, userId, Integer.parseInt(placementPosition));
     }

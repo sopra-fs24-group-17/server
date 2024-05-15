@@ -11,8 +11,6 @@ import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -23,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -459,7 +456,7 @@ public class GameEngineService {
         List<String> cardValues = new ArrayList<>();
         cardValues.add(topCard.get(topCard.size() - 1).getCode());
 
-        List<Card> explosionCard = gameDeckService.removeSpecifcCardFromPlayPile(game.getGameDeck(), String.join(",", cardValues));
+        List<Card> explosionCard = gameDeckService.removeSpecificCardFromPlayPile(game.getGameDeck(), String.join(",", cardValues));
 
         // take defuseCard from player and put to playPile
         String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);

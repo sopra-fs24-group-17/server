@@ -9,8 +9,6 @@ import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -48,7 +46,6 @@ public class GameDeckService {
 
     @Autowired
     public GameDeckService(GameDeckRepository gameDeckRepository, CardRepository cardRepository, UserService userService ,ApplicationEventPublisher eventPublisher, HttpClient httpClient) {
-        //this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.gameDeckRepository = gameDeckRepository;
         this.cardRepository = cardRepository;
@@ -90,7 +87,6 @@ public class GameDeckService {
      */
     public GameDeck fetchDeck(Game game, boolean init) throws IOException, InterruptedException {
 
-        log.info("invoked");
         String newDeckUri = "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1&jokers_enabled=true";
         HttpRequest newDeckRequest = buildGetRequest(newDeckUri);
 
@@ -126,7 +122,7 @@ public class GameDeckService {
         HttpResponse<String> drawCardsFromDeckResponse = httpClient.send(drawCardsFromDeckRequest, HttpResponse.BodyHandlers.ofString());
 
         List<String> cardsPath = Arrays.asList("cards");
-        List<String> additionalInfo = null;  // Assuming there's no additional pile-specific info needed for simple card parsing
+        List<String> additionalInfo = null;
         List<Card> cards = parseCards(gameDeck,drawCardsFromDeckResponse.body(), "deck_id", cardsPath, additionalInfo);
 
         gameDeck.setRemainingCardsDeck(0);
@@ -352,6 +348,8 @@ public class GameDeckService {
      */
     public void returnExplosionCardToDealerPile(Game game, Integer location, Card cardToBeReturned) throws IOException, InterruptedException {
 
+        log.info(cardToBeReturned.getCode());
+
         // Random placement in the pile
         if (location == 69 || location < -1) {
             returnCardsToPile(game.getGameDeck(), "dealer", cardToBeReturned.getCode());
@@ -410,7 +408,7 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
-    public List<Card> removeSpecifcCardFromPlayPile(GameDeck gameDeck, String cardsToRemove) throws IOException, InterruptedException {
+    public List<Card> removeSpecificCardFromPlayPile(GameDeck gameDeck, String cardsToRemove) throws IOException, InterruptedException {
         String uri = String.format("https://deckofcardsapi.com/api/deck/%s/pile/play/draw/?cards=%s", gameDeck.getDeckID(), cardsToRemove);
         HttpRequest request = buildGetRequest(uri);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -440,14 +438,9 @@ public class GameDeckService {
         } else {
             uri = String.format(baseUri + "random/", gameDeck.getDeckID(), userId);
         }
-        log.info(cardId);
-        log.info(uri);
 
         HttpRequest request = buildGetRequest(uri);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        log.info("Drew Card from Player Pile");
-        log.info(response.body());
 
         List<String> cardsPath = List.of("cards");
         List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, null);
@@ -471,16 +464,10 @@ public class GameDeckService {
         List<String> cardsPath = Arrays.asList("piles", userId.toString(), "cards");
         List<Card> cards = parseCards(gameDeck,drawCardFromPlayerResponse.body(), "deck_id", cardsPath, null);
 
-        List<String> cardValues = new ArrayList<>();
-
-        for (Card card: cards) {
-            if (Objects.equals(card.getInternalCode(), "defuse")) {
-                cardValues.add(card.getCode());
+        for (Card card : cards) {
+            if ("defuse".equals(card.getInternalCode())) {
+                return card.getCode();
             }
-        }
-
-        if (!cardValues.isEmpty()) {
-           return cardValues.get(0);
         }
 
         return null;
