@@ -152,9 +152,9 @@ public class GameEngineEventListenerTest {
     public void testPlayedCard() {
         Long gameId = 12345L;
         String userName = "user";
-        CardPlayedEvent event = new CardPlayedEvent(this, "explosion", gameId, userName);
+        CardPlayedEvent event = new CardPlayedEvent(this, "explosion", gameId, userName, "AB");
         listener.playedCard(event);
-        verify(webSocketService).sendMessageCardPlayed(gameId, userName, "explosion");
+        verify(webSocketService).sendMessageCardPlayed(gameId, userName, "explosion", "AB");
     }
 
     @Test

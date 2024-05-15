@@ -160,11 +160,12 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
-    public void sendMessageCardPlayed(Long gameId, String userName, String internalCode) {
+    public void sendMessageCardPlayed(Long gameId, String userName, String internalCode, String externalCode) {
         Map<String, Object> params = Map.of(
                 "type", "cardPlayed",
                 "userName", userName,
-                "cardPlayed", internalCode
+                "cardPlayed", internalCode,
+                "externalCode", externalCode
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }

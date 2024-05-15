@@ -77,7 +77,7 @@ public class GameEngineEventListener {
     @EventListener
     public void playedCard(CardPlayedEvent event) {
         log.info("Player {} played card {}", event.getInvokingPlayerUserName(), event.getInternalCode());
-        webSocketService.sendMessageCardPlayed(event.getGameId(), event.getInvokingPlayerUserName(), event.getInternalCode());
+        webSocketService.sendMessageCardPlayed(event.getGameId(), event.getInvokingPlayerUserName(), event.getInternalCode(), event.getExternalCode());
     }
 
     @EventListener
