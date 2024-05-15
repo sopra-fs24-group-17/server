@@ -282,6 +282,13 @@ public class GameDeckService {
         String returnCardsToPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/add/?cards=%s", gameDeck.getDeckID(), pileIdentifier, cardsToBeReturned);
         HttpRequest returnCardsToPileRequest = buildGetRequest(returnCardsToPileUri);
         HttpResponse<String> returnCardsToPileResponse = httpClient.send(returnCardsToPileRequest, HttpResponse.BodyHandlers.ofString());
+
+        // Calculate the number of cards to be returned
+        int numCardsToBeReturned = cardsToBeReturned.isEmpty() ? 0 : cardsToBeReturned.split(",").length;
+
+        // Update the remaining dealer cards count
+        gameDeck.setRemainingCardsDealerStack(gameDeck.getRemainingCardsDealerStack() + numCardsToBeReturned);
+        gameDeckRepository.saveAndFlush(gameDeck);
     }
 
     /**
