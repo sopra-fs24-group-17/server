@@ -1,10 +1,8 @@
-/*
 package ch.uzh.ifi.hase.soprafs24.controller;
 
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
 import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs24.service.GameDeckService;
 import ch.uzh.ifi.hase.soprafs24.service.GameEngineService;
 import ch.uzh.ifi.hase.soprafs24.service.WebSocketService;
@@ -32,16 +30,12 @@ class GameEngineControllerTest {
     @Mock
     private WebSocketService webSocketService;
 
-    @Mock
-    private UserRepository userRepository;
-
     @InjectMocks
     private GameEngineController gameEngineController;
 
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        gameEngineController = new GameEngineController(userRepository);
     }
 
     @Test
@@ -257,12 +251,12 @@ class GameEngineControllerTest {
         doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
         doNothing().when(gameEngineService).handleShuffleCard(any(Game.class), eq(userId));
 
-         gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
+        gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
 
-         verify(gameEngineService).handleAttackCard(game, userId);
-         verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
-         verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
-         verify(gameEngineService).dispatchGameState(gameId, userId);
+        verify(gameEngineService).handleAttackCard(game, userId);
+        verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
+        verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
+        verify(gameEngineService).dispatchGameState(gameId, userId);
     }
 
     @Test
@@ -400,7 +394,6 @@ class GameEngineControllerTest {
         verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB,CD");
         verify(gameEngineService).dispatchGameState(gameId, userId);
     }
-    */
 
     @Test
     void testHandleExplosionPlacement() throws IOException, InterruptedException {
