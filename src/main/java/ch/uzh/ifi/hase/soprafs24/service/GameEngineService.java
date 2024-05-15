@@ -11,8 +11,6 @@ import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -23,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -75,6 +72,7 @@ public class GameEngineService {
 
         // Ensure that the gameId is valid
         if (!optionalGame.isPresent()) {
+            log.info("Invalid GameId provided");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GameId provided");
         }
         return optionalGame.get();
@@ -109,6 +107,7 @@ public class GameEngineService {
 
         // Verify that the game can actually be started
         if (!state.equals(GameState.PREPARING)) {
+            log.info("Can't start a game that is beyond the preparation phase");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't start a game that is beyond the preparation phase");
         }
 
@@ -119,8 +118,8 @@ public class GameEngineService {
         this.gameDeckService.createDealerPile(currentGame);
 
         // Remove Explosions and Defusions from Deck
-        List<Card> explosions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "AS,AH,AC,AD");
-        List<Card> defusions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "KS,KH,KC,KD,X1,X2");
+        List<Card> explosions = gameDeckService.removeSpecificCardsFromPile(currentGame.getGameDeck(), "AS,AH,AC,AD", "dealer");
+        List<Card> defusions = gameDeckService.removeSpecificCardsFromPile(currentGame.getGameDeck(), "KS,KH,KC,KD,X1,X2", "dealer");
 
         // Fetch all active players
         List<User> players = currentGame.getPlayers();
@@ -198,6 +197,7 @@ public class GameEngineService {
         Game currentGame = findGameById(gameId);
 
         if (!userId.equals(currentGame.getCurrentTurn().getId())) {
+            log.info("It's not your turn");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "It's not your turn");
         }
 
@@ -271,12 +271,14 @@ public class GameEngineService {
         Game currentGame = findGameById(gameId);
 
         if (!currentGame.getState().equals(GameState.ONGOING)) {
+            log.info("User can only leave ongoing games");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User can only leave ongoing games");
         }
 
         List<User> players = currentGame.getPlayers();
 
         if (!players.contains(terminatingUser)) {
+            log.info("User is not part of the game");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not part of the game");
         }
 
@@ -310,6 +312,7 @@ public class GameEngineService {
         List<User> players = gameToBeTerminated.getPlayers();
 
         if (players.size() > 1) {
+            log.info("Still more than one active player in the game session found");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Still more than one active player in the game session found");
         }
 
@@ -430,12 +433,16 @@ public class GameEngineService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void handleFavorCard(Game game, Long userId, Long targetUserId) throws IOException, InterruptedException {
+    public void handleFavorCard(Game game, Long userId, String targetUserName) throws IOException, InterruptedException {
+
+        User targetUser = userRepository.findByUsername(targetUserName);
+        Long targetUserId = targetUser.getId();
 
         List<Long> playerIds = game.getPlayers().stream().map(User::getId).toList();
 
         // Assert that the targetUser is still part of the game
         if(!playerIds.contains(targetUserId)) {
+            log.info("Targeted User is not part of the game");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted User is not part of the game");
         }
 
@@ -455,15 +462,36 @@ public class GameEngineService {
         eventPublisher.publishEvent(playerCardEvent);
     }
 
-    public void handleNopeCard(Game game) {
-        // Let know the client that the first action doesn't have an effect
-        NopeEvent nopeEvent = new NopeEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
-        eventPublisher.publishEvent(nopeEvent);
+    public void handleExplosionPlacement(Long gameId, Long userId, Integer placementPosition) throws IOException, InterruptedException {
+        Game game = findGameById(gameId);
+
+        // take top card from playPile
+        List<Card> topCard = gameDeckService.exploreTopCardPlayPile(game.getGameDeck());
+        log.info(topCard.get(0).getCode());
+        log.info(topCard.get(topCard.size()-1).getCode());
+
+        List<String> cardValues = new ArrayList<>();
+        cardValues.add(topCard.get(topCard.size() - 1).getCode());
+
+        List<Card> explosionCard = gameDeckService.removeSpecificCardsFromPile(game.getGameDeck(),String.join(",", cardValues), "play");
+
+        // take defuseCard from player and put to playPile
+        String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
+
+        if (defuseCard == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User doesn't hold any defuse card");
+        }
+
+        Card drawnCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
+        List<Card> drawnCards = new ArrayList<>();
+        drawnCards.add(drawnCard);
+        gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
+
+        // return explosion card according to user request
+        gameDeckService.returnExplosionCardToDealerPile(game, placementPosition, explosionCard.get(0));
+        dispatchGameState(gameId, userId);
+        turnValidation(gameId, userId);
     }
-
-
-
-
 
     /**
      * Handler of the bomb card
@@ -473,10 +501,7 @@ public class GameEngineService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void handleExplosionCard(Long gameId, Long userId, String explosionId, Integer position) throws IOException, InterruptedException {
-        if(position==null)
-            position=-1;
-
+    public void handleExplosionCard(Long gameId, Long userId, String explosionId) throws IOException, InterruptedException {
         Game game = findGameById(gameId);
 
         User explodedUser = userRepository.findUserById(userId);
@@ -492,43 +517,24 @@ public class GameEngineService {
 
         // If he has a defuse card, request him to play the defuse card
         if (defuseCard != null) {
-            log.info(defuseCard);
-            // Draw the card from the user pile and place it on top of the play pile
-            Card drawnCard = gameDeckService.drawCardFromPlayerPile(game.getGameDeck(), userId,defuseCard);
-            log.info("Succesfully drawnCard");
-            List<Card> drawnCards = new ArrayList<>();
-            drawnCards.add(drawnCard);
-            gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
+            // send placementRequestEvent to client
 
-            // Send message to respective user that his defuse card was taken
-            DefuseEvent defuseEvent = new DefuseEvent(this, userId, game.getGameId(), drawnCards);
-            eventPublisher.publishEvent(defuseEvent);
+            // put explosion card to playPile
+            Card explosionCard = new Card();
+            explosionCard.setCode(explosionId);
+            explosionCard.setInternalCode("explosion");
 
-            // Place explosion card back on deck at random location
-            // To do -- allow user to select where exactly to place the explosion card
-            if(position >= 0 ) {
+            List<Card> playedCards = new ArrayList<>();
+            playedCards.add(explosionCard);
 
-                log.info("Place in specific position");
-                List<Card> cards = new ArrayList<>();
-                if(position > 0)
-                    cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(),position);
+            gameDeckService.placeCardsToPlayPile(game, userId, playedCards, explosionId);
 
-                gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
-                List<String> cardValues = new ArrayList<>();
+            // dispatch GameState
+            dispatchGameState(gameId, userId);
 
-                for (Card card : cards) {
-                    cardValues.add(card.getCode());
-                }
-                gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", String.join(",", cardValues));
-
-            }else{
-                log.info("Place in random position");
-                gameDeckService.returnCardsToPile(game.getGameDeck(), "dealer", explosionId);
-                gameDeckService.shuffleCardsInDealerPile(game.getGameDeck());
-            }
-            log.info(gameDeckService.getRemainingDealerPileStats(game.getGameDeck(), game.getGameDeck().getDealerPileId()));
-
-            turnValidation(gameId, userId);
+            // send placementRequest
+            PlacementEvent placementEvent = new PlacementEvent(this, gameId, userId);
+            eventPublisher.publishEvent(placementEvent);
 
         } else {
             // If he has no defuse card, put the user out of the game

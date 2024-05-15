@@ -67,7 +67,7 @@ class GameEngineControllerTest {
         cardIds.add(card2.getCode());
 
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(targetUserId);
+        cardMoveRequest.setTargetUsername("testUser");
 
         List<Card> transformedCards = new ArrayList<>();
         transformedCards.add(card1);
@@ -112,7 +112,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("testUser");
 
         Card card = new Card();
         card.setInternalCode("shuffle");
@@ -142,7 +142,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
 
         Card card = new Card();
         card.setInternalCode("future");
@@ -172,7 +172,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
 
         Card card = new Card();
         card.setInternalCode("skip");
@@ -204,7 +204,11 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
+
+        User targetUser = new User();
+        targetUser.setId(1L);
+        targetUser.setUsername("targetUser");
 
         Card card = new Card();
         card.setInternalCode("favor");
@@ -215,13 +219,14 @@ class GameEngineControllerTest {
 
         when(gameEngineService.transformCardsToInternalRepresentation(cardIds)).thenReturn(transformedCards);
         when(gameEngineService.findGameById(gameId)).thenReturn(game);
+        /* Mock user repo: when(userRepository.findByUsername(anyString())).thenReturn(targetUser); */
         doNothing().when(gameDeckService).removeCardsFromPlayerPile(any(Game.class), eq(userId), anyString());
         doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
         doNothing().when(gameEngineService).handleShuffleCard(any(Game.class), eq(userId));
 
         gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
 
-        verify(gameEngineService).handleFavorCard(game, userId, cardMoveRequest.getTargetUserId());
+        verify(gameEngineService).handleFavorCard(game, userId, cardMoveRequest.getTargetUsername());
         verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB");
         verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB");
         verify(gameEngineService).dispatchGameState(gameId, userId);
@@ -236,7 +241,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
 
         Card card = new Card();
         card.setInternalCode("attack");
@@ -266,7 +271,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB", "CD");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
 
         Card card1 = new Card();
         card1.setInternalCode("tacocat");
@@ -300,7 +305,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB", "CD");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
 
         Card card1 = new Card();
         card1.setInternalCode("cattermelon");
@@ -334,7 +339,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB", "CD");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
 
         Card card1 = new Card();
         card1.setInternalCode("beardcat");
@@ -368,7 +373,7 @@ class GameEngineControllerTest {
         CardMoveRequest cardMoveRequest = new CardMoveRequest();
         List<String> cardIds = List.of("AB", "CD");
         cardMoveRequest.setCardIds(cardIds);
-        cardMoveRequest.setTargetUserId(1L);
+        cardMoveRequest.setTargetUsername("targetUser");
 
         Card card1 = new Card();
         card1.setInternalCode("hairypotatocat");
@@ -393,6 +398,19 @@ class GameEngineControllerTest {
         verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "AB,CD");
         verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "AB,CD");
         verify(gameEngineService).dispatchGameState(gameId, userId);
+    }
+
+    @Test
+    void testHandleExplosionPlacement() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        String placementPosition = "1";
+
+        doNothing().when(gameEngineService).handleExplosionPlacement(gameId, userId, Integer.parseInt(placementPosition));
+
+        gameEngineController.handleExplosionPlacement(gameId, userId, placementPosition);
+
+        verify(gameEngineService, times(1)).handleExplosionPlacement(gameId, userId, Integer.parseInt(placementPosition));
     }
 
 }

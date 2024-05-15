@@ -42,15 +42,6 @@ public class Game implements Serializable {
     @JoinColumn(name = "currentTurn", referencedColumnName = "id")
     private User currentTurn;
 
-    @Column(nullable = true)
-    private Long currentHand;
-
-    @Column(nullable = true)
-    private Long scoreBoard;
-
-    @Column(nullable = true)
-    private String turns;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private GameState state = GameState.PREPARING;

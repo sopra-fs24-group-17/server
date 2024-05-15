@@ -2,10 +2,7 @@ package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
 import ch.uzh.ifi.hase.soprafs24.entity.*;
-import ch.uzh.ifi.hase.soprafs24.event.AttackEvent;
-import ch.uzh.ifi.hase.soprafs24.event.GameStateEvent;
-import ch.uzh.ifi.hase.soprafs24.event.PlayerCardEvent;
-import ch.uzh.ifi.hase.soprafs24.event.SkipEvent;
+import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
@@ -565,4 +562,130 @@ public class GameEngineServiceTest {
         verify(spyGameEngineService, times(1)).terminatingGame(gameId);
     }
 
+    @Test
+    public void testHandleExplosionPlacement_NoDefuseCard() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        Integer placementPosition = 3;
+
+        Game mockGame = new Game();
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameDeck(mockDeck);
+        Card explosionCard = new Card();
+        explosionCard.setInternalCode("explosion");
+        explosionCard.setCode("EX");
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(Collections.singletonList(explosionCard));
+        when(gameDeckService.exploreDefuseCardInPlayerPile(mockDeck, userId)).thenReturn(null);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameEngineService.handleExplosionPlacement(gameId, userId, placementPosition);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("User doesn't hold any defuse card", exception.getReason());
+    }
+
+    @Test
+    public void testHandleFavorCard_Success() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        String targetUserName = "targetUser";
+
+        Game mockGame = mock(Game.class);
+        GameDeck mockDeck = mock(GameDeck.class);
+        User targetUser = new User();
+        targetUser.setId(3L);
+        targetUser.setUsername(targetUserName);
+
+        User user = new User();
+        user.setId(userId);
+        user.setUsername("user");
+
+        List<User> players = Arrays.asList(user, targetUser);
+        when(mockGame.getPlayers()).thenReturn(players);
+        when(mockGame.getGameDeck()).thenReturn(mockDeck);
+        when(userRepository.findByUsername(targetUserName)).thenReturn(targetUser);
+
+        Card randomCard = new Card();
+        randomCard.setCode("RC1");
+        randomCard.setInternalCode("randomCard");
+
+        when(gameDeckService.drawCardFromPlayerPile(mockDeck, targetUser.getId(), null)).thenReturn(randomCard);
+
+        doNothing().when(eventPublisher).publishEvent(any(StealCardEvent.class));
+        doNothing().when(gameDeckService).returnCardsToPile(mockDeck, userId.toString(), randomCard.getCode());
+        doNothing().when(eventPublisher).publishEvent(any(PlayerCardEvent.class));
+
+        gameEngineService.handleFavorCard(mockGame, userId, targetUserName);
+
+        verify(userRepository, times(1)).findByUsername(targetUserName);
+        verify(gameDeckService, times(1)).drawCardFromPlayerPile(mockDeck, targetUser.getId(), null);
+        verify(eventPublisher, times(1)).publishEvent(any(StealCardEvent.class));
+        verify(gameDeckService, times(1)).returnCardsToPile(mockDeck, userId.toString(), randomCard.getCode());
+        verify(eventPublisher, times(1)).publishEvent(any(PlayerCardEvent.class));
+    }
+
+    @Test
+    public void testHandleFavorCard_TargetUserNotInGame() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        String targetUserName = "targetUser";
+
+        Game mockGame = mock(Game.class);
+        User targetUser = new User();
+        targetUser.setId(3L);
+        targetUser.setUsername(targetUserName);
+
+        User user = new User();
+        user.setId(userId);
+        user.setUsername("user");
+
+        List<User> players = Collections.singletonList(user);
+        when(mockGame.getPlayers()).thenReturn(players);
+        when(userRepository.findByUsername(targetUserName)).thenReturn(targetUser);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameEngineService.handleFavorCard(mockGame, userId, targetUserName);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Targeted User is not part of the game", exception.getReason());
+
+        verify(userRepository, times(1)).findByUsername(targetUserName);
+        verify(gameDeckService, times(0)).drawCardFromPlayerPile(any(GameDeck.class), anyLong(), anyString());
+        verify(eventPublisher, times(0)).publishEvent(any(StealCardEvent.class));
+        verify(gameDeckService, times(0)).returnCardsToPile(any(GameDeck.class), anyString(), anyString());
+        verify(eventPublisher, times(0)).publishEvent(any(PlayerCardEvent.class));
+    }
+
+    @Test
+    public void testHandleExplosionCard_WithDefuseCard() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        String explosionId = "EXP1";
+
+        Game mockGame = mock(Game.class);
+        GameDeck mockDeck = mock(GameDeck.class);
+        User explodedUser = new User();
+        explodedUser.setId(userId);
+        explodedUser.setUsername("explodedUser");
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(mockGame.getGameDeck()).thenReturn(mockDeck);
+        when(userRepository.findUserById(userId)).thenReturn(explodedUser);
+        when(gameDeckService.exploreDefuseCardInPlayerPile(mockDeck, userId)).thenReturn("DEF1");
+
+        Card mockExplosionCard = new Card();
+        mockExplosionCard.setCode(explosionId);
+        mockExplosionCard.setInternalCode("explosion");
+
+        List<Card> topCards = new ArrayList<>();
+        topCards.add(mockExplosionCard);
+
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(topCards);
+        gameEngineService.handleExplosionCard(gameId, userId, explosionId);
+        verify(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), eq(explosionId));
+    }
 }
