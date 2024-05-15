@@ -11,8 +11,6 @@ import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -23,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -121,8 +118,8 @@ public class GameEngineService {
         this.gameDeckService.createDealerPile(currentGame);
 
         // Remove Explosions and Defusions from Deck
-        List<Card> explosions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "AS,AH,AC,AD");
-        List<Card> defusions = gameDeckService.removeSpecificCardsFromDealerPile(currentGame.getGameDeck(), "KS,KH,KC,KD,X1,X2");
+        List<Card> explosions = gameDeckService.removeSpecificCardsFromPile(currentGame.getGameDeck(), "AS,AH,AC,AD", "dealer");
+        List<Card> defusions = gameDeckService.removeSpecificCardsFromPile(currentGame.getGameDeck(), "KS,KH,KC,KD,X1,X2", "dealer");
 
         // Fetch all active players
         List<User> players = currentGame.getPlayers();
@@ -453,14 +450,13 @@ public class GameEngineService {
 
         // take top card from playPile
         List<Card> topCard = gameDeckService.exploreTopCardPlayPile(game.getGameDeck());
-        if (!Objects.equals(topCard.get(0).getInternalCode(), "explosion")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Top card must be an explosion");
-        }
+        log.info(topCard.get(0).getCode());
+        log.info(topCard.get(topCard.size()-1).getCode());
 
         List<String> cardValues = new ArrayList<>();
-        cardValues.add(topCard.get(0).getCode());
+        cardValues.add(topCard.get(topCard.size() - 1).getCode());
 
-        List<Card> explosionCard = gameDeckService.removeSpecifcCardFromPlayPile(game.getGameDeck(), String.join(",", cardValues));
+        List<Card> explosionCard = gameDeckService.removeSpecificCardsFromPile(game.getGameDeck(),String.join(",", cardValues), "play");
 
         // take defuseCard from player and put to playPile
         String defuseCard = gameDeckService.exploreDefuseCardInPlayerPile(game.getGameDeck(), userId);
@@ -475,7 +471,7 @@ public class GameEngineService {
         gameDeckService.placeCardsToPlayPile(game, userId, drawnCards, drawnCard.getCode());
 
         // return explosion card according to user request
-        gameDeckService.returnExplosionCardToDealerPile(game, placementPosition, topCard.get(0));
+        gameDeckService.returnExplosionCardToDealerPile(game, placementPosition, explosionCard.get(0));
         dispatchGameState(gameId, userId);
         turnValidation(gameId, userId);
     }

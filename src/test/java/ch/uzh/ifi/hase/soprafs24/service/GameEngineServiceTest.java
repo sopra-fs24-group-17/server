@@ -563,29 +563,6 @@ public class GameEngineServiceTest {
     }
 
     @Test
-    public void testHandleExplosionPlacement_TopCardNotExplosion() throws IOException, InterruptedException {
-        Long gameId = 1L;
-        Long userId = 2L;
-        Integer placementPosition = 3;
-
-        Game mockGame = new Game();
-        GameDeck mockDeck = new GameDeck();
-        mockGame.setGameDeck(mockDeck);
-        Card nonExplosionCard = new Card();
-        nonExplosionCard.setInternalCode("not_explosion");
-
-        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
-        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(Collections.singletonList(nonExplosionCard));
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            gameEngineService.handleExplosionPlacement(gameId, userId, placementPosition);
-        });
-
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
-        assertEquals("Top card must be an explosion", exception.getReason());
-    }
-
-    @Test
     public void testHandleExplosionPlacement_NoDefuseCard() throws IOException, InterruptedException {
         Long gameId = 1L;
         Long userId = 2L;
