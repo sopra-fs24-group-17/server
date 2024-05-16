@@ -688,4 +688,63 @@ public class GameEngineServiceTest {
         gameEngineService.handleExplosionCard(gameId, userId, explosionId);
         verify(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), eq(explosionId));
     }
+
+    @Test
+    public void testReloadGameState_Success() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        User user1 = new User();
+        user1.setId(1L);
+
+        User user2 = new User();
+        user2.setId(userId);
+
+        GameDeck mockDeck = new GameDeck();
+        Game mockGame = new Game();
+        mockGame.setState(GameState.ONGOING);
+        mockGame.setGameId(gameId);
+        mockGame.setPlayers(Arrays.asList(user1, user2));
+        mockGame.setGameDeck(mockDeck);
+
+        Card topCard = new Card();
+        topCard.setCode("AH");
+        topCard.setInternalCode("Ace of Hearts");
+        List<Card> topCards = Arrays.asList(topCard);
+
+        String jsonResponse = "{\"dealer\": {\"remaining\": 52}}";
+        Map<String, Integer> pileCardCounts = Map.of("dealer", 52);
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.getRemainingPileStats(mockDeck, userId)).thenReturn(jsonResponse);
+        when(gameDeckService.parsePileCardCounts(jsonResponse)).thenReturn(pileCardCounts);
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(topCards);
+
+        gameEngineService.reloadGameState(gameId, userId);
+
+        verify(gameDeckService, times(1)).reloadPlayerPile(mockDeck, userId);
+    }
+
+    @Test
+    public void testReloadGameState_UserNotPartOfGame() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        User user1 = new User();
+        user1.setId(1L);
+
+        Game mockGame = new Game();
+        mockGame.setGameId(gameId);
+        mockGame.setState(GameState.ONGOING);
+        mockGame.setPlayers(Collections.singletonList(user1));
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameEngineService.reloadGameState(gameId, userId);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Targeted User is not part of the game", exception.getReason());
+    }
 }

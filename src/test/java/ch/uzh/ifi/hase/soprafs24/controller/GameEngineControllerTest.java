@@ -12,11 +12,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class GameEngineControllerTest {
@@ -406,6 +410,33 @@ class GameEngineControllerTest {
         gameEngineController.handleExplosionPlacement(gameId, userId, placementPosition);
 
         verify(gameEngineService, times(1)).handleExplosionPlacement(gameId, userId, Integer.parseInt(placementPosition));
+    }
+
+    @Test
+    public void testLoadCachedGame_Success() throws IOException, InterruptedException {
+        // Given
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        gameEngineController.loadCachedGame(gameId, userId);
+
+        verify(gameEngineService, times(1)).reloadGameState(gameId, userId);
+    }
+
+    @Test
+    public void testLoadCachedGame_UserNotPartOfGame() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted User is not part of the game"))
+                .when(gameEngineService).reloadGameState(gameId, userId);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameEngineController.loadCachedGame(gameId, userId);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Targeted User is not part of the game", exception.getReason());
     }
 
 }
