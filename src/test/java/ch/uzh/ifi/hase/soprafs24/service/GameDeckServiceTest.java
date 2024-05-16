@@ -6,6 +6,7 @@ import ch.uzh.ifi.hase.soprafs24.entity.Game;
 import ch.uzh.ifi.hase.soprafs24.entity.GameDeck;
 import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
+import ch.uzh.ifi.hase.soprafs24.event.ExplosionReturnedToDeckEvent;
 import ch.uzh.ifi.hase.soprafs24.event.PeekIntoDeckEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
@@ -13,6 +14,7 @@ import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;
 import ch.uzh.ifi.hase.soprafs24.rest.dto.GamePostDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import org.checkerframework.checker.units.qual.C;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -736,4 +738,172 @@ public class GameDeckServiceTest {
 
     }
 
+    @Test
+    public void testReturnExplosionCardToDealerPile_random() throws IOException, InterruptedException {
+        Card returnedCard = new Card();
+        returnedCard.setCode("AS");
+        returnedCard.setInternalCode("bomb");
+
+        String responseBody = "{\n" +
+                "  \"deck_id\": \"testDeckId\",\n" +
+                "  \"cards\": [\n" +
+                "    {\"code\": \"AS\", \"suit\": \"SPADES\", \"image\": \"http://image1.com\"},\n" +
+                "    {\"code\": \"AC\", \"suit\": \"CLUBS\", \"image\": \"http://image2.com\"}\n" +
+                "  ]\n" +
+                "}";
+
+        Map<String, Integer> mockRemaining = new HashMap<>();
+        mockRemaining.put("dealer", 55);
+        game.setCurrentTurn(mockUser);
+
+        // Mock the saveCards method to return the list of cards
+        doReturn(responseBody).when(spyGameDeckService).getRemainingPileStats(any(GameDeck.class), any(Long.class));
+        doReturn(mockRemaining).when(spyGameDeckService).parsePileCardCounts(any(String.class));
+        doNothing().when(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode());
+        doNothing().when(spyGameDeckService).shuffleCardsInDealerPile(testDeck);
+        doNothing().when(eventPublisher).publishEvent(any());
+
+        spyGameDeckService.returnExplosionCardToDealerPile(game, -10, returnedCard);;
+
+        verify(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode());
+        verify(spyGameDeckService).shuffleCardsInDealerPile(testDeck);
+        verify(eventPublisher).publishEvent(any(ExplosionReturnedToDeckEvent.class));
+    }
+
+    @Test
+    public void testReturnExplosionCardToDealerPile_topOfPile() throws IOException, InterruptedException {
+        Card returnedCard = new Card();
+        returnedCard.setCode("AS");
+        returnedCard.setInternalCode("bomb");
+
+        String responseBody = "{\n" +
+                "  \"deck_id\": \"testDeckId\",\n" +
+                "  \"cards\": [\n" +
+                "    {\"code\": \"AS\", \"suit\": \"SPADES\", \"image\": \"http://image1.com\"},\n" +
+                "    {\"code\": \"AC\", \"suit\": \"CLUBS\", \"image\": \"http://image2.com\"}\n" +
+                "  ]\n" +
+                "}";
+
+        Map<String, Integer> mockRemaining = new HashMap<>();
+        mockRemaining.put("dealer", 55);
+        game.setCurrentTurn(mockUser);
+
+        // Mock the saveCards method to return the list of cards
+        doReturn(responseBody).when(spyGameDeckService).getRemainingPileStats(any(GameDeck.class), any(Long.class));
+        doReturn(mockRemaining).when(spyGameDeckService).parsePileCardCounts(any(String.class));
+        doNothing().when(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode());
+        doNothing().when(eventPublisher).publishEvent(any());
+
+        spyGameDeckService.returnExplosionCardToDealerPile(game, 0, returnedCard);;
+
+        verify(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode());
+        verify(eventPublisher).publishEvent(any(ExplosionReturnedToDeckEvent.class));
+    }
+
+    @Test
+    public void testReturnExplosionCardToDealerPile_bottomOfPile() throws IOException, InterruptedException {
+        Card returnedCard = new Card();
+        returnedCard.setCode("AS");
+        returnedCard.setInternalCode("bomb");
+
+        Card pileCard = new Card();
+        pileCard.setCode("5S");
+        pileCard.setInternalCode("shuffle");
+        List<Card> mockCards = new ArrayList<>();
+
+        mockCards.add(pileCard);
+
+        String responseBody = "{\n" +
+                "  \"deck_id\": \"testDeckId\",\n" +
+                "  \"cards\": [\n" +
+                "    {\"code\": \"AS\", \"suit\": \"SPADES\", \"image\": \"http://image1.com\"},\n" +
+                "    {\"code\": \"AC\", \"suit\": \"CLUBS\", \"image\": \"http://image2.com\"}\n" +
+                "  ]\n" +
+                "}";
+
+        Map<String, Integer> mockRemaining = new HashMap<>();
+        mockRemaining.put("dealer", 1);
+        game.setCurrentTurn(mockUser);
+
+        // Mock the saveCards method to return the list of cards
+        doReturn(responseBody).when(spyGameDeckService).getRemainingPileStats(any(GameDeck.class), any(Long.class));
+        doReturn(mockRemaining).when(spyGameDeckService).parsePileCardCounts(any(String.class));
+        doReturn(mockCards).when(spyGameDeckService).drawCardsFromDealerPile(testDeck, 1);
+        doNothing().when(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode()+","+pileCard.getCode());
+        doNothing().when(eventPublisher).publishEvent(any());
+
+        spyGameDeckService.returnExplosionCardToDealerPile(game, -1, returnedCard);;
+
+        verify(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode()+","+pileCard.getCode());
+        verify(spyGameDeckService).drawCardsFromDealerPile(testDeck, 1);
+        verify(eventPublisher).publishEvent(any(ExplosionReturnedToDeckEvent.class));
+    }
+
+    @Test
+    public void testReturnExplosionCardToDealerPile_else() throws IOException, InterruptedException {
+        Card returnedCard = new Card();
+        returnedCard.setCode("AS");
+        returnedCard.setInternalCode("bomb");
+
+        Card pileCard = new Card();
+        pileCard.setCode("5S");
+        pileCard.setInternalCode("shuffle");
+        List<Card> mockCards = new ArrayList<>();
+
+        mockCards.add(pileCard);
+
+        String responseBody = "{\n" +
+                "  \"deck_id\": \"testDeckId\",\n" +
+                "  \"cards\": [\n" +
+                "    {\"code\": \"AS\", \"suit\": \"SPADES\", \"image\": \"http://image1.com\"},\n" +
+                "    {\"code\": \"AC\", \"suit\": \"CLUBS\", \"image\": \"http://image2.com\"}\n" +
+                "  ]\n" +
+                "}";
+
+        Map<String, Integer> mockRemaining = new HashMap<>();
+        mockRemaining.put("dealer", 5);
+        game.setCurrentTurn(mockUser);
+
+        // Mock the saveCards method to return the list of cards
+        doReturn(responseBody).when(spyGameDeckService).getRemainingPileStats(any(GameDeck.class), any(Long.class));
+        doReturn(mockRemaining).when(spyGameDeckService).parsePileCardCounts(any(String.class));
+        doReturn(mockCards).when(spyGameDeckService).drawCardsFromDealerPile(testDeck, 2);
+        doNothing().when(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode()+","+pileCard.getCode());
+        doNothing().when(eventPublisher).publishEvent(any());
+
+        spyGameDeckService.returnExplosionCardToDealerPile(game, 2, returnedCard);;
+
+        verify(spyGameDeckService).returnCardsToPile(testDeck, "dealer", returnedCard.getCode()+","+pileCard.getCode());
+        verify(spyGameDeckService).drawCardsFromDealerPile(testDeck, 2);
+        verify(eventPublisher).publishEvent(any(ExplosionReturnedToDeckEvent.class));
+    }
+
+    @Test
+    public void testRemoveCardsFromPlayerPile_apiFailure() throws IOException, InterruptedException {
+        String jsonRes = "{\"success\":false, \"error\":\"User doesn't possess the card(s)\"}";
+        HttpResponse<String> mockResponse = mock(HttpResponse.class);
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(mockResponse);
+        when(mockResponse.body()).thenReturn(jsonRes);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameDeckService.removeCardsFromPlayerPile(game, mockUser.getId(), "AS");
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Move is invalid, user doesn't poses the card(s) played", exception.getReason());
+    }
+
+    @Test
+    public void testRemoveCardsFromPlayerPile_ioException() throws IOException, InterruptedException {
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenThrow(new IOException("Network error"));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameDeckService.removeCardsFromPlayerPile(game, mockUser.getId(), "AS");
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Move is invalid, user doesn't poses the card(s) played", exception.getReason());
+    }
 }
