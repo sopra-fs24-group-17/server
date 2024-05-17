@@ -259,4 +259,29 @@ public class GameEngineEventListenerTest {
         listener.attackCardPlayed(event);
         verifyNoInteractions(webSocketService);
     }
+
+    @Test
+    public void testPlacementRequest() {
+        Long gameId = 12345L;
+        Long userId = 1L;
+
+        PlacementEvent placementEvent = new PlacementEvent(this, gameId, userId);
+        listener.placementRequest(placementEvent);
+        verify(webSocketService).sendPlacementRequest(gameId, userId);
+    }
+
+    @Test
+    public void testGetLucky() {
+        Long gameId = 12345L;
+        Long userId = 1L;
+
+        Card randomCard = new Card();
+        randomCard.setInternalCode("lucky");
+        randomCard.setCode("X1");
+
+        LuckyEvent luckyEvent = new LuckyEvent(this, userId, gameId, randomCard);
+        listener.getLucky(luckyEvent);
+        verify(webSocketService).sendMessageGetLucky(gameId, userId, randomCard);
+    }
+
 }

@@ -562,6 +562,25 @@ public class GameDeckService {
         return pileCardCounts;
     }
 
+    /**
+     * Method that reloads a designated player pile, used to reload the state of a game after connectivity issues.
+     * @param gameDeck
+     * @param userId
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void reloadPlayerPile(GameDeck gameDeck, Long userId) throws IOException, InterruptedException {
+        String listCardInPlayerPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/list/", gameDeck.getDeckID(), userId);
+        HttpRequest listCardInPlayerPileRequest = buildGetRequest(listCardInPlayerPileUri);
+        HttpResponse<String> drawCardFromPlayerResponse = httpClient.send(listCardInPlayerPileRequest, HttpResponse.BodyHandlers.ofString());
+
+        List<String> cardsPath = Arrays.asList("piles", userId.toString(), "cards");
+        List<Card> cards = parseCards(gameDeck,drawCardFromPlayerResponse.body(), "deck_id", cardsPath, null);
+
+        PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, userId, gameDeck.getGame().getGameId(), cards);        eventPublisher.publishEvent(playerCardEvent);
+        eventPublisher.publishEvent(playerCardEvent);
+    }
+
 
     /**
      * General method to parse card data from different types of JSON responses.
