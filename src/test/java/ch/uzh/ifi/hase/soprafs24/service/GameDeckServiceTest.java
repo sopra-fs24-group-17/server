@@ -8,6 +8,7 @@ import ch.uzh.ifi.hase.soprafs24.entity.User;
 import ch.uzh.ifi.hase.soprafs24.event.DrawCardsEvent;
 import ch.uzh.ifi.hase.soprafs24.event.ExplosionReturnedToDeckEvent;
 import ch.uzh.ifi.hase.soprafs24.event.PeekIntoDeckEvent;
+import ch.uzh.ifi.hase.soprafs24.event.PlayerCardEvent;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameRepository;

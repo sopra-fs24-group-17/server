@@ -839,4 +839,18 @@ public class UserServiceTest {
         assertEquals("user does not exist in DB", exception.getReason());
     }
 
+    @Test
+    public void testGetUserByUsername_success() {
+        String username = "testUsername";
+        User expectedUser = new User();
+        expectedUser.setUsername(username);
+        expectedUser.setEmail("test@example.com");
+
+        when(userRepository.findByUsername(username)).thenReturn(expectedUser);
+
+        User actualUser = userService.getUserByUsername(username);
+
+        assertEquals(expectedUser, actualUser);
+        verify(userRepository, times(1)).findByUsername(username);
+    }
 }

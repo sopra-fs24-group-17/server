@@ -197,9 +197,27 @@ public class GameEngineController {
             @DestinationVariable("gameId") Long gameId,
             @DestinationVariable("userId") Long userId) throws IOException, InterruptedException {
 
-        GameEngineController.log.info(String.format("User %s left game %s" , userId, gameId));
+        log.info(String.format("User %s left game %s" , userId, gameId));
 
         // Handle user leaving an ongoing game session
         gameEngineService.removeUserFromGame(gameId, userId);
+    }
+
+    /**
+     * Reloads the state of an ongoing game for a specific player
+     * @param gameId
+     * @param userId
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @MessageMapping("reload/{gameId}/{userId}")
+    public void loadCachedGame(
+            @DestinationVariable("gameId") Long gameId,
+            @DestinationVariable("userId") Long userId) throws IOException, InterruptedException {
+
+        log.info(String.format("User %s rejoined game %s", userId, gameId));
+
+        // Handle user rejoining a game session
+        gameEngineService.reloadGameState(gameId,userId);
     }
 }

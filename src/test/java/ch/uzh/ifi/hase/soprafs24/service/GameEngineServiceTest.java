@@ -691,4 +691,186 @@ public class GameEngineServiceTest {
         gameEngineService.handleExplosionCard(gameId, userId, explosionId);
         verify(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), eq(explosionId));
     }
+
+    @Test
+    public void testReloadGameState_Success() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        User user1 = new User();
+        user1.setId(1L);
+
+        User user2 = new User();
+        user2.setId(userId);
+
+        GameDeck mockDeck = new GameDeck();
+        Game mockGame = new Game();
+        mockGame.setState(GameState.ONGOING);
+        mockGame.setGameId(gameId);
+        mockGame.setPlayers(Arrays.asList(user1, user2));
+        mockGame.setGameDeck(mockDeck);
+        mockGame.setCurrentTurn(user1);
+
+        Card topCard = new Card();
+        topCard.setCode("AH");
+        topCard.setInternalCode("Ace of Hearts");
+        List<Card> topCards = Arrays.asList(topCard);
+
+        String jsonResponse = "{\"dealer\": {\"remaining\": 52}}";
+        Map<String, Integer> pileCardCounts = Map.of("dealer", 52);
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.getRemainingPileStats(mockDeck, userId)).thenReturn(jsonResponse);
+        when(gameDeckService.parsePileCardCounts(jsonResponse)).thenReturn(pileCardCounts);
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(topCards);
+
+        gameEngineService.reloadGameState(gameId, userId);
+
+        verify(gameDeckService, times(1)).reloadPlayerPile(mockDeck, userId);
+        verify(eventPublisher, times(1)).publishEvent(any(YourTurnEvent.class));
+    }
+
+    @Test
+    public void testReloadGameState_UserNotPartOfGame() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        User user1 = new User();
+        user1.setId(1L);
+
+        Game mockGame = new Game();
+        mockGame.setGameId(gameId);
+        mockGame.setState(GameState.ONGOING);
+        mockGame.setPlayers(Collections.singletonList(user1));
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameEngineService.reloadGameState(gameId, userId);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Targeted User is not part of the game", exception.getReason());
+    }
+
+    @Test
+    public void testHandleLuckyCard_Success() throws IOException, InterruptedException {
+        Game mockGame = new Game();
+        mockGame.setGameId(1L);
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameDeck(mockDeck);
+
+        Long userId = 1L;
+
+        Card mockCard = new Card();
+        mockCard.setCode("LUCKY1");
+
+        User currentUser = new User();
+        currentUser.setId(userId);
+        currentUser.setUsername("currentUser");
+
+        User nextUser = new User();
+        nextUser.setId(2L);
+        nextUser.setUsername("nextUser");
+
+        mockGame.setPlayers(Arrays.asList(currentUser, nextUser));
+        mockGame.setCurrentTurn(currentUser);
+
+        when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.drawRandomCardDealerPile(mockDeck)).thenReturn(mockCard);
+        when(userService.getUserById(userId)).thenReturn(currentUser);
+        doNothing().when(eventPublisher).publishEvent(any(LuckyEvent.class));
+
+        gameEngineService.handleLuckyCard(mockGame, userId);
+
+        verify(gameDeckService, times(1)).drawRandomCardDealerPile(mockDeck);
+        verify(gameDeckService, times(1)).returnCardsToPile(mockDeck, String.valueOf(userId), mockCard.getCode());
+        verify(eventPublisher, times(1)).publishEvent(any(LuckyEvent.class));
+    }
+
+    @Test
+    public void testHandleLuckyCard_TurnValidationThrowsInterruptedException() throws IOException, InterruptedException {
+        Game mockGame = new Game();
+        mockGame.setGameId(1L);
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameDeck(mockDeck);
+
+        Long userId = 1L;
+        Card mockCard = new Card();
+        mockCard.setCode("LUCKY1");
+
+        when(gameDeckService.drawRandomCardDealerPile(mockDeck)).thenReturn(mockCard);
+        doNothing().when(gameDeckService).returnCardsToPile(mockDeck, userId.toString(), mockCard.getCode());
+        doNothing().when(eventPublisher).publishEvent(any(LuckyEvent.class));
+
+        assertThrows(ResponseStatusException.class, () -> {
+            gameEngineService.handleLuckyCard(mockGame, userId);
+        });
+    }
+
+    @Test
+    public void testHandleExplosionPlacement_Success() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        Integer placementPosition = 3;
+
+        User currentUser = new User();
+        currentUser.setId(userId);
+        currentUser.setUsername("currentUser");
+
+        User nextUser = new User();
+        nextUser.setId(2L);
+        nextUser.setUsername("nextUser");
+
+        Game mockGame = new Game();
+        GameDeck mockDeck = new GameDeck();
+        mockGame.setGameDeck(mockDeck);
+        mockGame.setCurrentTurn(currentUser);
+        mockGame.setPlayers(Arrays.asList(currentUser, nextUser));
+
+        Card topCard = new Card();
+        topCard.setCode("EX");
+        topCard.setInternalCode("explosion");
+        List<Card> topCards = Collections.singletonList(topCard);
+
+        Card defuseCard = new Card();
+        defuseCard.setCode("DF");
+        defuseCard.setInternalCode("defuse");
+
+        when(userService.getUserById(userId)).thenReturn(currentUser);
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+        when(gameDeckService.exploreTopCardPlayPile(mockDeck)).thenReturn(topCards);
+        when(gameDeckService.removeSpecificCardsFromPile(mockDeck, "EX", "play")).thenReturn(topCards);
+        when(gameDeckService.exploreDefuseCardInPlayerPile(mockDeck, userId)).thenReturn("DF");
+        when(gameDeckService.drawCardFromPlayerPile(mockDeck, userId, "DF")).thenReturn(defuseCard);
+
+        doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), eq("DF"));
+        doNothing().when(gameDeckService).returnExplosionCardToDealerPile(any(Game.class), eq(placementPosition), eq(topCard));
+
+        gameEngineService.handleExplosionPlacement(gameId, userId, placementPosition);
+
+        verify(gameDeckService).removeSpecificCardsFromPile(mockDeck, "EX", "play");
+        verify(gameDeckService).exploreDefuseCardInPlayerPile(mockDeck, userId);
+        verify(gameDeckService).drawCardFromPlayerPile(mockDeck, userId, "DF");
+        verify(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), eq("DF"));
+        verify(gameDeckService).returnExplosionCardToDealerPile(any(Game.class), eq(placementPosition), eq(topCard));
+    }
+
+    @Test
+    public void testReloadGameState_GameNotOngoing() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        Game mockGame = new Game();
+        mockGame.setState(GameState.FINISHED);
+
+        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            gameEngineService.reloadGameState(gameId, userId);
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
+        assertEquals("Can only reload state for an ongoing game", exception.getReason());
+    }
 }

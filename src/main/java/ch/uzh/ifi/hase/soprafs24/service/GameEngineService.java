@@ -590,4 +590,34 @@ public class GameEngineService {
         GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts, numberPlayers, usernames);
         eventPublisher.publishEvent(gameStateEvent);
     }
+
+    /**
+     * Reloads the state of a cached game
+     * @param gameId
+     * @param userId
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void reloadGameState(Long gameId, Long userId) throws IOException, InterruptedException {
+        Game game = findGameById(gameId);
+
+        if (!game.getState().equals(GameState.ONGOING)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can only reload state for an ongoing game");
+        }
+
+        List<Long> playerIds = game.getPlayers().stream().map(User::getId).toList();
+
+        if(!playerIds.contains(userId)) {
+            log.info("Targeted User is not part of the game");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Targeted User is not part of the game");
+        }
+
+        gameDeckService.reloadPlayerPile(game.getGameDeck(), userId);
+        dispatchGameState(gameId,userId);
+
+        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, game.getCurrentTurn().getId(), game.getGameId(), game.getCurrentTurn().getUsername());
+        eventPublisher.publishEvent(yourTurnEvent);
+
+    }
+
 }

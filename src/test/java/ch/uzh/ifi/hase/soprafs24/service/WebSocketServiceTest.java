@@ -318,4 +318,43 @@ public class WebSocketServiceTest {
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
+    @Test
+    public void testSendPlacementRequest() {
+        Long gameId = 1L;
+        Long userId = 2L;
+
+        webSocketService.sendPlacementRequest(gameId, userId);
+
+        JSONObject expectedMessage = new JSONObject();
+        expectedMessage.put("type", "placementRequest");
+        expectedMessage.put("userId", userId);
+
+        verify(messagingTemplate).convertAndSend(eq("/game/" + gameId + "/" + userId), eq(expectedMessage.toString()));
+    }
+
+    @Test
+    public void testSendMessageGetLucky() {
+        Long gameId = 1L;
+        Long userId = 2L;
+        Card randomCard = new Card();
+        randomCard.setCode("KC");
+        randomCard.setInternalCode("defuse");
+
+        webSocketService.sendMessageGetLucky(gameId, userId, randomCard);
+
+        JSONObject cardJson = new JSONObject();
+        cardJson.put("code", randomCard.getCode());
+        cardJson.put("internalCode", randomCard.getInternalCode());
+
+        JSONArray cardsArray = new JSONArray();
+        cardsArray.put(cardJson);
+
+        JSONObject expectedMessage = new JSONObject();
+        expectedMessage.put("type", "cards");
+        expectedMessage.put("gameId", gameId);
+        expectedMessage.put("user", userId);
+        expectedMessage.put("cards", cardsArray);
+
+        verify(messagingTemplate).convertAndSend(eq("/game/" + gameId + "/" + userId), eq(expectedMessage.toString()));
+    }
 }
