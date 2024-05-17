@@ -602,6 +602,10 @@ public class GameEngineService {
 
         gameDeckService.reloadPlayerPile(game.getGameDeck(), userId);
         dispatchGameState(gameId,userId);
+
+        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, game.getCurrentTurn().getId(), game.getGameId(), game.getCurrentTurn().getUsername());
+        eventPublisher.publishEvent(yourTurnEvent);
+
     }
 
 }

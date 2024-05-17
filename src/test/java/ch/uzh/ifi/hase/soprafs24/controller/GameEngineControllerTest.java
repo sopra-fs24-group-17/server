@@ -12,16 +12,25 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static java.nio.file.Paths.get;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class GameEngineControllerTest {
 
@@ -41,6 +50,9 @@ class GameEngineControllerTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
     }
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @Test
     void testHandleCardMove_success() throws IOException, InterruptedException {
@@ -439,4 +451,48 @@ class GameEngineControllerTest {
         assertEquals("Targeted User is not part of the game", exception.getReason());
     }
 
+    @Test
+    void testHandleCardMove_LuckyCard() throws IOException, InterruptedException {
+        Long gameId = 1L;
+        Long userId = 2L;
+        CardMoveRequest cardMoveRequest = new CardMoveRequest();
+        List<String> cardIds = List.of("LUCKY1");
+        cardMoveRequest.setCardIds(cardIds);
+        cardMoveRequest.setTargetUsername("testUser");
+
+        Card card = new Card();
+        card.setInternalCode("lucky");
+        card.setCode("LUCKY1");
+
+        List<Card> transformedCards = List.of(card);
+        Game game = new Game();
+
+        when(gameEngineService.transformCardsToInternalRepresentation(cardIds)).thenReturn(transformedCards);
+        when(gameEngineService.findGameById(gameId)).thenReturn(game);
+        doNothing().when(gameDeckService).removeCardsFromPlayerPile(any(Game.class), eq(userId), anyString());
+        doNothing().when(gameDeckService).placeCardsToPlayPile(any(Game.class), eq(userId), anyList(), anyString());
+        doNothing().when(gameEngineService).handleLuckyCard(any(Game.class), eq(userId));
+
+        gameEngineController.handleCardMove(gameId, userId, cardMoveRequest);
+
+        verify(gameEngineService).handleLuckyCard(game, userId);
+        verify(gameDeckService).removeCardsFromPlayerPile(game, userId, "LUCKY1");
+        verify(gameDeckService).placeCardsToPlayPile(game, userId, transformedCards, "LUCKY1");
+        verify(gameEngineService).dispatchGameState(gameId, userId);
+    }
+
+    @Test
+    void testHandleResponseStatusException() {
+        ResponseStatusException exception = new ResponseStatusException(HttpStatus.BAD_REQUEST, "Test error message");
+
+        ResponseEntity<Object> responseEntity = gameEngineController.handleResponseStatusException(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertNotNull(responseEntity.getBody());
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
+        assertEquals(HttpStatus.BAD_REQUEST, responseBody.get("error"));
+        assertEquals("Test error message", responseBody.get("message"));
+    }
 }

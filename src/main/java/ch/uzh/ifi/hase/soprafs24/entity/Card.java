@@ -32,7 +32,7 @@ public class Card implements Serializable {
 
     @PrePersist
     @PreUpdate
-    private void beforeSave() {
+    void beforeSave() {
         mapCodeToInternalRepresentation();
     }
 
