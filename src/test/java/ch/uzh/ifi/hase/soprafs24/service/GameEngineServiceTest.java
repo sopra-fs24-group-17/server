@@ -49,6 +49,9 @@ public class GameEngineServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private GameService gameService;
+
     @InjectMocks
     private GameEngineService gameEngineService;
 

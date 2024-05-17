@@ -262,7 +262,9 @@ public class WebSocketServiceTest {
     public void sendMessageEndGameTest() {
         Long gameId = 100L;
         String userName = "winner";
-        webSocketService.sendMessageEndGame(gameId, userName);
+        List<String> leaderboard = new ArrayList<>();
+        leaderboard.add(userName);
+        webSocketService.sendMessageEndGame(gameId, userName, leaderboard);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
