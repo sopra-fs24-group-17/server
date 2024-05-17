@@ -373,6 +373,8 @@ public class GameEngineService {
         // Launch a get lucky event
         LuckyEvent luckyEvent = new LuckyEvent(this, userId, game.getGameId(), randomCard);
         eventPublisher.publishEvent(luckyEvent);
+        // End turn
+        turnValidation(game.getGameId(), userId);
     }
 
     /**
