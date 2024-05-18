@@ -40,6 +40,8 @@ public class GameEngineService {
 
     private UserService userService;
 
+    private GameService gameService;
+
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -51,7 +53,8 @@ public class GameEngineService {
                              UserRepository userRepository,
                              GameDeckService gameDeckService,
                              UserService userService,
-                             ApplicationEventPublisher eventPublisher) {
+                             ApplicationEventPublisher eventPublisher,
+                                GameService gameService) {
 
         this.gameRepository = gameRepository;
         this.gameDeckRepository = gameDeckRepository;
@@ -60,6 +63,7 @@ public class GameEngineService {
         this.gameDeckService = gameDeckService;
         this.userService = userService;
         this.eventPublisher = eventPublisher;
+        this.gameService = gameService;
     }
 
     /**
@@ -287,6 +291,9 @@ public class GameEngineService {
             turnValidation(gameId, userId);
         }
 
+        // Add loosing user to the leaderboard
+        gameService.addPlayerLeaderboard(currentGame, terminatingUser.getUsername());
+
         // Remove from the player list for the game
         players.remove(terminatingUser);
         gameRepository.saveAndFlush(currentGame);
@@ -324,10 +331,15 @@ public class GameEngineService {
         gameToBeTerminated.setWinningPlayer(winningUser);
         winningUser.getUserStats().setGamesWon(winningUser.getUserStats().getGamesWon()+1);
 
+        // Retrieve leaderboard
+        List<String> leaderboard = gameToBeTerminated.getLeaderboard();
+        leaderboard.add(winningUser.getUsername());
+        log.info(String.format("Game %s finished with following leaderboard %s", gameId, String.join(",", leaderboard)));
+
         gameRepository.saveAndFlush(gameToBeTerminated);
 
         // Publish end game event
-        EndGameEvent endGameEvent = new EndGameEvent(this, winningUser.getUsername(), gameId);
+        EndGameEvent endGameEvent = new EndGameEvent(this, winningUser.getUsername(), gameId, leaderboard);
         eventPublisher.publishEvent(endGameEvent);
     }
 

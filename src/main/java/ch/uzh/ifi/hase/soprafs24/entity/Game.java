@@ -61,4 +61,7 @@ public class Game implements Serializable {
     private  boolean attacked = false;
 
     private boolean repeatTurn = false;
+
+    @ElementCollection
+    private List<String> leaderboard = new ArrayList<>();
 }
