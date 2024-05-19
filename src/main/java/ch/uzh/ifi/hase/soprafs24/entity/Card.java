@@ -32,7 +32,7 @@ public class Card implements Serializable {
 
     @PrePersist
     @PreUpdate
-    private void beforeSave() {
+    void beforeSave() {
         mapCodeToInternalRepresentation();
     }
 
@@ -117,7 +117,7 @@ public class Card implements Serializable {
                 case "QD":
                 case "QC":
                 case "QH":
-                    internalCode = "nope";
+                    internalCode = "lucky";
                     break;
                 default:
                     internalCode = "unknown";

@@ -381,5 +381,12 @@ public class UserService {
         return userFriendsService.getFriends(userId);
     }
 
-
+    /**
+     * Retrieves a user by username from the repository.
+     * @param username of the user to be retrieved
+     * @return a user object
+     */
+    public User getUserByUsername(String username){
+        return userRepository.findByUsername(username);
+    }
 }

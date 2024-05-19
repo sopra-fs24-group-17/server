@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -137,10 +138,21 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
-    public void sendMessageEndGame(Long gameId, String userName) {
+    public void sendMessageEndGame(Long gameId, String userName, List<String> leaderboard) {
+        JSONArray leaderboardArray = new JSONArray();
+        Collections.reverse(leaderboard);
+        int place = 1;
+        for (String s : leaderboard) {
+            JSONObject position = new JSONObject();
+            position.put("username", s);
+            position.put("position", place);
+            leaderboardArray.put(position);
+            place++;
+        }
         Map<String, Object> params = Map.of(
                 "type", "endGame",
-                "winningUser", userName
+                "winningUser", userName,
+                "leaderboard", leaderboardArray
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }
@@ -160,11 +172,12 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
-    public void sendMessageCardPlayed(Long gameId, String userName, String internalCode) {
+    public void sendMessageCardPlayed(Long gameId, String userName, String internalCode, String externalCode) {
         Map<String, Object> params = Map.of(
                 "type", "cardPlayed",
                 "userName", userName,
-                "cardPlayed", internalCode
+                "cardPlayed", internalCode,
+                "externalCode", externalCode
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }
@@ -222,17 +235,43 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId, params);
     }
 
-    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers) {
+    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames) {
         JSONObject pilesJson = new JSONObject();
+        JSONArray playerNamesJson = new JSONArray(playerNames);
         remainingCardStats.forEach(pilesJson::put);
         Map<String, Object> params = Map.of(
                 "type", "gameState",
                 "topCardCode", topCard.getCode(),
                 "topCardInternalCode", topCard.getInternalCode(),
                 "piles", pilesJson,
-                "numberOfPlayers", numberOfPlayers
+                "numberOfPlayers", numberOfPlayers,
+                "playerNames", playerNamesJson
         );
         sendWebSocketMessage("/game/" + gameId, params);
+    }
+
+    public void sendPlacementRequest(Long gameId, Long userId) {
+        Map<String, Object> params = Map.of(
+                "type", "placementRequest",
+                "userId", userId
+        );
+        sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
+    }
+
+    public void sendMessageGetLucky(Long gameId, Long userId, Card randomCard) {
+        JSONArray cardsArray = new JSONArray();
+        JSONObject cardJson = new JSONObject();
+        cardJson.put("code", randomCard.getCode());
+        cardJson.put("internalCode", randomCard.getInternalCode());
+        cardsArray.put(cardJson);
+
+        Map<String, Object> params = Map.of(
+                "type", "cards",
+                "gameId", gameId,
+                "user", userId,
+                "cards", cardsArray
+        );
+        sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
     public void sendMessageGameCreated(Long gameId) {

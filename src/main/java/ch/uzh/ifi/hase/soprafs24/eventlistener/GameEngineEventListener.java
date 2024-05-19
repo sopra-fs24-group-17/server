@@ -65,7 +65,7 @@ public class GameEngineEventListener {
     @EventListener
     public void endGame(EndGameEvent event) {
         log.info("Player {} won the game {}",event.getUserName(), event.getGameId());
-        webSocketService.sendMessageEndGame(event.getGameId(), event.getUserName());
+        webSocketService.sendMessageEndGame(event.getGameId(), event.getUserName(), event.getLeaderboard());
     }
 
     @EventListener
@@ -77,7 +77,7 @@ public class GameEngineEventListener {
     @EventListener
     public void playedCard(CardPlayedEvent event) {
         log.info("Player {} played card {}", event.getInvokingPlayerUserName(), event.getInternalCode());
-        webSocketService.sendMessageCardPlayed(event.getGameId(), event.getInvokingPlayerUserName(), event.getInternalCode());
+        webSocketService.sendMessageCardPlayed(event.getGameId(), event.getInvokingPlayerUserName(), event.getInternalCode(), event.getExternalCode());
     }
 
     @EventListener
@@ -119,11 +119,23 @@ public class GameEngineEventListener {
     @EventListener
     public void provideGameStats(GameStateEvent event) {
         log.info("Game Stats for {} dispatched", event.getGameId());
-        webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats(), event.getNumberOfPlayers());
+        webSocketService.sendGameState(event.getGameId(), event.getTopMostCardPlayPile(), event.getRemainingCardStats(), event.getNumberOfPlayers(), event.getPlayerNames());
     }
 
     @EventListener
     public void explosionIndividual(ExplosionEventIndividual event) {
         webSocketService.sendMessageExplosionIndividual(event.getGameId(), event.getUserId());
+    }
+
+    @EventListener
+    public void placementRequest(PlacementEvent event) {
+        log.info("Placement Request sent for game {}", event.getGameId());
+        webSocketService.sendPlacementRequest(event.getGameId(), event.getUserId());
+    }
+
+    @EventListener
+    public void getLucky(LuckyEvent event) {
+        log.info("Player {} play Lucky card for game {}", event.getUserId(),event.getGameId());
+        webSocketService.sendMessageGetLucky(event.getGameId(), event.getUserId(), event.getRandomCard());
     }
 }

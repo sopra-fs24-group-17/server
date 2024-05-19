@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
@@ -34,9 +35,20 @@ public class EmailSenderServiceTest {
         verify(mailSender).send(messageCaptor.capture());
         SimpleMailMessage sentMessage = messageCaptor.getValue();
 
-        // Verify the content of the message
         assertEquals(toEmail, sentMessage.getTo()[0]);
         assertEquals("Exploding Kittens: Password Reset", sentMessage.getSubject());
         assertEquals("noreply.explodingkittens17@gmail.com", sentMessage.getFrom());
+    }
+
+    @Test
+    public void testMailExceptionHandling() {
+        String toEmail = "user@example.com";
+        String username = "testUser";
+        String oneTimePassword = "123456";
+
+        Mockito.doThrow(new MailSendException("Simulated mail sending error"))
+                .when(mailSender).send(Mockito.any(SimpleMailMessage.class));
+
+        emailSenderService.sendNewPassword(toEmail, username, oneTimePassword);
     }
 }

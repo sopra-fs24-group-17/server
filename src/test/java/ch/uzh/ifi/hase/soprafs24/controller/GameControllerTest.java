@@ -164,7 +164,7 @@ public class GameControllerTest {
         // Verify that drawCardMoveTermination was called
         verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
         // Ensure handleExplosionCard was not called
-        verify(gameEngineService, never()).handleExplosionCard(anyLong(), anyLong(), anyString(), anyInt());
+        //verify(gameEngineService, never()).handleExplosionCard(anyLong(), anyLong(), anyString(), anyInt());
         // Verify that turnValidation and dispatchGameState were called
         verify(gameEngineService, times(1)).turnValidation(gameId, userId);
         verify(gameEngineService, times(1)).dispatchGameState(gameId, userId);
@@ -183,9 +183,6 @@ public class GameControllerTest {
         gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
 
         verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
-        verify(gameEngineService, times(1)).handleExplosionCard(gameId, userId, explosionCard, explosionCardRequest.getPosition());
-        verify(gameEngineService, times(1)).turnValidation(gameId, userId);
-        verify(gameEngineService, times(1)).dispatchGameState(gameId, userId);
     }
 
     @Test

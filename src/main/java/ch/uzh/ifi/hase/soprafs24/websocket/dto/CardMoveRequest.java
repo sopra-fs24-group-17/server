@@ -11,6 +11,6 @@ public class CardMoveRequest {
     private Long gameId;
     private Long userId;
     private List<String> cardIds;
-    private Long targetUserId;
+    private String targetUsername;
     private List<String> negationUsers;
 }

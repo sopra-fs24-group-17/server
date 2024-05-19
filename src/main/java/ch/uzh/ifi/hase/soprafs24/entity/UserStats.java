@@ -43,7 +43,7 @@ public class UserStats implements Serializable {
     @PreUpdate
     private void calculateWinLossRatio() {
         if (gamesPlayed != null && gamesPlayed > 0) {
-            this.winLossRatio = (double) gamesWon / gamesPlayed;
+            this.winLossRatio = (double) gamesWon / (gamesPlayed);
         } else {
             this.winLossRatio = 0.0;
         }

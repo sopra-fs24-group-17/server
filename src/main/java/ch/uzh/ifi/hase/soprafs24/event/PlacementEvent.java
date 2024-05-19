@@ -6,14 +6,13 @@ import org.springframework.context.ApplicationEvent;
 
 @Setter
 @Getter
-public class NopeEvent extends ApplicationEvent {
+public class PlacementEvent extends ApplicationEvent {
     private Long gameId;
-    private String activePlayer;
+    private Long userId;
 
-    public NopeEvent(Object source, Long gameId, String activePlayer) {
+    public PlacementEvent(Object source, Long gameId, Long userId) {
         super(source);
         this.gameId = gameId;
-        this.activePlayer = activePlayer;
+        this.userId = userId;
     }
-
 }
