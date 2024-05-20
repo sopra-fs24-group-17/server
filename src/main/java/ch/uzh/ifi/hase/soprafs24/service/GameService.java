@@ -210,6 +210,12 @@ public class GameService {
         return gameId;
     }
 
+    public void addPlayerLeaderboard(Game game, String username){
+        List<String> leaderboard = game.getLeaderboard();
+        leaderboard.add(username);
+        gameRepository.save(game);
+    }
+
     /**
      * This method gets automatically executed every 1hr, to set all games that were created
      * longer than 1hr ago and never went beyond the preparation state to aborted.

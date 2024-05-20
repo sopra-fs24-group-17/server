@@ -65,7 +65,7 @@ public class GameEngineEventListener {
     @EventListener
     public void endGame(EndGameEvent event) {
         log.info("Player {} won the game {}",event.getUserName(), event.getGameId());
-        webSocketService.sendMessageEndGame(event.getGameId(), event.getUserName());
+        webSocketService.sendMessageEndGame(event.getGameId(), event.getUserName(), event.getLeaderboard());
     }
 
     @EventListener

@@ -552,7 +552,7 @@ public class GameDeckService {
         List<String> cardsPath = Arrays.asList("piles", userId.toString(), "cards");
         List<Card> cards = parseCards(gameDeck,drawCardFromPlayerResponse.body(), "deck_id", cardsPath, null);
 
-        PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, userId, gameDeck.getGame().getGameId(), cards);        eventPublisher.publishEvent(playerCardEvent);
+        PlayerCardEvent playerCardEvent = new PlayerCardEvent(this, userId, gameDeck.getGame().getGameId(), cards);
         eventPublisher.publishEvent(playerCardEvent);
     }
 
