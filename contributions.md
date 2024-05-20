@@ -171,3 +171,4 @@
 | 8    | 191     | Add "/edit" to edit profile URL        | https://github.com/sopra-fs24-group-17/server/issues/191 | 4         | Liam Kane                        | &#9745;  |
 | 8    | 193     | Merge Setup Game and Start Lobby buttons to one button in Create Game view        | https://github.com/sopra-fs24-group-17/server/issues/193 | 4         | Liam Kane                        | &#9745;  |
 | 8    | 30     | Implement a feature that allows users to access a rules overview at any time during the game. This could be a "Rules" button or icon that opens a modal or sidebar displaying the game rules in an easy and concise manner        | https://github.com/sopra-fs24-group-17/server/issues/30 | 4         | Liam Kane                        | &#9745;  |
+| 8    | 204     | Friends page fix        | https://github.com/sopra-fs24-group-17/server/issues/204 | 4         | Liam Kane                        | &#9745;  |
