@@ -125,9 +125,11 @@ public class GameEngineEventListenerTest {
     public void testEndGame() {
         Long gameId = 12345L;
         String userName = "user";
-        EndGameEvent event = new EndGameEvent(this, userName, gameId);
+        List<String> leaderboard = new ArrayList<>();
+        leaderboard.add((userName));
+        EndGameEvent event = new EndGameEvent(this, userName, gameId, leaderboard);
         listener.endGame(event);
-        verify(webSocketService).sendMessageEndGame(gameId, userName);
+        verify(webSocketService).sendMessageEndGame(gameId, userName, leaderboard);
     }
 
     @Test
