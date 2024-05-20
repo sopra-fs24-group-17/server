@@ -319,7 +319,15 @@ public class WebSocketServiceTest {
         playerIds.add(4L);
         playerIds.add(5L);
 
-        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers, playerNames, playerIds);
+        List<String> playerAvatars = new ArrayList<>();
+        playerAvatars.add("avatar1");
+        playerAvatars.add("avatar2");
+        playerAvatars.add("avatar3");
+        playerAvatars.add("avatar4");
+        playerAvatars.add("avatar5");
+
+
+        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers, playerNames, playerIds, playerAvatars);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
