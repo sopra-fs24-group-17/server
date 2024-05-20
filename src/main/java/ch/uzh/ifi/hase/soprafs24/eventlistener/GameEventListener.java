@@ -24,13 +24,13 @@ public class GameEventListener {
     @EventListener
     public void onGameJoinEvent(GameJoinEvent event) {
         log.info("GameJoinEvent triggered for game ID: {}", event.getGameId());
-        webSocketService.sendMessageJoinedUser(event.getUserName(), event.getGameId());
+        webSocketService.sendMessageJoinedUser(event.getUserName(), event.getGameId(), event.getMaxPlayerCount(), event.getCurrentPlayerCount());
     }
 
     @EventListener
     public void onGameLeaveEvent(GameLeaveEvent event) {
         log.info("GameLeaveEvent triggered for game ID: {}", event.getGameId());
-        webSocketService.sendMessageLeftUser(event.getUserName(), event.getGameId());
+        webSocketService.sendMessageLeftUser(event.getUserName(), event.getGameId(), event.getMaxPlayerCount(), event.getCurrentPlayerCount());
     }
 
 }

@@ -213,7 +213,7 @@ public class GameEngineService {
 
         if (currentGame.isRepeatTurn()) {
             nextPlayer = terminatingUser;
-            drawCardMoveTermination(gameId, userId);
+            drawCardMoveTermination(gameId, userId, false);
             currentGame.setRepeatTurn(false);
             gameRepository.saveAndFlush(currentGame);
         }
@@ -244,7 +244,7 @@ public class GameEngineService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public String drawCardMoveTermination(Long gameId, Long userId) throws IOException, InterruptedException {
+    public String drawCardMoveTermination(Long gameId, Long userId, boolean random) throws IOException, InterruptedException {
         Game game = findGameById(gameId);
 
         List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(), 1);
@@ -379,14 +379,19 @@ public class GameEngineService {
      */
     public void handleLuckyCard(Game game, Long userId) throws IOException, InterruptedException {
         // Draw a random card
-        Card randomCard = gameDeckService.drawRandomCardDealerPile(game.getGameDeck());
-        // Give that card to triggering user
-        gameDeckService.returnCardsToPile(game.getGameDeck(), userId.toString(), randomCard.getCode());
-        // Launch a get lucky event
-        LuckyEvent luckyEvent = new LuckyEvent(this, userId, game.getGameId(), randomCard);
-        eventPublisher.publishEvent(luckyEvent);
-        // End turn
-        turnValidation(game.getGameId(), userId);
+        String explosionCard = drawCardMoveTermination(game.getGameId(), userId, false);
+
+        if (explosionCard != null) {
+            // Handle explosion
+            handleExplosionCard(game.getGameId(), userId, explosionCard);
+        }
+        else {
+            // Handle turnValidation (finding next player and communicating through websocket)
+            turnValidation(game.getGameId(), userId);
+
+            // Dispatch gameState
+            dispatchGameState(game.getGameId(), userId);
+        }
     }
 
     /**

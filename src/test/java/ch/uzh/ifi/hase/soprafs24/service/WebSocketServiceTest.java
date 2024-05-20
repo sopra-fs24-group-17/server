@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.json.JSONObject;
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
+@ActiveProfiles("dev")
 public class WebSocketServiceTest {
 
     @Mock
@@ -171,7 +173,9 @@ public class WebSocketServiceTest {
     public void sendMessageJoinedUserTest() {
         String userName = "testUser";
         Long gameId = 123L;
-        webSocketService.sendMessageJoinedUser(userName, gameId);
+        Integer maxPlayers = 4;
+        Integer currentPlayers = 2;
+        webSocketService.sendMessageJoinedUser(userName, gameId, maxPlayers, currentPlayers);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
@@ -179,7 +183,9 @@ public class WebSocketServiceTest {
     public void sendMessageLeftUserTest() {
         String userName = "testUser";
         Long gameId = 123L;
-        webSocketService.sendMessageLeftUser(userName, gameId);
+        Integer maxPlayers = 4;
+        Integer currentPlayers = 2;
+        webSocketService.sendMessageLeftUser(userName, gameId, maxPlayers, currentPlayers);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 

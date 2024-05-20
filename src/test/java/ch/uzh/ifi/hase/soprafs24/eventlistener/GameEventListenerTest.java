@@ -9,9 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.mockito.Mockito.verify;
 
+@ActiveProfiles("dev")
 public class GameEventListenerTest {
 
     @Mock
@@ -29,19 +31,24 @@ public class GameEventListenerTest {
     public void testOnGameJoinEvent() {
         String userName = "testUser";
         Long gameId = 123L;
-        GameJoinEvent event = new GameJoinEvent(this, userName, gameId);
+        Integer maxPlayers = 4;
+        Integer currentPlayers = 2;
+        GameJoinEvent event = new GameJoinEvent(this, userName, gameId, maxPlayers, currentPlayers);
 
         gameEventListener.onGameJoinEvent(event);
-        verify(webSocketService).sendMessageJoinedUser(userName, gameId);
+        verify(webSocketService).sendMessageJoinedUser(userName, gameId, maxPlayers, currentPlayers);
     }
 
     @Test
     public void testOnGameLeaveEvent() {
         String userName = "testUser";
         Long gameId = 123L;
-        GameLeaveEvent event = new GameLeaveEvent(this, userName, gameId);
+        Integer maxPlayers = 3;
+        Integer currentPlayers = 2;
+
+        GameLeaveEvent event = new GameLeaveEvent(this, userName, gameId, maxPlayers, currentPlayers);
 
         gameEventListener.onGameLeaveEvent(event);
-        verify(webSocketService).sendMessageLeftUser(userName, gameId);
+        verify(webSocketService).sendMessageLeftUser(userName, gameId, maxPlayers, currentPlayers);
     }
 }

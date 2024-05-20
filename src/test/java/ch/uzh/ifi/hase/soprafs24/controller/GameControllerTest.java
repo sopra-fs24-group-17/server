@@ -22,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -37,6 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(GameController.class)
+@ActiveProfiles("dev")
 public class GameControllerTest {
 
     @Autowired
@@ -157,12 +159,12 @@ public class GameControllerTest {
         explosionCardRequest.setPosition(null);
 
         // Mock behavior: No explosion card is drawn
-        when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(null);
+        when(gameEngineService.drawCardMoveTermination(gameId, userId, false)).thenReturn(null);
 
         gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
 
         // Verify that drawCardMoveTermination was called
-        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
         // Ensure handleExplosionCard was not called
         //verify(gameEngineService, never()).handleExplosionCard(anyLong(), anyLong(), anyString(), anyInt());
         // Verify that turnValidation and dispatchGameState were called
@@ -179,10 +181,10 @@ public class GameControllerTest {
         ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
         explosionCardRequest.setPosition(null);
 
-        when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(explosionCard);
+        when(gameEngineService.drawCardMoveTermination(gameId, userId, false)).thenReturn(explosionCard);
         gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
 
-        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
     }
 
     @Test

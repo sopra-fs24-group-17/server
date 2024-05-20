@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+@ActiveProfiles("dev")
 @ExtendWith(MockitoExtension.class)
 public class GameDeckServiceTest {
 
@@ -628,33 +630,6 @@ public class GameDeckServiceTest {
         assertNotNull(defuseCode);
         verify(httpClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
         verify(spyGameDeckService).parseCards(any(GameDeck.class), eq(responseBody), eq("deck_id"), eq(Arrays.asList("piles", mockUser.getId().toString(), "cards")), eq(null));
-    }
-
-    @Test
-    public void testDrawRandomCardDealerPile() throws IOException, InterruptedException {
-        List<Card> mockCards = new ArrayList<>();
-        Card card1 = new Card();
-        card1.setCode("KS");
-        card1.setInternalCode("defuse");
-        mockCards.add(card1);
-
-        String responseBody = "{\n" +
-                "  \"deck_id\": \"testDeckId\",\n" +
-                "  \"cards\": [\n" +
-                "    {\"code\": \"KS\", \"suit\": \"SPADES\", \"image\": \"http://image1.com\"},\n" +
-                "  ]\n" +
-                "}";
-        HttpResponse<String> mockResponse = mock(HttpResponse.class);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-                .thenReturn(mockResponse);
-        when(mockResponse.body()).thenReturn(responseBody);
-        doReturn(mockCards).when(spyGameDeckService).parseCards(any(GameDeck.class), eq(responseBody), eq("deck_id"),eq(Arrays.asList("cards")), eq(null));
-
-        Card randomCard = spyGameDeckService.drawRandomCardDealerPile(testDeck);
-
-        assertNotNull(randomCard);
-        verify(httpClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
-        verify(spyGameDeckService).parseCards(any(GameDeck.class), eq(responseBody), eq("deck_id"), eq(Arrays.asList("cards")), eq(null));
     }
 
     @Test
