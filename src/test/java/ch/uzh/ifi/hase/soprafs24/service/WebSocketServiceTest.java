@@ -335,7 +335,7 @@ public class WebSocketServiceTest {
         playerAvatars.add("avatar5");
 
 
-        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers, playerNames, playerIds, playerAvatars);
+        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers, playerNames, playerIds, playerAvatars, "heinz");
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 

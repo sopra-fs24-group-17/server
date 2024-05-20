@@ -237,9 +237,9 @@ public class GameEngineEventListenerTest {
         playerAvatars.add("avatar1");
         playerAvatars.add("avatar2");
 
-        GameStateEvent event = new GameStateEvent(this, gameId, topCard, remainingCardStats, numberOfPlayers, usernames, playerIds, playerAvatars);
+        GameStateEvent event = new GameStateEvent(this, gameId, topCard, remainingCardStats, numberOfPlayers, usernames, playerIds, playerAvatars, "user2");
         listener.provideGameStats(event);
-        verify(webSocketService).sendGameState(eq(gameId), eq(topCard), eq(remainingCardStats), eq(numberOfPlayers), eq(usernames), eq(playerIds), eq(playerAvatars));
+        verify(webSocketService).sendGameState(eq(gameId), eq(topCard), eq(remainingCardStats), eq(numberOfPlayers), eq(usernames), eq(playerIds), eq(playerAvatars), eq("user2"));
     }
 
     @Test

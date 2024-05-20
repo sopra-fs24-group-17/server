@@ -578,6 +578,8 @@ public class GameEngineService {
         game.getGameDeck().setRemainingCardsDealerStack(dealerCount);
         gameDeckRepository.saveAndFlush(game.getGameDeck());
 
+        String activePlayer = game.getCurrentTurn().getUsername();
+
         List<Card> topCardsPlayPile = gameDeckService.exploreTopCardPlayPile(game.getGameDeck());
         Card topCardPlayPile;
         if (topCardsPlayPile == null) {
@@ -596,7 +598,7 @@ public class GameEngineService {
         List<Long> userIds = game.getPlayers().stream().map(User::getId).toList();
 
         // Publish Event
-        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts, numberPlayers, usernames, userIds, avatars);
+        GameStateEvent gameStateEvent = new GameStateEvent(this, gameId,topCardPlayPile, parsedPileCardCounts, numberPlayers, usernames, userIds, avatars, activePlayer);
         eventPublisher.publishEvent(gameStateEvent);
     }
 
