@@ -157,12 +157,12 @@ public class GameControllerTest {
         explosionCardRequest.setPosition(null);
 
         // Mock behavior: No explosion card is drawn
-        when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(null);
+        when(gameEngineService.drawCardMoveTermination(gameId, userId, false)).thenReturn(null);
 
         gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
 
         // Verify that drawCardMoveTermination was called
-        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
         // Ensure handleExplosionCard was not called
         //verify(gameEngineService, never()).handleExplosionCard(anyLong(), anyLong(), anyString(), anyInt());
         // Verify that turnValidation and dispatchGameState were called
@@ -179,10 +179,10 @@ public class GameControllerTest {
         ExplosionCardRequest explosionCardRequest = new ExplosionCardRequest();
         explosionCardRequest.setPosition(null);
 
-        when(gameEngineService.drawCardMoveTermination(gameId, userId)).thenReturn(explosionCard);
+        when(gameEngineService.drawCardMoveTermination(gameId, userId, false)).thenReturn(explosionCard);
         gameEngineController.handleTerminatingMove(gameId, userId, explosionCardRequest);
 
-        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+        verify(gameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
     }
 
     @Test

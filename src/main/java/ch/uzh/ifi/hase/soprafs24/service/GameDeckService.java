@@ -444,31 +444,6 @@ public class GameDeckService {
         return cards.get(0);
     }
 
-
-    /**
-     * Helper method that draws a random card from the dealer pile
-     * @param gameDeck indicating the playing deck
-     * @return Card object.
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public Card drawRandomCardDealerPile(GameDeck gameDeck) throws IOException, InterruptedException {
-        String baseUri = "https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random/";
-        String uri = String.format(baseUri, gameDeck.getDeckID(), gameDeck.getDealerPileId());
-
-        log.info(uri);
-
-        HttpRequest request = buildGetRequest(uri);
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        log.info("Drew Random Card from Dealer Pile");
-        log.info(response.body());
-
-        List<String> cardsPath = List.of("cards");
-        List<Card> cards = parseCards(gameDeck, response.body(), "deck_id", cardsPath, null);
-        return cards.get(0);
-    }
-
     /**
      * Helper method that validates if the player is in posesion of a defuse card
      * @param gameDeck indicating the playing deck

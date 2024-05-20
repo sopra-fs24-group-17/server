@@ -228,7 +228,7 @@ public class GameEngineServiceTest {
         when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
         when(gameDeckService.drawCardsFromDealerPile(any(), eq(1))).thenReturn(Collections.singletonList(drawnCard));
 
-        String result = gameEngineService.drawCardMoveTermination(1L, 1L);
+        String result = gameEngineService.drawCardMoveTermination(1L, 1L, false);
 
         assertEquals("example_card", result);
     }
@@ -384,7 +384,7 @@ public class GameEngineServiceTest {
         ArgumentCaptor<PlayerCardEvent> eventCaptor = ArgumentCaptor.forClass(PlayerCardEvent.class);
         doNothing().when(eventPublisher).publishEvent(eventCaptor.capture());
 
-        String result = gameEngineService.drawCardMoveTermination(1L, 1L);
+        String result = gameEngineService.drawCardMoveTermination(1L, 1L, false);
 
         verify(eventPublisher, times(1)).publishEvent(any(PlayerCardEvent.class));
         PlayerCardEvent capturedEvent = eventCaptor.getValue();
@@ -496,11 +496,11 @@ public class GameEngineServiceTest {
         when(userService.getUserById(userId)).thenReturn(terminatingUser);
 
         GameEngineService spyGameEngineService = Mockito.spy(gameEngineService);
-        doReturn("example_card").when(spyGameEngineService).drawCardMoveTermination(gameId, userId);
+        doReturn("example_card").when(spyGameEngineService).drawCardMoveTermination(gameId, userId, false);
 
         spyGameEngineService.turnValidation(gameId, userId);
 
-        verify(spyGameEngineService, times(1)).drawCardMoveTermination(gameId, userId);
+        verify(spyGameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
 
         assertFalse(mockGame.isRepeatTurn(), "Repeat turn should be reset to false after turnValidation.");
         assertEquals(terminatingUser, mockGame.getCurrentTurn(), "The current turn should still belong to the terminating user during a repeat turn.");
@@ -748,61 +748,6 @@ public class GameEngineServiceTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
         assertEquals("Targeted User is not part of the game", exception.getReason());
-    }
-
-    @Test
-    public void testHandleLuckyCard_Success() throws IOException, InterruptedException {
-        Game mockGame = new Game();
-        mockGame.setGameId(1L);
-        GameDeck mockDeck = new GameDeck();
-        mockGame.setGameDeck(mockDeck);
-
-        Long userId = 1L;
-
-        Card mockCard = new Card();
-        mockCard.setCode("LUCKY1");
-
-        User currentUser = new User();
-        currentUser.setId(userId);
-        currentUser.setUsername("currentUser");
-
-        User nextUser = new User();
-        nextUser.setId(2L);
-        nextUser.setUsername("nextUser");
-
-        mockGame.setPlayers(Arrays.asList(currentUser, nextUser));
-        mockGame.setCurrentTurn(currentUser);
-
-        when(gameRepository.findByGameId(1L)).thenReturn(Optional.of(mockGame));
-        when(gameDeckService.drawRandomCardDealerPile(mockDeck)).thenReturn(mockCard);
-        when(userService.getUserById(userId)).thenReturn(currentUser);
-        doNothing().when(eventPublisher).publishEvent(any(LuckyEvent.class));
-
-        gameEngineService.handleLuckyCard(mockGame, userId);
-
-        verify(gameDeckService, times(1)).drawRandomCardDealerPile(mockDeck);
-        verify(gameDeckService, times(1)).returnCardsToPile(mockDeck, String.valueOf(userId), mockCard.getCode());
-        verify(eventPublisher, times(1)).publishEvent(any(LuckyEvent.class));
-    }
-
-    @Test
-    public void testHandleLuckyCard_TurnValidationThrowsInterruptedException() throws IOException, InterruptedException {
-        Game mockGame = new Game();
-        mockGame.setGameId(1L);
-        GameDeck mockDeck = new GameDeck();
-        mockGame.setGameDeck(mockDeck);
-
-        Long userId = 1L;
-        Card mockCard = new Card();
-        mockCard.setCode("LUCKY1");
-
-        when(gameDeckService.drawRandomCardDealerPile(mockDeck)).thenReturn(mockCard);
-        doNothing().when(gameDeckService).returnCardsToPile(mockDeck, userId.toString(), mockCard.getCode());
-        doNothing().when(eventPublisher).publishEvent(any(LuckyEvent.class));
-
-        assertThrows(ResponseStatusException.class, () -> {
-            gameEngineService.handleLuckyCard(mockGame, userId);
-        });
     }
 
     @Test
