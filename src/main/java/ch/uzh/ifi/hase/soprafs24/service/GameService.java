@@ -75,7 +75,7 @@ public class GameService {
         // Add the initiating user to the player set
         game.getPlayers().add(verifiedUser);
         Game savedGame = gameRepository.save(game);
-        eventPublisher.publishEvent(new GameCreationEvent(this, savedGame.getGameId(), verifiedUser.getUsername()));
+        eventPublisher.publishEvent(new GameCreationEvent(this, savedGame.getGameId(), verifiedUser.getUsername(), savedGame.getMaxPlayers(), savedGame.getPlayers().size()));
 
         try {
             // Create corresponding deck of cards for the game
@@ -123,7 +123,7 @@ public class GameService {
         } else {
             players.add(verifiedUser);
 
-            GameJoinEvent gameJoinEvent = new GameJoinEvent(this, verifiedUser.getUsername(), gameId);
+            GameJoinEvent gameJoinEvent = new GameJoinEvent(this, verifiedUser.getUsername(), gameId, currentGame.getMaxPlayers(), currentGame.getPlayers().size());
             eventPublisher.publishEvent(gameJoinEvent);
         }
         gameRepository.save(currentGame);
@@ -161,7 +161,7 @@ public class GameService {
             players.remove(verifiedUser);
 
             // After successful leaving of a player, publish the event for the EventListener
-            GameLeaveEvent gameLeaveEvent = new GameLeaveEvent(this, verifiedUser.getUsername(), currentGame.getGameId());
+            GameLeaveEvent gameLeaveEvent = new GameLeaveEvent(this, verifiedUser.getUsername(), currentGame.getGameId(), currentGame.getMaxPlayers(), currentGame.getPlayers().size());
             eventPublisher.publishEvent(gameLeaveEvent);
 
             // If the last player left the game, change the status to aborted

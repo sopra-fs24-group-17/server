@@ -32,20 +32,24 @@ public class WebSocketService {
         this.sendMessage.convertAndSend(destination, dto);
     }
 
-    public void sendMessageJoinedUser(String userName, Long gameId) {
+    public void sendMessageJoinedUser(String userName, Long gameId, Integer maxPlayers, Integer currentPlayers) {
         Map<String, Object> params = Map.of(
                 "type", "join",
                 "userName", userName,
-                "gameId", gameId
+                "gameId", gameId,
+                "maxPlayers", maxPlayers,
+                "currentPlayers", currentPlayers
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }
 
-    public void sendMessageLeftUser(String userName, Long gameId) {
+    public void sendMessageLeftUser(String userName, Long gameId, Integer maxPlayers, Integer currentPlayers) {
         Map<String, Object> params = Map.of(
                 "type", "leave",
                 "userName", userName,
-                "gameId", gameId
+                "gameId", gameId,
+                "maxPlayers", maxPlayers,
+                "currentPlayers", currentPlayers
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }

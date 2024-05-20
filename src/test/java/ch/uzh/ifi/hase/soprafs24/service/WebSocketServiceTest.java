@@ -171,7 +171,9 @@ public class WebSocketServiceTest {
     public void sendMessageJoinedUserTest() {
         String userName = "testUser";
         Long gameId = 123L;
-        webSocketService.sendMessageJoinedUser(userName, gameId);
+        Integer maxPlayers = 4;
+        Integer currentPlayers = 2;
+        webSocketService.sendMessageJoinedUser(userName, gameId, maxPlayers, currentPlayers);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
@@ -179,7 +181,9 @@ public class WebSocketServiceTest {
     public void sendMessageLeftUserTest() {
         String userName = "testUser";
         Long gameId = 123L;
-        webSocketService.sendMessageLeftUser(userName, gameId);
+        Integer maxPlayers = 4;
+        Integer currentPlayers = 2;
+        webSocketService.sendMessageLeftUser(userName, gameId, maxPlayers, currentPlayers);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
