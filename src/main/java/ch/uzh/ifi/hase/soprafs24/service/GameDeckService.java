@@ -132,6 +132,10 @@ public class GameDeckService {
         return saveCards(cards);
     }
 
+    public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
+        return drawCardsFromDealerPile(gameDeck, numberOfCards, false);
+    }
+
     /**
      * Allows drawing a specified number of cards from the dealer pile.
      * An exception is thrown if the number of cards to be drawn exceeds the available cards in the pile.
@@ -141,7 +145,7 @@ public class GameDeckService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards) throws IOException, InterruptedException {
+    public List<Card> drawCardsFromDealerPile(GameDeck gameDeck, Integer numberOfCards, Boolean random) throws IOException, InterruptedException {
 
         String jsonResponse = getRemainingPileStats(gameDeck, 1L);
         Map<String, Integer> parsedPileCardCounts = parsePileCardCounts(jsonResponse);
@@ -150,9 +154,13 @@ public class GameDeckService {
         if (numberOfCards > dealerCount) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of cards to be drawn exceeds available cards");
         }
-
-        String drawCardsFromPileUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?count=%s", gameDeck.getDeckID(), gameDeck.getDealerPileId(), numberOfCards);
-        HttpRequest drawCardsFromPileRequest = buildGetRequest(drawCardsFromPileUri);
+        String baseUri;
+        if (random) {
+            baseUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/count=%s", gameDeck.getDeckID(), gameDeck.getDealerPileId(), numberOfCards);
+        } else {
+            baseUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?count=%s", gameDeck.getDeckID(), gameDeck.getDealerPileId(), numberOfCards);
+        }
+        HttpRequest drawCardsFromPileRequest = buildGetRequest(baseUri);
         HttpResponse<String> drawCardsFromPileResponse = httpClient.send(drawCardsFromPileRequest, HttpResponse.BodyHandlers.ofString());
 
         List<String> cardsPath = List.of("cards");
@@ -374,12 +382,16 @@ public class GameDeckService {
         }
         // Return to Bottom of Stack
         else if (location == -1 || dealerCount <= location) {
-            List<Card> drawnDeck = drawCardsFromDealerPile(game.getGameDeck(), dealerCount);
-            Collections.reverse(drawnDeck);
-            List<String> cardsToBePlacedBackOnDealerPile = drawnDeck.stream().map(Card::getCode).collect(Collectors.toList());
+            if (dealerCount == 0) {
+                returnCardsToPile(game.getGameDeck(), "dealer", cardToBeReturned.getCode());
+            } else {
+                List<Card> drawnDeck = drawCardsFromDealerPile(game.getGameDeck(), dealerCount);
+                Collections.reverse(drawnDeck);
+                List<String> cardsToBePlacedBackOnDealerPile = drawnDeck.stream().map(Card::getCode).collect(Collectors.toList());
 
-            String returnCards =  cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
-            returnCardsToPile(game.getGameDeck(), "dealer", returnCards);
+                String returnCards = cardToBeReturned.getCode() + "," + String.join(",", cardsToBePlacedBackOnDealerPile);
+                returnCardsToPile(game.getGameDeck(), "dealer", returnCards);
+            }
         }
         else {
             List<Card> drawnCards = drawCardsFromDealerPile(game.getGameDeck(), location);
