@@ -153,10 +153,10 @@ public class GameEngineController {
         GameEngineController.log.info(String.format("Game: %s, user: %s terminated his turn" , gameId, userId));
 
         // Handle termination of move draw
-        String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId);
+        String explosionCard = gameEngineService.drawCardMoveTermination(gameId, userId, false);
 
         if (explosionCard != null) {
-            // To DO -- handle explosion
+            // Handle explosion
             gameEngineService.handleExplosionCard(gameId, userId, explosionCard);
 
         } else {

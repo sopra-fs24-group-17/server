@@ -631,33 +631,6 @@ public class GameDeckServiceTest {
     }
 
     @Test
-    public void testDrawRandomCardDealerPile() throws IOException, InterruptedException {
-        List<Card> mockCards = new ArrayList<>();
-        Card card1 = new Card();
-        card1.setCode("KS");
-        card1.setInternalCode("defuse");
-        mockCards.add(card1);
-
-        String responseBody = "{\n" +
-                "  \"deck_id\": \"testDeckId\",\n" +
-                "  \"cards\": [\n" +
-                "    {\"code\": \"KS\", \"suit\": \"SPADES\", \"image\": \"http://image1.com\"},\n" +
-                "  ]\n" +
-                "}";
-        HttpResponse<String> mockResponse = mock(HttpResponse.class);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-                .thenReturn(mockResponse);
-        when(mockResponse.body()).thenReturn(responseBody);
-        doReturn(mockCards).when(spyGameDeckService).parseCards(any(GameDeck.class), eq(responseBody), eq("deck_id"),eq(Arrays.asList("cards")), eq(null));
-
-        Card randomCard = spyGameDeckService.drawRandomCardDealerPile(testDeck);
-
-        assertNotNull(randomCard);
-        verify(httpClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
-        verify(spyGameDeckService).parseCards(any(GameDeck.class), eq(responseBody), eq("deck_id"), eq(Arrays.asList("cards")), eq(null));
-    }
-
-    @Test
     public void testDrawCardFromPlayerPile_randomCard() throws IOException, InterruptedException {
         List<Card> mockCards = new ArrayList<>();
         Card card1 = new Card();
