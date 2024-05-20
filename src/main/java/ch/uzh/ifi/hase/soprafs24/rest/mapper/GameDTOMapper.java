@@ -32,6 +32,7 @@ public interface GameDTOMapper {
     @Mapping(target = "availableSlots", expression = "java(calculateAvailableSlots(game))")
     @Mapping(target = "deckId", ignore = true)
     @Mapping(target = "currentPlayers", expression = "java(calculateCurrentPlayers(game))")
+    //@Mapping(source = "leaderboard", target = "leaderboard")
     GameGetDTO convertEntityToGameGetDTO(Game game);
 
     // Conversion of GamePostDTO to Game Entity

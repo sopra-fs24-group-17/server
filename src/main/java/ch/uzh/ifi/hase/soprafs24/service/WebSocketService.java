@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -137,10 +138,21 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId + "/" + userId, params);
     }
 
-    public void sendMessageEndGame(Long gameId, String userName) {
+    public void sendMessageEndGame(Long gameId, String userName, List<String> leaderboard) {
+        JSONArray leaderboardArray = new JSONArray();
+        Collections.reverse(leaderboard);
+        int place = 1;
+        for (String s : leaderboard) {
+            JSONObject position = new JSONObject();
+            position.put("username", s);
+            position.put("position", place);
+            leaderboardArray.put(position);
+            place++;
+        }
         Map<String, Object> params = Map.of(
                 "type", "endGame",
-                "winningUser", userName
+                "winningUser", userName,
+                "leaderboard", leaderboardArray
         );
         sendWebSocketMessage("/game/" + gameId, params);
     }
