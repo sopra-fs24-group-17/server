@@ -156,7 +156,8 @@ public class GameDeckService {
         }
         String baseUri;
         if (random) {
-            baseUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/count=%s", gameDeck.getDeckID(), gameDeck.getDealerPileId(), numberOfCards);
+
+            baseUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/random/", gameDeck.getDeckID(), gameDeck.getDealerPileId());
         } else {
             baseUri = String.format("https://www.deckofcardsapi.com/api/deck/%s/pile/%s/draw/?count=%s", gameDeck.getDeckID(), gameDeck.getDealerPileId(), numberOfCards);
         }
