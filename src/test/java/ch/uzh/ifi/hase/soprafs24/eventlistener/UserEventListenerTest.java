@@ -9,9 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.mockito.Mockito.verify;
 
+@ActiveProfiles("dev")
 public class UserEventListenerTest {
 
     @Mock

@@ -116,6 +116,8 @@ public class GameService {
 
         List<User> players = currentGame.getPlayers();
         if (players.contains(verifiedUser)) {
+            GameJoinEvent gameJoinEvent = new GameJoinEvent(this, verifiedUser.getUsername(), gameId, currentGame.getMaxPlayers(), currentGame.getPlayers().size());
+            eventPublisher.publishEvent(gameJoinEvent);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is already part of the session");
         }
         if (players.size() >= currentGame.getMaxPlayers()) {
