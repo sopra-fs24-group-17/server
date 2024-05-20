@@ -245,9 +245,10 @@ public class GameEngineService {
      * @throws InterruptedException
      */
     public String drawCardMoveTermination(Long gameId, Long userId, boolean random) throws IOException, InterruptedException {
+
         Game game = findGameById(gameId);
 
-        List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(), 1);
+        List<Card> cards = gameDeckService.drawCardsFromDealerPile(game.getGameDeck(), 1, random);
         gameDeckService.returnCardsToPile(game.getGameDeck(), userId.toString(), cards.get(0).getCode());
 
         if (Objects.equals(cards.get(0).getInternalCode(), "explosion")) {
@@ -379,7 +380,7 @@ public class GameEngineService {
      */
     public void handleLuckyCard(Game game, Long userId) throws IOException, InterruptedException {
         // Draw a random card
-        String explosionCard = drawCardMoveTermination(game.getGameId(), userId, false);
+        String explosionCard = drawCardMoveTermination(game.getGameId(), userId, true);
 
         if (explosionCard != null) {
             // Handle explosion

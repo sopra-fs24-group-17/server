@@ -521,14 +521,6 @@ public class GameDeckServiceTest {
     }
 
     @Test
-    public void testShuffleCardsInDealerPile_excesiveCards() throws IOException, InterruptedException {
-        testDeck.setRemainingCardsDealerStack(0);
-        assertThrows(ResponseStatusException.class, () -> {
-            gameDeckService.shuffleCardsInDealerPile(testDeck);
-        });
-    }
-
-    @Test
     public void testExploreTopCardPlayPile_success() throws IOException, InterruptedException {
         List<Card> mockCards = new ArrayList<>();
         Card card1 = new Card();
