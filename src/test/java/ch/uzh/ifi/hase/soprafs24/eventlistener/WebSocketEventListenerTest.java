@@ -10,6 +10,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 
+@ActiveProfiles("dev")
 class WebSocketEventListenerTest {
 
     @Mock

@@ -9,9 +9,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.mockito.Mockito.*;
 
+@ActiveProfiles("dev")
 public class FriendshipRequestEventListenerTest {
 
     @Mock

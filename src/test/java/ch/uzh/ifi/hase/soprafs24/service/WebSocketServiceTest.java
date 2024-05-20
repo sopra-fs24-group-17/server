@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.json.JSONObject;
 import ch.uzh.ifi.hase.soprafs24.entity.Card;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
+@ActiveProfiles("dev")
 public class WebSocketServiceTest {
 
     @Mock

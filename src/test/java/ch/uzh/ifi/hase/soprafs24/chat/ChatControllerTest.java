@@ -10,10 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@ActiveProfiles("dev")
 public class ChatControllerTest {
 
     @InjectMocks
