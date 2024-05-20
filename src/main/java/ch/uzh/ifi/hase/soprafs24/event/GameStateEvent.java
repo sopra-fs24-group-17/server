@@ -16,13 +16,17 @@ public class GameStateEvent extends ApplicationEvent {
     private Map<String, Integer> remainingCardStats;
     private Integer numberOfPlayers;
     private List<String> playerNames;
+    private List<Long> playerIds;
+    private List<String> playerAvatars;
 
-    public GameStateEvent(Object source, Long gameId, Card topMostCardPlayPile, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames) {
+    public GameStateEvent(Object source, Long gameId, Card topMostCardPlayPile, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames, List<Long> playerIds, List<String> playerAvatars) {
         super(source);
         this.gameId = gameId;
         this.topMostCardPlayPile = topMostCardPlayPile;
         this.remainingCardStats = remainingCardStats;
         this.numberOfPlayers = numberOfPlayers;
         this.playerNames = playerNames;
+        this.playerIds = playerIds;
+        this.playerAvatars = playerAvatars;
     }
 }

@@ -235,18 +235,33 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId, params);
     }
 
-    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames) {
+    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames, List<Long> playerIds, List<String> playerAvatars) {
         JSONObject pilesJson = new JSONObject();
         JSONArray playerNamesJson = new JSONArray(playerNames);
+        JSONObject playersJson = new JSONObject();
+
+        // Populate pilesJson
         remainingCardStats.forEach(pilesJson::put);
+
+        for (int i = 0; i < playerNames.size(); i++) {
+            JSONObject playerInfo = new JSONObject();
+            playerInfo.put("name", playerNames.get(i));
+            playerInfo.put("avatar", playerAvatars.get(i));
+            playersJson.put(playerIds.get(i).toString(), playerInfo);
+        }
+
+        // Create the params map
         Map<String, Object> params = Map.of(
                 "type", "gameState",
                 "topCardCode", topCard.getCode(),
                 "topCardInternalCode", topCard.getInternalCode(),
                 "piles", pilesJson,
                 "numberOfPlayers", numberOfPlayers,
-                "playerNames", playerNamesJson
+                "playerNames", playerNamesJson,  // Keeping this in case you still need it
+                "players", playersJson            // Adding the new playersJson object with names and avatars
         );
+
+        // Send the WebSocket message
         sendWebSocketMessage("/game/" + gameId, params);
     }
 

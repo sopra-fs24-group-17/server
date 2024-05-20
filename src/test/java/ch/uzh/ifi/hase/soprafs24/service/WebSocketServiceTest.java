@@ -314,7 +314,22 @@ public class WebSocketServiceTest {
         playerNames.add("heidi");
         playerNames.add("thomas");
 
-        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers, playerNames);
+        List<Long> playerIds = new ArrayList<>();
+        playerIds.add(1L);
+        playerIds.add(2L);
+        playerIds.add(3L);
+        playerIds.add(4L);
+        playerIds.add(5L);
+
+        List<String> playerAvatars = new ArrayList<>();
+        playerAvatars.add("avatar1");
+        playerAvatars.add("avatar2");
+        playerAvatars.add("avatar3");
+        playerAvatars.add("avatar4");
+        playerAvatars.add("avatar5");
+
+
+        webSocketService.sendGameState(gameId, topCard, remainingCardStats, numberOfPlayers, playerNames, playerIds, playerAvatars);
         verify(messagingTemplate).convertAndSend(eq("/game/" + gameId), any(String.class));
     }
 
