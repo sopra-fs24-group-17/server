@@ -18,8 +18,9 @@ public class GameStateEvent extends ApplicationEvent {
     private List<String> playerNames;
     private List<Long> playerIds;
     private List<String> playerAvatars;
+    private String activePlayer;
 
-    public GameStateEvent(Object source, Long gameId, Card topMostCardPlayPile, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames, List<Long> playerIds, List<String> playerAvatars) {
+    public GameStateEvent(Object source, Long gameId, Card topMostCardPlayPile, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames, List<Long> playerIds, List<String> playerAvatars, String activePlayer) {
         super(source);
         this.gameId = gameId;
         this.topMostCardPlayPile = topMostCardPlayPile;
@@ -28,5 +29,6 @@ public class GameStateEvent extends ApplicationEvent {
         this.playerNames = playerNames;
         this.playerIds = playerIds;
         this.playerAvatars = playerAvatars;
+        this.activePlayer = activePlayer;
     }
 }

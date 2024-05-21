@@ -273,9 +273,14 @@ public class GameEngineServiceTest {
         Long gameId = 1L;
         Long userId = 1L;
 
+        User player2 = new User();
+        player2.setId(3L);
+        player2.setUsername("player2");
+
         Game mockGame = new Game();
         GameDeck mockDeck = new GameDeck();
         mockGame.setGameDeck(mockDeck);
+        mockGame.setCurrentTurn(player2);
 
         Card topCard = new Card();
         topCard.setCode("AH");
@@ -425,6 +430,7 @@ public class GameEngineServiceTest {
         player2.setUsername("player2");
         List<User> players = Arrays.asList(player1, player2);
         mockGame.setPlayers(players);
+        mockGame.setCurrentTurn(player2);
 
         when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
         when(gameDeckService.getRemainingPileStats(mockDeck, userId)).thenReturn(jsonResponse);
@@ -463,6 +469,7 @@ public class GameEngineServiceTest {
         player2.setUsername("player2");
         List<User> players = Arrays.asList(player1, player2);
         mockGame.setPlayers(players);
+        mockGame.setCurrentTurn(player2);
 
         when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
         when(gameDeckService.getRemainingPileStats(mockDeck, userId)).thenReturn(jsonResponse);
@@ -668,15 +675,20 @@ public class GameEngineServiceTest {
         Long gameId = 1L;
         Long userId = 2L;
         String explosionId = "EXP1";
+        User player2 = new User();
+        player2.setId(3L);
+        player2.setUsername("player2");
 
         Game mockGame = mock(Game.class);
         GameDeck mockDeck = mock(GameDeck.class);
         User explodedUser = new User();
         explodedUser.setId(userId);
         explodedUser.setUsername("explodedUser");
+        mockGame.setCurrentTurn(player2);
 
         when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
         when(mockGame.getGameDeck()).thenReturn(mockDeck);
+        when(mockGame.getCurrentTurn()).thenReturn(player2);
         when(userRepository.findUserById(userId)).thenReturn(explodedUser);
         when(gameDeckService.exploreDefuseCardInPlayerPile(mockDeck, userId)).thenReturn("DEF1");
 
