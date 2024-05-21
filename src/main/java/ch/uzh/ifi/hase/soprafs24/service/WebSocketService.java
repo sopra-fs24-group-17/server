@@ -239,7 +239,7 @@ public class WebSocketService {
         sendWebSocketMessage("/game/" + gameId, params);
     }
 
-    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames, List<Long> playerIds, List<String> playerAvatars) {
+    public void sendGameState(Long gameId, Card topCard, Map<String, Integer> remainingCardStats, Integer numberOfPlayers, List<String> playerNames, List<Long> playerIds, List<String> playerAvatars, String activePlayer) {
         JSONObject pilesJson = new JSONObject();
         JSONArray playerNamesJson = new JSONArray(playerNames);
         JSONObject playersJson = new JSONObject();
@@ -262,7 +262,8 @@ public class WebSocketService {
                 "piles", pilesJson,
                 "numberOfPlayers", numberOfPlayers,
                 "playerNames", playerNamesJson,  // Keeping this in case you still need it
-                "players", playersJson            // Adding the new playersJson object with names and avatars
+                "players", playersJson,            // Adding the new playersJson object with names and avatars
+                "activePlayer", activePlayer
         );
 
         // Send the WebSocket message
