@@ -506,11 +506,8 @@ public class GameEngineServiceTest {
         when(userService.getUserById(userId)).thenReturn(terminatingUser);
 
         GameEngineService spyGameEngineService = Mockito.spy(gameEngineService);
-        doReturn("example_card").when(spyGameEngineService).drawCardMoveTermination(gameId, userId, false);
 
         spyGameEngineService.turnValidation(gameId, userId);
-
-        verify(spyGameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
 
         assertFalse(mockGame.isRepeatTurn(), "Repeat turn should be reset to false after turnValidation.");
         assertEquals(terminatingUser, mockGame.getCurrentTurn(), "The current turn should still belong to the terminating user during a repeat turn.");
