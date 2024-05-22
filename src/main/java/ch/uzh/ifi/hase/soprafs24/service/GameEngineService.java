@@ -213,9 +213,11 @@ public class GameEngineService {
 
         if (currentGame.isRepeatTurn()) {
             nextPlayer = terminatingUser;
+
             if (!skipPlayed) {
                 drawCardMoveTermination(gameId, userId, false);
             }
+          
             currentGame.setRepeatTurn(false);
             gameRepository.saveAndFlush(currentGame);
         }
