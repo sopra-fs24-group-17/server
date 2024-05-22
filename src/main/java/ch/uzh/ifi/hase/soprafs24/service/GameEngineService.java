@@ -213,7 +213,6 @@ public class GameEngineService {
 
         if (currentGame.isRepeatTurn()) {
             nextPlayer = terminatingUser;
-            //drawCardMoveTermination(gameId, userId, false);
             currentGame.setRepeatTurn(false);
             gameRepository.saveAndFlush(currentGame);
         }
@@ -437,6 +436,7 @@ public class GameEngineService {
         }
         // Make the next user to grab two cards from pile
         game.setAttacked(true);
+        game.setRepeatTurn(false);
         gameRepository.saveAndFlush(game);
 
         // To Do - Trigger Attack Event but on next user channel.
