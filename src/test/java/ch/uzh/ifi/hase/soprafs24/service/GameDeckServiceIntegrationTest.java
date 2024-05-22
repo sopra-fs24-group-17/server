@@ -26,7 +26,6 @@ import java.util.*;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ActiveProfiles("dev")
 @ExtendWith(MockitoExtension.class)
 public class GameDeckServiceIntegrationTest {
 
