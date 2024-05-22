@@ -1,10 +1,7 @@
 package ch.uzh.ifi.hase.soprafs24.service;
 
 import ch.uzh.ifi.hase.soprafs24.constant.GameState;
-import ch.uzh.ifi.hase.soprafs24.entity.Card;
-import ch.uzh.ifi.hase.soprafs24.entity.Game;
-import ch.uzh.ifi.hase.soprafs24.entity.User;
-import ch.uzh.ifi.hase.soprafs24.entity.UserStats;
+import ch.uzh.ifi.hase.soprafs24.entity.*;
 import ch.uzh.ifi.hase.soprafs24.event.*;
 import ch.uzh.ifi.hase.soprafs24.repository.CardRepository;
 import ch.uzh.ifi.hase.soprafs24.repository.GameDeckRepository;
@@ -187,6 +184,9 @@ public class GameEngineService {
         return currentGame;
     }
 
+    public boolean turnValidation(Long gameId, Long userId) throws IOException, InterruptedException {
+        return turnValidation(gameId, userId, false);
+    }
     /**
      * Handles a websocket request from a user who wants to terminate his turn.
      * First checks whether the user invoking a termination of his move was actually the current active player
@@ -195,7 +195,7 @@ public class GameEngineService {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void turnValidation(Long gameId, Long userId) throws IOException, InterruptedException{
+    public boolean turnValidation(Long gameId, Long userId, Boolean skipPlayed) throws IOException, InterruptedException{
 
         User terminatingUser = userService.getUserById(userId);
         Game currentGame = findGameById(gameId);
@@ -213,7 +213,9 @@ public class GameEngineService {
 
         if (currentGame.isRepeatTurn()) {
             nextPlayer = terminatingUser;
-            drawCardMoveTermination(gameId, userId, false);
+            if (!skipPlayed) {
+                drawCardMoveTermination(gameId, userId, false);
+            }
             currentGame.setRepeatTurn(false);
             gameRepository.saveAndFlush(currentGame);
         }
@@ -224,17 +226,19 @@ public class GameEngineService {
             gameRepository.saveAndFlush(currentGame);
         }
 
-        if (nextPlayer != null) {
-            currentGame.setCurrentTurn(nextPlayer);
-            gameRepository.saveAndFlush(currentGame);
-        } else {
-            terminatingGame(gameId); // Just one user left, initiate end of game and evaluation
-        }
-
-        // Publish event whose turn it is (user- and game-specific channel)
-        YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId(), currentGame.getCurrentTurn().getUsername());
-        eventPublisher.publishEvent(yourTurnEvent);
+    if (nextPlayer != null) {
+        currentGame.setCurrentTurn(nextPlayer);
+        gameRepository.saveAndFlush(currentGame);
+    } else {
+        terminatingGame(gameId); // Just one user left, initiate end of game and evaluation
     }
+
+    // Publish event whose turn it is (user- and game-specific channel)
+    YourTurnEvent yourTurnEvent = new YourTurnEvent(this, currentGame.getCurrentTurn().getId(), currentGame.getGameId(), currentGame.getCurrentTurn().getUsername());
+    eventPublisher.publishEvent(yourTurnEvent);
+
+    return true;
+}
 
     /**
      * Implements the final draw that indicates end of turn
@@ -416,7 +420,7 @@ public class GameEngineService {
     public void handleSkipCard(Game game, Long userId) throws IOException, InterruptedException {
         SkipEvent skipEvent = new SkipEvent(this, game.getGameId(), game.getCurrentTurn().getUsername());
         eventPublisher.publishEvent(skipEvent);
-        turnValidation(game.getGameId(), userId);
+        turnValidation(game.getGameId(), userId, true);
     }
 
     /**
@@ -437,6 +441,7 @@ public class GameEngineService {
         }
         // Make the next user to grab two cards from pile
         game.setAttacked(true);
+        game.setRepeatTurn(false);
         gameRepository.saveAndFlush(game);
 
         // To Do - Trigger Attack Event but on next user channel.
