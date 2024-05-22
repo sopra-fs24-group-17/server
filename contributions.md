@@ -181,3 +181,11 @@
 | 8    | 172     | Ensure Lobby is informed when a user quits the browser                                                                                                                                                                          | https://github.com/sopra-fs24-group-17/client/issues/172 | 4         | Panagiotis Patsias                        | &#9745;  |
 | 8    | 216     | Fix friends not showing until filter is applied | https://github.com/sopra-fs24-group-17/server/issues/216 | 4         | Liam Kane                        | &#9745;  |
 | 8    | 220     | Last AllPlayer view beautification and table fixes | https://github.com/sopra-fs24-group-17/server/issues/220 | 4         | Liam Kane                        | &#9745;  |
+| 8    | 132     | implement getLucky card for game | https://github.com/sopra-fs24-group-17/client/issues/132 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 169     | Change popups to fit better with explosion animation based on who got the explosion | https://github.com/sopra-fs24-group-17/client/issues/169 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 178     | chat in game | https://github.com/sopra-fs24-group-17/client/issues/178 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 176     | game state caching client send to dedicated endpoint | https://github.com/sopra-fs24-group-17/client/issues/176 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 136     | Add mapping for future card that changes internal mapping (kittens) to chickens | https://github.com/sopra-fs24-group-17/client/issues/136 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 177     | lobby upgrade  | https://github.com/sopra-fs24-group-17/client/issues/177 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 212     | Fix favor card, take mutlitple cards  | https://github.com/sopra-fs24-group-17/client/issues/212 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 213     | Remove placeholder in explosion time alert  | https://github.com/sopra-fs24-group-17/client/issues/213 | 4         | Liam Tessendorf                        | &#9745;  |
