@@ -262,7 +262,13 @@ public class GameDeckService {
      */
     public List<Card> peekIntoDealerPile(Game game) throws IOException, InterruptedException {
 
-        List<Card> topThreeCards = drawCardsFromDealerPile(game.getGameDeck(), 3);
+        GameDeck deck = game.getGameDeck();
+        Integer remainingCards = deck.getRemainingCardsDealerStack();
+        Integer cardNum = 3;
+        if(remainingCards<cardNum)
+            cardNum = remainingCards;
+
+        List<Card> topThreeCards = drawCardsFromDealerPile(deck, cardNum);
 
         List<String> cardsToBePlacedBackOnDealerPile = new ArrayList<>();
 
