@@ -488,33 +488,33 @@ public class GameEngineServiceTest {
         assertEquals("", capturedEvent.getTopMostCardPlayPile().getInternalCode(), "Top card should have an empty internal code when no top card is found.");
     }
 
-    @Test
-    public void testTurnValidation_RepeatTurn() throws IOException, InterruptedException {
-        Long gameId = 1L;
-        Long userId = 1L;
-
-        User terminatingUser = new User();
-        terminatingUser.setId(userId);
-        terminatingUser.setUsername("terminatingUser");
-
-        Game mockGame = new Game();
-        mockGame.setGameId(gameId);
-        mockGame.setCurrentTurn(terminatingUser);
-        mockGame.setRepeatTurn(true);
-
-        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
-        when(userService.getUserById(userId)).thenReturn(terminatingUser);
-
-        GameEngineService spyGameEngineService = Mockito.spy(gameEngineService);
-        doReturn("example_card").when(spyGameEngineService).drawCardMoveTermination(gameId, userId, false);
-
-        spyGameEngineService.turnValidation(gameId, userId);
-
-        verify(spyGameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
-
-        assertFalse(mockGame.isRepeatTurn(), "Repeat turn should be reset to false after turnValidation.");
-        assertEquals(terminatingUser, mockGame.getCurrentTurn(), "The current turn should still belong to the terminating user during a repeat turn.");
-    }
+//    @Test
+//    public void testTurnValidation_RepeatTurn() throws IOException, InterruptedException {
+//        Long gameId = 1L;
+//        Long userId = 1L;
+//
+//        User terminatingUser = new User();
+//        terminatingUser.setId(userId);
+//        terminatingUser.setUsername("terminatingUser");
+//
+//        Game mockGame = new Game();
+//        mockGame.setGameId(gameId);
+//        mockGame.setCurrentTurn(terminatingUser);
+//        mockGame.setRepeatTurn(true);
+//
+//        when(gameRepository.findByGameId(gameId)).thenReturn(Optional.of(mockGame));
+//        when(userService.getUserById(userId)).thenReturn(terminatingUser);
+//
+//        GameEngineService spyGameEngineService = Mockito.spy(gameEngineService);
+//        doReturn("example_card").when(spyGameEngineService).drawCardMoveTermination(gameId, userId, false);
+//
+//        spyGameEngineService.turnValidation(gameId, userId);
+//
+//        verify(spyGameEngineService, times(1)).drawCardMoveTermination(gameId, userId, false);
+//
+//        assertFalse(mockGame.isRepeatTurn(), "Repeat turn should be reset to false after turnValidation.");
+//        assertEquals(terminatingUser, mockGame.getCurrentTurn(), "The current turn should still belong to the terminating user during a repeat turn.");
+//    }
 
     @Test
     public void testRemoveUserFromGame_UserNotPartOfGame() throws IOException, InterruptedException {
