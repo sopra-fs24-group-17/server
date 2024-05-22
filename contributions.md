@@ -189,3 +189,4 @@
 | 8    | 177     | lobby upgrade  | https://github.com/sopra-fs24-group-17/client/issues/177 | 4         | Panagiotis Patsias & Liam Tessendorf                        | &#9745;  |
 | 8    | 212     | Fix favor card, take mutlitple cards  | https://github.com/sopra-fs24-group-17/client/issues/212 | 4         | Liam Tessendorf                        | &#9745;  |
 | 8    | 213     | Remove placeholder in explosion time alert  | https://github.com/sopra-fs24-group-17/client/issues/213 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 222     | Add card names to chicken cards in tutorial  | https://github.com/sopra-fs24-group-17/client/issues/222 | 4         | Liam Kane                        | &#9745;  |
