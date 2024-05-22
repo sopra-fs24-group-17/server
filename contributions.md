@@ -186,6 +186,6 @@
 | 8    | 178     | chat in game | https://github.com/sopra-fs24-group-17/client/issues/178 | 4         | Liam Tessendorf                        | &#9745;  |
 | 8    | 176     | game state caching client send to dedicated endpoint | https://github.com/sopra-fs24-group-17/client/issues/176 | 4         | Liam Tessendorf                        | &#9745;  |
 | 8    | 136     | Add mapping for future card that changes internal mapping (kittens) to chickens | https://github.com/sopra-fs24-group-17/client/issues/136 | 4         | Liam Tessendorf                        | &#9745;  |
-| 8    | 177     | lobby upgrade  | https://github.com/sopra-fs24-group-17/client/issues/177 | 4         | Liam Tessendorf                        | &#9745;  |
+| 8    | 177     | lobby upgrade  | https://github.com/sopra-fs24-group-17/client/issues/177 | 4         | Panagiotis Patsias & Liam Tessendorf                        | &#9745;  |
 | 8    | 212     | Fix favor card, take mutlitple cards  | https://github.com/sopra-fs24-group-17/client/issues/212 | 4         | Liam Tessendorf                        | &#9745;  |
 | 8    | 213     | Remove placeholder in explosion time alert  | https://github.com/sopra-fs24-group-17/client/issues/213 | 4         | Liam Tessendorf                        | &#9745;  |
