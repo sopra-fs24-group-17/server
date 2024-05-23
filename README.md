@@ -1,29 +1,45 @@
-# Exploding Chickens web implementation (server)
 
-Exploding Chickens is a spin-off of the popular game 'Exploding Kittens'. In this version, the protagonists are lovely chickens (but not so lovely, they can explode!). We created this unique implementation to conect people through a web implementation of this game, as previously it was only possible to play  when players were co-located.
+## Table of Content
+- [Introduction](#introduction) 
+- [Built With](#built-with)
+- [Main Components](#main-components)
+- [Launch and Deployment](#launch-and-deployment)
+- [Roadmap (next steps)](#roadmap-next-steps)
+- [Authors](#authors)
+- [Acknowledgements](#acknowledgments)
+- [License](#license)
+
+## Introduction
+
+Exploding Chickens is a spin-off of the popular game 'Exploding Kittens'. In this version, the protagonists are lovely chickens (but be careful, they can explode!). We created this unique implementation to connect people through a web implementation of this game, as previously it was only possible to play when players were co-located.
 
 This project offers an innovative user interface and features that enhance collaboration between players while providing a good user experience. These features include the ability to send friend requests, a chat to discuss strategies, high-quality graphics, and various fun play modes.
 
-## Technologies
-
-The server was implemented using the following technologies
--   Java
--   Spring boot
--   Gradle
--   Web socket communication
--   Database to enable persistance
--   API calls (email and cards management)
--   Google cloud for deployment
--   Git for version control and collaboration among developers
--   Github to follow agile practices
--   Mockito and JUnit for testing
+## Built With
+* [React](https://react.dev/) - Front-end JavaScript library
+* [Spring](https://spring.io/projects/spring-framework) - Java Back-end framework
+* [Gradle](https://gradle.org/) - Build automation tool
+* [STOMP](https://stomp-js.github.io/stomp-websocket/) - Bidirectional real time communication over websockets
+* [DeckOfCardsAPI](https://www.deckofcardsapi.com/) - External API to simulate card decks
+* [PerspectiveAPI](https://www.perspectiveapi.com/) - External API for content moderation (checking usernames and emails for toxicity)
+* [GmailAPI](https://developers.google.com/gmail/api/reference/rest) - External API for email interaction for password reset
+* [PostgreSQL](https://www.postgresql.org/) - Persistent Database (through instance of CloudSQL)
 
 ## Main components
--  [GameController.java] (https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/controller/GameController.java) : Handles client requests related to the game, such as starting, ending, and joining games. 
--  [GameEngineController.java] (https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/controller/GameEngineController.java) :  Manages requests concerning the game mechanics, including playing and drawing cards.  
--  [GameDeckService.java] (https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameDeckService.java) : Interfaces with the [Deck of Cards API](https://www.deckofcardsapi.com/) : Interfaces with the Deck API to request and receive responses that are crucial for game functionality.
--  [GameEngineService.java] (https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameEngineService.java) :  Defines the logic driving game execution, including turn management and card effect processing.
--  [WebSocketService.java] (https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/WebSocketService.java) : Manages WebSocket communication to ensure a smooth user experience by sending updates to clients.
+[GameController](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/controller/GameController.java)
+Handles client requests related to creation/joining/leaving of game sessions. 
+
+[GameEngineController](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/controller/GameEngineController.java)
+Manges requests from game sessions surrounding card moves, move terminations, etc.  
+
+[GameDeckService](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameDeckService.java)
+Interacts with the [Deck of Cards API](https://www.deckofcardsapi.com/) to simulate card decks for the game sessions.
+
+[GameEngineService](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameEngineService.java) 
+This is the core of our application as it hosts the logic of the game.
+
+[WebSocketService](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/WebSocketService.java)
+Manages bidirectional, real-time communication between client and server.
 
 
 ## Launch and Deployment
@@ -36,31 +52,34 @@ The server was implemented using the following technologies
 - Run : `./gradlew bootRun`
 - Test: `./gradlew test`
 
-You can verify that the server is running by visiting `localhost:8080` in your browser.
+You can verify that the server is running by visiting `localhost:8080` in your browser. By default the development profile is active, utilizing an in-memory H2 database.
 You can access the local hosted application (client) by visiting `localhost:3000`
 
 NOTE: The client repository can be found [here](https://github.com/sopra-fs24-group-17/client)
 
 #### Cloud service
-The application is hosted in google cloud service. 
-To make a new deployment (release) it is necessary to merge the release branch with our main branch, this will automatically start the deployment in google cloud. It is important to also activate the database in google cloud (Ellaborate more about how to do this - if needed). 
+- through GitHub workflows, the main branch is automatically deployed onto Google Cloud's App Engine
+- during deployment, the in-memory H2 database is migrated to a CloudSQL instance of PostgreSQL
+  - (Note: if changes to the database schema are done, the database must be restarted upon deployment)
+- during deployment, credentials for Google App Engine, PostgreSQL and the Gmail API are replaced with GitHub secrets
 
-Finally, it is a good practice to mark a new release with a tag, for example 'M4' represents the release at Milestone 4.
 
-
-### Roadmap (next steps)
-- On game store : Thinking from a buisiness perspective and a way to generate revenue an online store where users can buy upgrades to the game, customizable cards, among others would be a great addition to make this project self-sustainable.
-- Enhance game features : To make a game fun and reach more people is necessary to innovate. It would be desired to incorporate new cards with new effects in the game as well as having more game modes that would cautivate all the players. For extending the game it would be necessary to develop the implementation of new cards or new game modes both for the client and the server, but the existing implementations can be followed as how-to guideline.
+## Roadmap (next steps)
+Below is an outline of suggestive features that developers who want to contribute to our project could use as a starting point:
+- new game modes, e.g higher probability of explosions and new custom game cards
+- implementation of a mobile application
+- in game store to allow customization of user profiles and avatars
 
 ## Authors
-- Kevin Bründler [random9ness](https://github.com/random9ness)
-- Liam Tessendorf [liamti5](https://github.com/liamti5)
-- Liam Kane [ljkane](https://github.com/ljkane)
-- Panagiotis Patsias [PanagiotisPatsias](https://github.com/PanagiotisPatsias)
-- Jorge Ortiz [jorgeortizv](https://github.com/jorgeortizv)
+* **Liam Tessendorf** - (*Frontend*) - [liamti5](https://github.com/liamti5)
+* **Liam Kane** - (*Frontend*) - [ljkane](https://github.com/ljkane)
+* **Panagiotis Patsias** - (*Frontend*) - [PanagiotisPatsias](https://github.com/PanagiotisPatsias)
+* **Jorge Ortiz** - (*Backend*) - [jorgeortizv](https://github.com/jorgeortizv)
+* **Kevin Bründler** - (*Backend*) - [random9ness](https://github.com/random9ness)
 
-### License
+## Acknowledgments
+We would like to thank the professor and tutors of the Software Engineering Lab course from the Univeristy of Zurich.
+A special thanks to our tutor [feji08](https://github.com/feji08) for the weekly meetings and continuous support.
+
+## License
 This project is licensed under the MIT License. For more details, see the [LICENSE](https://github.com/sopra-fs24-group-17/server/blob/main/LICENSE.txt) file.
-
-
-
