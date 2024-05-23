@@ -39,6 +39,8 @@ The server was implemented using the following technologies
 You can verify that the server is running by visiting `localhost:8080` in your browser.
 You can access the local hosted application (client) by visiting `localhost:3000`
 
+NOTE: The client repository can be found [here](https://github.com/sopra-fs24-group-17/client)
+
 #### Cloud service
 The application is hosted in google cloud service. 
 To make a new deployment (release) it is necessary to merge the release branch with our main branch, this will automatically start the deployment in google cloud. It is important to also activate the database in google cloud (Ellaborate more about how to do this - if needed). 
