@@ -28,7 +28,7 @@ The server was implemented using the following technologies
 
 ## Launch and Deployment
 #### Cloning the repository:
-`git clone https://github.com/sopra-fs24-group-17/server.git`
+`git clone https://github.com/sopra-fs24-group-17/server.git`\
 `cd server`
 
 #### Locally
@@ -41,14 +41,14 @@ You can access the local hosted application (client) by visiting `localhost:3000
 
 #### Cloud service
 The application is hosted in google cloud service. 
-To make a new deployment (release) it is necessary to merge the release branch with our main branch, this will automatically start the deployment in google cloud. It is important to also activate the database in google cloud (Ellaborate more about how to do this). 
+To make a new deployment (release) it is necessary to merge the release branch with our main branch, this will automatically start the deployment in google cloud. It is important to also activate the database in google cloud (Ellaborate more about how to do this - if needed). 
 
 Finally, it is a good practice to mark a new release with a tag, for example 'M4' represents the release at Milestone 4.
 
 
-### Roadmap
+### Roadmap (next steps)
 - On game store : Thinking from a buisiness perspective and a way to generate revenue an online store where users can buy upgrades to the game, customizable cards, among others would be a great addition to make this project self-sustainable.
-- Enhance game features : To make a game fun and reach more people is necessary to innovate. It would be desired to incorporate new cards with new effects in the game as well as having more game modes that would cautivate all the players. For extending the game it would be necessary to develop the implementation of new cards or new game modes both for the client and the server.
+- Enhance game features : To make a game fun and reach more people is necessary to innovate. It would be desired to incorporate new cards with new effects in the game as well as having more game modes that would cautivate all the players. For extending the game it would be necessary to develop the implementation of new cards or new game modes both for the client and the server, but the existing implementations can be followed as how-to guideline.
 
 ## Authors
 - Kevin Bründler (random9ness)
@@ -61,5 +61,4 @@ Finally, it is a good practice to mark a new release with a tag, for example 'M4
 This project is licensed under the MIT License. For more details, see the LICENSE file.
 
 
-You can verify that the server is running by visiting `localhost:8080` in your browser.
 
