@@ -65,10 +65,10 @@ NOTE: The client repository can be found [here](https://github.com/sopra-fs24-gr
 
 
 ## Roadmap (next steps)
-Below is an outline of suggestive features that developers who want to contribute to our project could use as a starting point:
-- new game modes, e.g higher probability of explosions and new custom game cards
+Below is an outline of suggested features that developers who want to contribute to our project could use as a starting point:
+- new game modes, e.g. higher probability of explosions and new custom game cards
 - implementation of a mobile application
-- in game store to allow customization of user profiles and avatars
+- an in game store to allow customization of user profiles and avatars
 
 ## Authors
 * **Liam Tessendorf** - (*Frontend*) - [liamti5](https://github.com/liamti5)
