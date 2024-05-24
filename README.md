@@ -1,87 +1,85 @@
-# SoPra RESTful Service Template FS24
 
-## Getting started with Spring Boot
--   Documentation: https://docs.spring.io/spring-boot/docs/current/reference/html/index.html
--   Guides: http://spring.io/guides
-    -   Building a RESTful Web Service: http://spring.io/guides/gs/rest-service/
-    -   Building REST services with Spring: https://spring.io/guides/tutorials/rest/
+## Table of Content
+- [Introduction](#introduction) 
+- [Built With](#built-with)
+- [Main Components](#main-components)
+- [Launch and Deployment](#launch-and-deployment)
+- [Roadmap (next steps)](#roadmap-next-steps)
+- [Authors](#authors)
+- [Acknowledgements](#acknowledgments)
+- [License](#license)
 
-## Setup this Template with your IDE of choice
-Download your IDE of choice (e.g., [IntelliJ](https://www.jetbrains.com/idea/download/), [Visual Studio Code](https://code.visualstudio.com/), or [Eclipse](http://www.eclipse.org/downloads/)). Make sure Java 17 is installed on your system (for Windows, please make sure your `JAVA_HOME` environment variable is set to the correct version of Java).
+## Introduction
 
-### IntelliJ
-If you consider to use IntelliJ as your IDE of choice, you can make use of your free educational license [here](https://www.jetbrains.com/community/education/#students).
-1. File -> Open... -> SoPra server template
-2. Accept to import the project as a `gradle project`
-3. To build right click the `build.gradle` file and choose `Run Build`
+Exploding Chickens is a spin-off of the popular game 'Exploding Kittens'. In this version, the protagonists are lovely chickens (but be careful, they can explode!). We created this unique implementation to connect people through a web implementation of this game, as previously it was only possible to play when players were co-located.
 
-### VS Code
-The following extensions can help you get started more easily:
--   `vmware.vscode-spring-boot`
--   `vscjava.vscode-spring-initializr`
--   `vscjava.vscode-spring-boot-dashboard`
--   `vscjava.vscode-java-pack`
+This project offers an innovative user interface and features that enhance collaboration between players while providing a good user experience. These features include the ability to send friend requests, a chat to discuss strategies, high-quality graphics, and various fun play modes.
 
-**Note:** You'll need to build the project first with Gradle, just click on the `build` command in the _Gradle Tasks_ extension. Then check the _Spring Boot Dashboard_ extension if it already shows `soprafs24` and hit the play button to start the server. If it doesn't show up, restart VS Code and check again.
+## Built With
+* [React](https://react.dev/) - Front-end JavaScript library
+* [Spring](https://spring.io/projects/spring-framework) - Java Back-end framework
+* [Gradle](https://gradle.org/) - Build automation tool
+* [STOMP](https://stomp-js.github.io/stomp-websocket/) - Bidirectional real time communication over websockets
+* [DeckOfCardsAPI](https://www.deckofcardsapi.com/) - External API to simulate card decks
+* [PerspectiveAPI](https://www.perspectiveapi.com/) - External API for content moderation (checking usernames and emails for toxicity)
+* [GmailAPI](https://developers.google.com/gmail/api/reference/rest) - External API for email interaction for password reset
+* [PostgreSQL](https://www.postgresql.org/) - Persistent Database (through instance of CloudSQL)
 
-## Building with Gradle
-You can use the local Gradle Wrapper to build the application.
--   macOS: `./gradlew`
--   Linux: `./gradlew`
--   Windows: `./gradlew.bat`
+## Main components
+[GameController](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/controller/GameController.java)
+Handles client requests related to creation/joining/leaving of game sessions. 
 
-More Information about [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html) and [Gradle](https://gradle.org/docs/).
+[GameEngineController](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/controller/GameEngineController.java)
+Manges requests from game sessions surrounding card moves, move terminations, etc.  
 
-### Build
+[GameDeckService](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameDeckService.java)
+Interacts with the [Deck of Cards API](https://www.deckofcardsapi.com/) to simulate card decks for the game sessions.
 
-```bash
-./gradlew build
-```
+[GameEngineService](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/GameEngineService.java) 
+This is the core of our application as it hosts the logic of the game.
 
-### Run
+[WebSocketService](https://github.com/sopra-fs24-group-17/server/blob/develop/src/main/java/ch/uzh/ifi/hase/soprafs24/service/WebSocketService.java)
+Manages bidirectional, real-time communication between client and server.
 
-```bash
-./gradlew bootRun
-```
 
-You can verify that the server is running by visiting `localhost:8080` in your browser.
+## Launch and Deployment
+#### Cloning the repository:
+`git clone https://github.com/sopra-fs24-group-17/server.git`\
+`cd server`
 
-### Test
+#### Locally
+- Build : `./gradlew build`
+- Run : `./gradlew bootRun`
+- Test: `./gradlew test`
 
-```bash
-./gradlew test
-```
+You can verify that the server is running by visiting `localhost:8080` in your browser. By default the development profile is active, utilizing an in-memory H2 database.
+You can access the local hosted application (client) by visiting `localhost:3000`
 
-### Development Mode
-You can start the backend in development mode, this will automatically trigger a new build and reload the application
-once the content of a file has been changed.
+NOTE: The client repository can be found [here](https://github.com/sopra-fs24-group-17/client)
 
-Start two terminal windows and run:
+#### Cloud service
+- through GitHub workflows, the main branch is automatically deployed onto Google Cloud's App Engine
+- during deployment, the in-memory H2 database is migrated to a CloudSQL instance of PostgreSQL
+  - (Note: if changes to the database schema are done, the database must be restarted upon deployment)
+- during deployment, credentials for Google App Engine, PostgreSQL and the Gmail API are replaced with GitHub secrets
 
-`./gradlew build --continuous`
 
-and in the other one:
+## Roadmap (next steps)
+Below is an outline of suggested features that developers who want to contribute to our project could use as a starting point:
+- new game modes, e.g. higher probability of explosions and new custom game cards
+- implementation of a mobile application
+- an in game store to allow customization of user profiles and avatars
 
-`./gradlew bootRun`
+## Authors
+* **Liam Tessendorf** - (*Frontend*) - [liamti5](https://github.com/liamti5)
+* **Liam Kane** - (*Frontend*) - [ljkane](https://github.com/ljkane)
+* **Panagiotis Patsias** - (*Frontend*) - [PanagiotisPatsias](https://github.com/PanagiotisPatsias)
+* **Jorge Ortiz** - (*Backend*) - [jorgeortizv](https://github.com/jorgeortizv)
+* **Kevin Bründler** - (*Backend*) - [random9ness](https://github.com/random9ness)
 
-If you want to avoid running all tests with every change, use the following command instead:
+## Acknowledgments
+We would like to thank the professor and tutors of the Software Engineering Lab course from the Univeristy of Zurich.
+A special thanks to our tutor [feji08](https://github.com/feji08) for the weekly meetings and continuous support.
 
-`./gradlew build --continuous -xtest`
-
-## API Endpoint Testing with Postman
-We recommend using [Postman](https://www.getpostman.com) to test your API Endpoints.
-
-## Debugging
-If something is not working and/or you don't know what is going on. We recommend using a debugger and step-through the process step-by-step.
-
-To configure a debugger for SpringBoot's Tomcat servlet (i.e. the process you start with `./gradlew bootRun` command), do the following:
-
-1. Open Tab: **Run**/Edit Configurations
-2. Add a new Remote Configuration and name it properly
-3. Start the Server in Debug mode: `./gradlew bootRun --debug-jvm`
-4. Press `Shift + F9` or the use **Run**/Debug "Name of your task"
-5. Set breakpoints in the application where you need it
-6. Step through the process one step at a time
-
-## Testing
-Have a look here: https://www.baeldung.com/spring-boot-testing
+## License
+This project is licensed under the MIT License. For more details, see the [LICENSE](https://github.com/sopra-fs24-group-17/server/blob/main/LICENSE.txt) file.
