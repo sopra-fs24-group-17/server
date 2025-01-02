@@ -75,7 +75,7 @@ Below is an outline of suggested features that developers who want to contribute
 * **Liam Kane** - (*Frontend*) - [ljkane](https://github.com/ljkane)
 * **Panagiotis Patsias** - (*Frontend*) - [PanagiotisPatsias](https://github.com/PanagiotisPatsias)
 * **Jorge Ortiz** - (*Backend*) - [jorgeortizv](https://github.com/jorgeortizv)
-* **Kevin Bründler** - (*Backend*) - [random9ness](https://github.com/random9ness)
+* **Kevin Bründler** - (*Backend*) - [random9nessss](https://github.com/random9nessss)
 
 ## Acknowledgments
 We would like to thank the professor and tutors of the Software Engineering Lab course from the Univeristy of Zurich.
